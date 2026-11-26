@@ -10,10 +10,11 @@
   #summary { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.26j"></script>
-<script src="js/parse.js?v=2026.11.26j"></script>
-<script src="js/geo.js?v=2026.11.26j"></script>
-<script src="js/export.js?v=2026.11.26j"></script>
+<script src="js/converter.js?v=2026.11.26n"></script>
+<script src="js/parse.js?v=2026.11.26n"></script>
+<script src="js/geo.js?v=2026.11.26n"></script>
+<script src="js/export.js?v=2026.11.26n"></script>
+<script src="js/giadat.js?v=2026.11.26n"></script>
 </head>
 <body>
 <div id="summary">Đang chạy…</div>
@@ -135,6 +136,24 @@ test("findFeature: tìm vùng chứa điểm (lọc khung bao, MultiPolygon)", (
   eq(VN.findFeature(30.5, 30.5, feats).properties.ten, "B", "B phần 2");
   eq(VN.findFeature(15, 15, feats), null, "ngoài");
   eq(Object.keys(feats[0]).includes("_bbox"), false, "_bbox không lộ ra khi JSON hoá");
+});
+
+test("Giá đất: màu theo bậc giá, khoảng cách tới đoạn đường, đoạn gần nhất", () => {
+  eq(VN.mauGia(500000), "#fff3b0", "< 1 triệu");
+  eq(VN.mauGia(13300000), "#9d0208", "10–20 triệu");
+  eq(VN.mauGia(45500000), "#5a189a", "≥ 20 triệu");
+  // điểm cách đoạn nằm ngang 0,001° vĩ độ ≈ 110,6 m
+  near(VN.khoangCachToiDuong(106.0005, 16.0, [[106.0, 16.001], [106.001, 16.001]]), 110.57, 0.5, "khoảng cách");
+  // điểm vượt quá đầu mút → tính tới đầu mút
+  near(VN.khoangCachToiDuong(106.002, 16.001, [[106.0, 16.001], [106.001, 16.001]]), 107.0, 1, "tới đầu mút");
+  const doan = [
+    { duong: "A", hinh: [[106.0, 16.001], [106.001, 16.001]] },
+    { duong: "B", hinh: [[106.0, 16.0005], [106.001, 16.0005]] },
+    { duong: "C", hinh: [[106.1, 16.1], [106.101, 16.1]] },
+    { duong: "Không toạ độ" },
+  ];
+  eq(VN.doanGanNhat(106.0005, 16.0, doan, 300, 5).map((x) => x.d.duong), ["B", "A"], "thứ tự gần → xa, bỏ đoạn xa");
+  eq(VN.boDau("Đường Lê Duẩn"), "duong le duan", "bỏ dấu");
 });
 
 test("Sắp tên điểm theo số", () => {

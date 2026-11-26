@@ -414,6 +414,7 @@
   function render(fit) {
     renderTable();
     renderProvinces();
+    if (VN.giadatRows) VN.giadatRows(state.rows);
     whenStyleReady(() => {
       renderMap(fit);
       schedulePlanningHits();
@@ -490,6 +491,7 @@
     map.on("sourcedata", (e) => { if (e.sourceId === "qh" && e.isSourceLoaded) schedulePlanningHits(); });
 
     qhReady = true;
+    applyOverlayOpacity();
     qhToggle.hidden = false;
     setQhVisible(qhVisible);
     loadLegend();
@@ -622,18 +624,21 @@
       const el = document.createElement("div");
       el.className = "vn-lbl " + p.lop.replace("nhan_", "");
       el.innerHTML = escapeHtml(p.ten) + (p.phu ? `<small>${escapeHtml(p.phu)}</small>` : "");
-      nen.labels.push({ lop: p.lop, mk: new maplibregl.Marker({ element: el, anchor: "center" })
+      if (p.y_nghia) el.title = p.y_nghia;
+      nen.labels.push({ lop: p.lop, mk: new maplibregl.Marker({ element: el, anchor: p.lop === "nhan_dao" ? "left" : "center" })
         .setLngLat(f.geometry.coordinates).addTo(map) });
     }
     updateLabels();
     renderProvinces();
   }
 
-  // Nhãn tỉnh hiện ở zoom 5,5 – 9,5; nhãn biển, quần đảo, nước láng giềng ở zoom < 9,5
+  // Nhãn tỉnh hiện ở zoom 5,5 – 9,5; Biển Đông, nước láng giềng ở zoom < 9,5;
+  // đảo, quần đảo (Hoàng Sa, Trường Sa, Bạch Long Vĩ, Phú Quốc…) LUÔN hiện
   function updateLabels() {
     const z = map.getZoom();
     for (const { lop, mk } of nen.labels) {
-      const show = lop === "nhan_tinh" ? z >= 5.5 && z < 9.5 : z < 9.5;
+      const luon = lop === "nhan_dao" || mk.getElement().querySelector("small");   // có dòng "(… – Việt Nam)"
+      const show = luon ? true : lop === "nhan_tinh" ? z >= 5.5 && z < 9.5 : z < 9.5;
       mk.getElement().style.display = show ? "" : "none";
     }
   }
@@ -666,7 +671,82 @@
       `Kinh tuyến trục vẫn chọn theo tỉnh cũ.</small>`;
   }
 
-  whenStyleReady(() => { setBase(base); addPlanningLayer(); loadBasemap(); });
+  // ---------------- Độ đậm lớp phủ (quy hoạch, giá đất) trên nền bản đồ / ảnh vệ tinh ----------------
+  const opInput = $("overlay-opacity");
+  opInput.value = store.get("opacity", "100");
+  function overlayFactor() { return Math.max(0, Math.min(100, Number(opInput.value) || 0)) / 100; }
+  function applyOverlayOpacity() {
+    const f = overlayFactor();
+    $("overlay-opacity-val").textContent = `${Math.round(f * 100)}%`;
+    if (map.getLayer("qh-fill")) {
+      const hit = ["boolean", ["feature-state", "hit"], false];
+      map.setPaintProperty("qh-fill", "fill-opacity", ["interpolate", ["linear"], ["zoom"],
+        10, ["case", hit, 0.85 * f, 0.7 * f], 16, ["case", hit, 0.85 * f, 0.5 * f]]);
+      map.setPaintProperty("qh-line", "line-opacity", ["case", hit, Math.max(f, 0.4), 0.6 * Math.max(f, 0.3)]);
+    }
+    if (VN.giadatOpacity) VN.giadatOpacity(f);
+  }
+  opInput.addEventListener("input", () => { store.set("opacity", opInput.value); applyOverlayOpacity(); });
+
+  // ---------------- Cỡ chữ (A− / A+) — phóng to bảng điều khiển, nhãn và ô thông tin trên bản đồ ----------------
+  const CO_CHU = [0.9, 1, 1.15, 1.3, 1.5, 1.75];
+  let coChu = CO_CHU.indexOf(Number(store.get("fs", "1")));
+  if (coChu < 0) coChu = 1;
+  function setCoChu(i) {
+    coChu = Math.max(0, Math.min(CO_CHU.length - 1, i));
+    document.documentElement.style.setProperty("--fs", CO_CHU[coChu]);
+    store.set("fs", String(CO_CHU[coChu]));
+    $("fs-val").textContent = `${Math.round(CO_CHU[coChu] * 100)}%`;
+    map.resize();
+  }
+  $("fs-down").addEventListener("click", () => setCoChu(coChu - 1));
+  $("fs-up").addEventListener("click", () => setCoChu(coChu + 1));
+  setCoChu(coChu);
+
+  // ---------------- Thanh kéo đổi độ rộng bảng điều khiển (điện thoại: đổi chiều cao bản đồ) ----------------
+  (function () {
+    const sp = $("splitter"), root = document.documentElement;
+    const doc = () => window.matchMedia("(max-width: 820px)").matches;
+    const ap = () => {
+      root.style.setProperty("--panel-w", `${store.get("panelW", "400")}px`);
+      root.style.setProperty("--map-h", `${store.get("mapH", "50")}vh`);
+      map.resize();
+    };
+    ap();
+    let dragging = false;
+    const move = (x, y) => {
+      if (doc()) {
+        const h = Math.round(Math.max(25, Math.min(85, (y / window.innerHeight) * 100)));
+        store.set("mapH", String(h));
+      } else {
+        const w = Math.round(Math.max(280, Math.min(window.innerWidth - 300, x)));
+        store.set("panelW", String(w));
+      }
+      ap();
+    };
+    sp.addEventListener("pointerdown", (e) => { dragging = true; sp.setPointerCapture(e.pointerId); sp.classList.add("keo"); e.preventDefault(); });
+    sp.addEventListener("pointermove", (e) => { if (dragging) move(e.clientX, e.clientY); });
+    const stop = () => { dragging = false; sp.classList.remove("keo"); };
+    sp.addEventListener("pointerup", stop);
+    sp.addEventListener("pointercancel", stop);
+    sp.addEventListener("dblclick", () => { store.set("panelW", "400"); store.set("mapH", "50"); ap(); });
+    sp.addEventListener("keydown", (e) => {   // bàn phím: ← → (máy tính), ↑ ↓ (điện thoại)
+      const d = { ArrowLeft: -20, ArrowRight: 20, ArrowUp: -5, ArrowDown: 5 }[e.key];
+      if (!d) return;
+      e.preventDefault();
+      if (doc()) store.set("mapH", String(Math.max(25, Math.min(85, Number(store.get("mapH", "50")) + d / 4))));
+      else store.set("panelW", String(Math.max(280, Math.min(window.innerWidth - 300, Number(store.get("panelW", "400")) + d))));
+      ap();
+    });
+    window.addEventListener("resize", ap);
+  })();
+
+  whenStyleReady(() => {
+    setBase(base); addPlanningLayer(); loadBasemap();
+    // Lớp giá đất 2026 (docs/js/giadat.js)
+    if (VN.giadatInit) VN.giadatInit(map, { store, escapeHtml, fmt, toast, opacity: overlayFactor,
+      attribution: '<a href="huong-dan.html#nguon-du-lieu" target="_blank">Giá đất: NQ 12/2025/NQ-HĐND tỉnh Quảng Trị; vị trí đoạn đường dò theo OSM/OSRM</a>' });
+  });
 
   // Lần đầu mở: hiện ví dụ cho người dùng thấy ngay; các lần sau: chạy lại dữ liệu đã lưu
   if (!coords.value.trim()) coords.value = state.dir === "vn2wgs" ? SAMPLES.vn2000 : SAMPLES.wgs84;

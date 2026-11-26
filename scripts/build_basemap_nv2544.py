@@ -345,6 +345,18 @@ def main(src, dst):
         ("Đ. Hải Nam", 109.7, 19.2, "nhan_nuoc"),
     ]:
         labels.append(feature(lop, "Point", [lon, lat], ten=ten, vi_tri="đặt tay"))
+    # Đảo, quần đảo luôn ghi chú (theo bản đồ NV25-44 và góp ý của TS Trần Trung Anh). Toạ độ: vị trí đảo
+    # (gần đúng, đặt tay); đơn vị hành chính theo Nghị quyết 202/2025/QH15.
+    for ten, phu, y_nghia, lon, lat in [
+        ("Đ. Bạch Long Vĩ", "(TP. Hải Phòng – Việt Nam)", "Điểm chủ quyền quan trọng ở Vịnh Bắc Bộ", 107.727, 20.133),
+        ("Đ. Phú Quốc", "(An Giang – Việt Nam)", "Đảo lớn nhất Việt Nam, quan trọng ở vùng biển Tây Nam", 103.96, 10.23),
+        ("QĐ. Thổ Chu", "(An Giang – Việt Nam)", "Cực Tây Nam vùng biển Việt Nam", 103.47, 9.30),
+        ("QĐ. Côn Sơn", "(TP. Hồ Chí Minh – Việt Nam)", "Côn Đảo — vùng biển phía Nam", 106.61, 8.69),
+        ("Đ. Phú Quý", "(Lâm Đồng – Việt Nam)", "Vùng biển Nam Trung Bộ", 108.94, 10.52),
+        ("Đ. Lý Sơn", "(Quảng Ngãi – Việt Nam)", "Vùng biển miền Trung", 109.12, 15.38),
+        ("Đ. Cồn Cỏ", "(Quảng Trị – Việt Nam)", "Đảo tiền tiêu của tỉnh Quảng Trị", 107.34, 17.16),
+    ]:
+        labels.append(feature("nhan_dao", "Point", [lon, lat], ten=ten, phu=phu, y_nghia=y_nghia, vi_tri="đặt tay"))
     feats += labels
 
     out = {

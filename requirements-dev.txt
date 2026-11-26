@@ -1,3 +1,6 @@
 pytest
 # chỉ cần cho scripts/extract_landuse_mapinfo.py (đọc bản MapInfo của bản đồ quy hoạch)
 pyogrio
+
+# cho scripts/build_giadat_2026.py (đọc bảng giá đất Excel)
+openpyxl

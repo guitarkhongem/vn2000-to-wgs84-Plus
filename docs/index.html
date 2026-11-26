@@ -7,14 +7,15 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.26j">
+<link rel="stylesheet" href="css/style.css?v=2026.11.26n">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.26j"></script>
-<script src="js/parse.js?v=2026.11.26j"></script>
-<script src="js/geo.js?v=2026.11.26j"></script>
-<script src="js/export.js?v=2026.11.26j"></script>
+<script src="js/converter.js?v=2026.11.26n"></script>
+<script src="js/parse.js?v=2026.11.26n"></script>
+<script src="js/geo.js?v=2026.11.26n"></script>
+<script src="js/export.js?v=2026.11.26n"></script>
+<script src="js/giadat.js?v=2026.11.26n"></script>
 </head>
 <body>
 <div class="layout">
@@ -27,6 +28,12 @@
       </div>
       <a class="btn small help" href="huong-dan.html" title="Hướng dẫn sử dụng">? Hướng dẫn</a>
     </header>
+    <div class="fs-ctl" role="group" aria-label="Cỡ chữ">
+      <span>Cỡ chữ</span>
+      <button type="button" class="btn small" id="fs-down" title="Chữ nhỏ hơn">A−</button>
+      <span id="fs-val" class="muted">100%</span>
+      <button type="button" class="btn small" id="fs-up" title="Chữ to hơn">A+</button>
+    </div>
 
     <section class="card">
       <h2>Kinh tuyến trục</h2>
@@ -88,12 +95,25 @@
       </div>
       <div id="area" class="area" hidden></div>
       <div id="qh-info" class="qh-info" hidden></div>
+      <div id="gd-gan" class="gd-gan" hidden></div>
       <div id="circles" class="circles" hidden></div>
+    </section>
+
+    <section class="card" id="gd-card" hidden>
+      <h2>Bảng giá đất 2026</h2>
+      <p class="muted small">Tỉnh Quảng Trị, áp dụng từ 01/01/2026 (Nghị quyết 12/2025/NQ-HĐND) — 78 xã, phường, đặc khu.</p>
+      <div class="row wrap">
+        <label class="field grow"><span>Xã, phường, đặc khu</span><select id="gd-xa"></select></label>
+        <label class="field grow"><span>Tên đường / đoạn</span><input id="gd-tim" type="search" placeholder="vd: Lê Duẩn" autocomplete="off"></label>
+      </div>
+      <div id="gd-kq" class="gd-kq"><small class="muted">Chọn xã hoặc gõ tên đường (≥ 2 ký tự).</small></div>
+      <details class="gd-nguon"><summary>Nguồn dữ liệu giá đất</summary><ul id="gd-nguon"></ul></details>
     </section>
 
     <footer class="credits">
       <p>Tác giả: <strong>Trần Trường Sinh</strong> · 0917.750.555</p>
       <p>Nguồn công thức: <em>Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác</em> — Trần Trung Anh, Quách Mạnh Tuấn (Hội nghị KH Quốc gia về Công nghệ Địa không gian).</p>
+      <p>7 tham số tính chuyển: <em>Quyết định số 05/2007/QĐ-BTNMT của Bộ Tài nguyên và Môi trường: Về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000</em>.</p>
       <details class="sources">
         <summary>Nguồn dữ liệu bản đồ</summary>
         <ul>
@@ -101,12 +121,16 @@
           <li><b>Bản đồ đường phố</b>: © OpenStreetMap contributors (giấy phép ODbL).</li>
           <li><b>Ảnh vệ tinh</b>: Esri World Imagery (Esri, Maxar, Earthstar Geographics).</li>
           <li><b>Lớp quy hoạch</b>: Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa.</li>
-          <li><b>Tham số chuyển đổi</b> VN-2000 → WGS84: 7 tham số Helmert, trùng EPSG:6960.</li>
+          <li><b>Giá đất 2026</b>: Nghị quyết 12/2025/NQ-HĐND ngày 11/12/2025 của HĐND tỉnh Quảng Trị (bản tổng hợp Excel "BANG GIA DAT 2026"); vị trí đoạn đường dò theo mạng đường © OpenStreetMap contributors bằng OSRM.</li>
+          <li><b>Tham số chuyển đổi</b> VN-2000 ⇄ WGS84 (7 tham số): Quyết định số 05/2007/QĐ-BTNMT ngày 27/02/2007 của Bộ Tài nguyên và Môi trường về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000.</li>
         </ul>
         <a href="huong-dan.html#nguon-du-lieu">Chi tiết trong Hướng dẫn</a>
       </details>
     </footer>
   </aside>
+
+  <div id="splitter" class="splitter" role="separator" aria-orientation="vertical" tabindex="0"
+       title="Kéo để đổi độ rộng bảng điều khiển (bấm đúp: về mặc định)"><span></span></div>
 
   <main class="map-wrap">
     <div id="map" aria-label="Bản đồ"></div>
@@ -117,6 +141,17 @@
     <button type="button" id="qh-toggle" class="overlay-toggle" aria-pressed="true" hidden>
       <span class="swatch" aria-hidden="true"></span>Quy hoạch
     </button>
+    <button type="button" id="gd-toggle" class="overlay-toggle gd" aria-pressed="true" hidden>
+      <span class="swatch gd" aria-hidden="true"></span>Giá đất
+    </button>
+    <label class="opacity-ctl" title="Độ đậm của lớp quy hoạch và giá đất trên nền bản đồ / ảnh vệ tinh">
+      <span>Độ đậm lớp phủ <b id="overlay-opacity-val">100%</b></span>
+      <input id="overlay-opacity" type="range" min="0" max="100" step="5" value="100">
+    </label>
+    <details id="gd-legend" class="legend gd-legend" hidden>
+      <summary>Giá đất ở VT1 (đ/m²)</summary>
+      <ul></ul>
+    </details>
     <details id="legend" class="legend" hidden>
       <summary>Chú giải quy hoạch</summary>
       <ul></ul>
@@ -124,6 +159,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.26j"></script>
+<script src="js/app.js?v=2026.11.26n"></script>
 </body>
 </html>

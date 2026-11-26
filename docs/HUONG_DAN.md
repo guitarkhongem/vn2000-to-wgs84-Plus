@@ -5,8 +5,12 @@ không cần cài đặt.
 
 ## 1. Bố cục màn hình
 
-- **Máy tính:** bảng điều khiển bên trái, bản đồ bên phải.
-- **Điện thoại:** bản đồ ở trên, kéo xuống để thấy bảng điều khiển.
+- **Máy tính:** bảng điều khiển bên trái, bản đồ bên phải. **Kéo thanh dọc** giữa hai phần để nới / thu
+  bảng điều khiển (bấm đúp thanh để về mặc định; dùng được cả phím ← →).
+- **Điện thoại:** bản đồ ở trên, bảng điều khiển bên dưới; **kéo thanh ngang** dưới bản đồ để đổi chiều cao
+  bản đồ.
+- **Cỡ chữ:** nút **A−** / **A+** dưới tiêu đề (90 % – 175 %) phóng to chữ trong bảng điều khiển, ô thông
+  tin, chú giải và nhãn trên bản đồ. Lựa chọn được nhớ cho lần sau.
 
 Lần đầu mở trang, ứng dụng tự chạy một **ví dụ** (4 góc một thửa đất ở Hướng Hóa) để bạn thấy ngay kết quả.
 
@@ -91,6 +95,13 @@ Bảng **Kết quả** có đủ hai hệ cho mỗi điểm: Tên, X, Y, Vĩ đ�
 ## 7. Bản đồ
 
 - **Bản đồ / Vệ tinh** (góc trên trái): đổi nền. Ở vùng nông thôn, ảnh vệ tinh zoom sâu có thể hơi mờ.
+- **Độ đậm lớp phủ** (thanh trượt dưới nút *Giá đất*): giảm độ đậm của lớp **quy hoạch** và **giá đất** để
+  nhìn thấy ảnh vệ tinh / bản đồ bên dưới (0 % = trong suốt, 100 % = mặc định). Khi bật *Vệ tinh* mà chỉ thấy
+  màu quy hoạch, hãy kéo thanh này xuống khoảng 30–50 % hoặc tắt nút *Quy hoạch*.
+- **Đảo, quần đảo luôn được ghi chú** ở mọi mức zoom: QĐ. Hoàng Sa (TP. Đà Nẵng), QĐ. Trường Sa (Khánh Hòa),
+  Đ. Bạch Long Vĩ (TP. Hải Phòng — điểm chủ quyền quan trọng ở Vịnh Bắc Bộ), Đ. Phú Quốc (An Giang — quan trọng
+  ở vùng biển Tây Nam), QĐ. Thổ Chu (An Giang), QĐ. Côn Sơn (TP. Hồ Chí Minh), Đ. Phú Quý (Lâm Đồng),
+  Đ. Lý Sơn (Quảng Ngãi), Đ. Cồn Cỏ (Quảng Trị). Đưa chuột vào tên đảo để xem ý nghĩa.
 - **Nền hành chính khi thu nhỏ:** từ mức zoom 9 trở xuống, bản đồ chuyển sang **nền hành chính Việt Nam**
   (34 tỉnh, thành phố mới; biên giới quốc gia; **QĐ. Hoàng Sa** và **QĐ. Trường Sa** tô đỏ). Phóng to qua
   mức 9–10, nền tự chuyển dần về Bản đồ / Vệ tinh. Nguồn: xem mục *Nguồn dữ liệu*.
@@ -129,7 +140,46 @@ Lớp lấy từ **Bản đồ điều chỉnh quy hoạch sử dụng đất đ
      ghi được **tên nhóm**.
 - Thông tin chỉ để **tham khảo**; khi giao dịch cần đối chiếu bản đồ, văn bản quy hoạch chính thức.
 
-## 9. Nguồn dữ liệu
+## 9. Giá đất 2026
+
+Lớp **Giá đất** hiển thị **Bảng giá đất tỉnh Quảng Trị áp dụng từ 01/01/2026** (Nghị quyết
+12/2025/NQ-HĐND ngày 11/12/2025 của HĐND tỉnh) — 78 xã, phường, đặc khu, khoảng 6 700 đoạn đường.
+
+- Nút **Giá đất** (dưới nút *Quy hoạch*): bật / tắt lớp. Đoạn đường hiện từ **mức zoom 11**, tô màu theo
+  **giá đất ở Vị trí 1** (chú giải góc dưới trái): vàng nhạt < 1 triệu … tím ≥ 20 triệu đ/m².
+- **Bấm vào đoạn đường** để xem: tên đường, đoạn từ … đến …, xã mới (và xã cũ), bảng giá **Vị trí 1–4** của
+  đất ở, đất thương mại dịch vụ (TMDV), đất cơ sở sản xuất phi nông nghiệp (SXKD), và mức thay đổi so với
+  bảng giá cũ.
+- **Sau khi chuyển đổi**, dưới bảng kết quả có mục *Giá đất 2026 quanh tâm thửa*: tối đa 4 đoạn đường gần
+  nhất (trong 400 m) kèm khoảng cách, và **giá đất nông nghiệp** của xã. Bấm vào một đoạn để bay tới đoạn đó.
+- **Tra cứu** (mục *Bảng giá đất 2026* trong bảng điều khiển): chọn xã và / hoặc gõ tên đường (không cần
+  dấu). Tra được **cả các đoạn không có toạ độ**; đoạn có toạ độ bấm vào để xem trên bản đồ.
+
+**Vị trí đoạn đường được xác định thế nào:** mỗi đoạn trong bảng giá có liên kết Google Maps nối điểm đầu
+→ điểm cuối (đôi khi có điểm giữa). Ứng dụng **dò tuyến theo mạng đường OpenStreetMap** giữa các
+điểm đó, nên đoạn vẽ ra bám theo con đường thật, không phải đường thẳng:
+
+1. Tải toàn bộ mạng đường OSM vùng có đoạn giá đất (Overpass API, 39 ô 0,2°, ~69 000 tuyến đường), dựng đồ thị
+   và **dò đường ngắn nhất ưu tiên đúng tên**: cạnh trùng tên đường trong bảng giá tính trọng số 1,0, cạnh khác
+   tên × 1,6 — tuyến đi theo đúng con đường có tên khi có thể. Điểm đầu/cuối chiếu lên đường trùng tên trong
+   60 m, nếu không có thì đường gần nhất trong 150 m.
+2. **Đối chiếu tên**: so tên và số hiệu (ref) đường OSM dọc tuyến với tên trong bảng giá (bỏ dấu; *Quốc lộ 9* =
+   *QL9* = *QL.9*; *Quốc lộ 1A* = *Quốc lộ 1*). Có thêm tuyến dò OSRM hồ sơ *đi bộ* cho một phần các đoạn; mỗi
+   đoạn chọn tuyến đạt hạng tốt nhất, cùng hạng chọn tuyến trùng tên nhiều hơn.
+3. Kiểm tra từng đoạn:
+
+| Trên bản đồ | Ý nghĩa |
+|---|---|
+| Nét liền | Hai đầu bám đường ≤ 30 m, tuyến không vòng quá 2,5 lần đường thẳng, và ≥ 50 % chiều dài nằm trên đường trùng tên (khi OSM có tên đường) |
+| Nét đứt | **Cần xem lại**: không đạt một trong các điều kiện trên, hoặc không dò được (nối thẳng các điểm). Khi lý do là khác tên, ô thông tin ghi tên đường OSM mà tuyến nằm trên (thường là phố trong đô thị được OSM ghi theo tên quốc lộ, hoặc OSM chưa có tên) |
+
+Khoảng một phần ba số đoạn có liên kết toạ độ; số còn lại (*"Chưa gắn vị trí"* hoặc mô tả theo thửa, tờ
+bản đồ) chỉ tra cứu được trong bảng.
+
+> **Lưu ý:** đoạn đường gần nhất chưa chắc là đường mà thửa đất tiếp giáp; vị trí (VT1–VT4) của thửa do cơ
+> quan có thẩm quyền xác định theo quy định kèm Nghị quyết. Thông tin chỉ để tham khảo.
+
+## 10. Nguồn dữ liệu
 
 | Dữ liệu | Nguồn | Ghi chú |
 |---|---|---|
@@ -137,17 +187,18 @@ Lớp lấy từ **Bản đồ điều chỉnh quy hoạch sử dụng đất đ
 | Bản đồ đường phố | © **OpenStreetMap contributors**, giấy phép ODbL | openstreetmap.org/copyright |
 | Ảnh vệ tinh | **Esri World Imagery** (Esri, Maxar, Earthstar Geographics) | Độ phân giải tuỳ vùng |
 | Lớp quy hoạch Hướng Hóa | **Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa** | Chỉ để tham khảo (mục 8) |
-| Tham số chuyển đổi VN-2000 → WGS84 | 7 tham số Helmert, trùng **EPSG:6960** *VN-2000 to WGS 84 (2)* (Coordinate Frame) | |
+| Giá đất 2026 | **Nghị quyết 12/2025/NQ-HĐND** ngày 11/12/2025 của HĐND tỉnh Quảng Trị — Bảng giá đất áp dụng từ 01/01/2026 (Phụ lục I: đất nông nghiệp; II: đất ở; III: đất TMDV, đất cơ sở SXKD phi nông nghiệp), qua bản tổng hợp Excel *"BANG GIA DAT 2026"* | Liên kết Google Maps điểm đầu – cuối từng đoạn lấy từ bản tổng hợp; hình đoạn đường dò theo mạng đường © **OpenStreetMap contributors** (ODbL) dữ liệu tải qua **Overpass API** (maps.mail.ru), dò tuyến trên máy; một phần bằng **OSRM** (máy chủ routing.openstreetmap.de của FOSSGIS). Mục 9 |
+| Tham số chuyển đổi VN-2000 ⇄ WGS84 (7 tham số) | **Quyết định số 05/2007/QĐ-BTNMT** ngày 27/02/2007 của Bộ Tài nguyên và Môi trường *về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000* | Dịch gốc −191,90441429 m; −39,30318279 m; −111,45032835 m · góc xoay −0,00928836″; 0,01975479″; −0,00427372″ · tỉ lệ k = 1,000000252906278 (cũng là bộ EPSG:6960, Coordinate Frame) |
 | Công thức chuyển đổi | Trần Trung Anh, Quách Mạnh Tuấn — *Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác*, Hội nghị KH Quốc gia về Công nghệ Địa không gian | |
 
 Tên nguồn cũng hiện ở **góc dưới phải bản đồ** (nút ⓘ) và cuối bảng điều khiển (*Nguồn dữ liệu bản đồ*).
 
-## 10. Ứng dụng tự nhớ
+## 11. Ứng dụng tự nhớ
 
 Kinh tuyến trục, chiều chuyển đổi, dữ liệu nhập lần trước, nền bản đồ, các ô *Nối điểm*,
-*Chiều dài cạnh* và nút *Quy hoạch* được nhớ cho lần mở sau. Dữ liệu chỉ lưu trên máy bạn, không gửi đi đâu.
+*Chiều dài cạnh*, nút *Quy hoạch* và *Giá đất* được nhớ cho lần mở sau. Dữ liệu chỉ lưu trên máy bạn, không gửi đi đâu.
 
-## 11. Xử lý sự cố
+## 12. Xử lý sự cố
 
 | Hiện tượng | Nguyên nhân thường gặp |
 |---|---|

@@ -34,6 +34,9 @@ pytest                    # chạy test — PHẢI xanh trước khi commit
 | `functions/planning_layer.py` | Lớp quy hoạch: nạp GeoJSON, tìm thửa gần điểm (STRtree), đổi sang WGS84, vẽ folium |
 | `data/QHHUONGHOA_30.geojson` | Quy hoạch Hướng Hóa (Điều chỉnh QHSDĐ đến 2030): EPSG:9212 (VN-2000 TM-3, lon0 = 106.25), toạ độ [Đông, Bắc], 19 809 polygon, ~1 triệu đỉnh. Thuộc tính `ma_dat`, `ten_dat`, `mau` (màu gốc), `nguon` (`nhan` / `mau` / `nhom` / null) |
 | `scripts/build_basemap_nv2544.py` | Tạo `docs/data/nen_hanhchinh.geojson` (nền hành chính WebGIS) từ shapefile của đề tài NV25-44 (Lambert *BD1trieu_VN2000*, kinh tuyến 108°). Đổi hệ: Lambert ngược → TM-3 kinh tuyến gần nhất → **gọi nguyên** `vn2000_to_wgs84_baibao`. Thuần Python. Dữ liệu gốc **không nằm trong repo** (máy tác giả: `Desktop\Trung Anh\NV25-44 QGIS\NV25-44 QGIS\Data`) |
+| `scripts/build_giadat_2026.py` | Tạo `docs/data/giadat_2026.json` (bảng giá đất 2026: PL I nông nghiệp theo xã, PL II đất ở, PL III TMDV/SXKD theo đoạn đường) từ `BANG GIA DAT 2026.xlsm` (**không nằm trong repo**; máy tác giả: `C:\Users\msi\Downloads`). Đọc toạ độ từ liên kết Google Maps (`data/giadat_link_rut_gon.json` giải các link rút gọn), ghép hình tuyến từ `data/giadat_tuyen.json`, phân loại chất lượng `cl` = `tot` / `xem_lai` / `thang`. Cần `openpyxl` |
+| `scripts/do_tuyen_giadat.js` | Dò tuyến OSRM (routing.openstreetmap.de, hồ sơ foot, ~1 yêu cầu/giây, chỉ dò đoạn chưa có) → `data/giadat_tuyen.json` (hồ sơ `di_bo`) |
+| `scripts/do_tuyen_giadat_osm.py` | Dò tuyến trên máy từ mạng đường OSM tải qua Overpass (file JSON `{nguon, ways:[{h,n,r,g}]}`, **không nằm trong repo**; máy tác giả: `Downloads\osm_duong_quangtri.json`): Dijkstra, cạnh trùng tên × 1,0, khác tên × 1,6 → hồ sơ `osm_ten` trong `data/giadat_tuyen.json`. Thuần Python |
 | `scripts/extract_landuse_mapinfo.py` | Tạo file trên từ bản MapInfo gốc (`Level 30` = vùng tô màu, `Level 33` = nhãn mã đất) + `docs/data/quyhoach_chugiai.json`. Cần `pyogrio` (requirements-dev). Bản MapInfo **không nằm trong repo** (máy tác giả: `Desktop\Thay Tien\MAP`) |
 | `assets/` | Logo, ảnh nền cho bản Streamlit |
 | `tests/` | pytest |
@@ -56,6 +59,7 @@ Không cần build: HTML + JS thuần, thư viện lấy từ CDN (MapLibre GL 4
 | `docs/js/export.js` | Xuất CSV (có BOM), KML, DXF R12 (tên tiếng Việt ghi dạng `\U+XXXX`) |
 | `docs/js/app.js` | Ghép giao diện + bản đồ. Lưu tạm lựa chọn người dùng trong localStorage |
 | `docs/tests.html` | Test JS, mở trực tiếp bằng trình duyệt — phải hiện "Tất cả … test đều đạt" |
+| `docs/js/giadat.js`, `docs/data/giadat_2026.json` | Lớp *Giá đất 2026*: nguồn `gd`, lớp `gd-*` (từ zoom 11, màu theo đất ở VT1), đoạn gần tâm thửa (400 m), tra cứu theo xã / tên đường. Hàm thuần `VN.mauGia`, `VN.khoangCachToiDuong`, `VN.doanGanNhat`, `VN.boDau` có test trong `tests.html`. `app.js` gọi `VN.giadatInit(map, helpers)` và `VN.giadatRows(rows)` |
 | `docs/data/nen_hanhchinh.geojson` | Nền hành chính VN (34 tỉnh, biên giới, Hoàng Sa, Trường Sa, nước láng giềng, nhãn), WGS84, thuộc tính `lop`; mục `nguon` ghi nguồn. Hiện ở zoom ≤ 9 (lớp `nen-*`), OSM / vệ tinh mờ dần vào từ zoom 8,5 → 10. Không có file → app giữ OSM ở mọi zoom |
 
 ### Lớp quy hoạch trên WebGIS
@@ -94,7 +98,8 @@ Mọi dữ liệu đưa vào app phải **ghi rõ nguồn** ở cả bốn chỗ
 ## Quy tắc bắt buộc
 
 1. **Không thay đổi thuật toán** trong `functions/converter.py`: hằng số elip, 7 tham số
-   (dX, dY, dZ, rx, ry, rz, k), k0 = 0.9999, y0 = 500000. Muốn sửa phải có nguồn đối chiếu
+   (dX, dY, dZ, rx, ry, rz, k) — nguồn: **Quyết định số 05/2007/QĐ-BTNMT** ngày 27/02/2007 của Bộ TN&MT về sử
+   dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000 —, k0 = 0.9999, y0 = 500000. Muốn sửa phải có nguồn đối chiếu
    và thêm test chứng minh.
 2. Quy ước toạ độ VN-2000: **X = hướng Bắc**, **Y = hướng Đông** (có 500 000 m). Đừng đảo.
 3. Giữ tách lớp: logic tính toán/đọc dữ liệu nằm trong `functions/`, **không import

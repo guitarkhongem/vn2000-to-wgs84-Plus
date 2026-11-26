@@ -23,6 +23,8 @@ Repo này phát triển tiếp từ
 - Xuất CSV (Excel), KML (Google Earth), DXF (AutoCAD).
 - **Nền hành chính Việt Nam** khi thu nhỏ bản đồ: 34 tỉnh, thành phố mới, biên giới, QĐ. Hoàng Sa, QĐ. Trường Sa;
   cho biết điểm thuộc tỉnh mới nào.
+- **Giá đất 2026** (NQ 12/2025/NQ-HĐND, 78 xã phường): đoạn đường dò theo mạng đường OSM, tô màu theo giá;
+  giá các đoạn gần thửa sau khi chuyển đổi; tra cứu theo xã / tên đường.
 
 ## Nguồn dữ liệu
 
@@ -32,7 +34,8 @@ Repo này phát triển tiếp từ
 | Bản đồ đường phố | © OpenStreetMap contributors (ODbL) |
 | Ảnh vệ tinh | Esri World Imagery (Esri, Maxar, Earthstar Geographics) |
 | Quy hoạch Hướng Hóa | Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa |
-| Tham số VN-2000 → WGS84 | 7 tham số Helmert, trùng EPSG:6960 |
+| Giá đất 2026 | Nghị quyết 12/2025/NQ-HĐND tỉnh Quảng Trị (bản tổng hợp Excel "BANG GIA DAT 2026"); hình đoạn đường dò theo mạng đường © OpenStreetMap contributors (Overpass API + dò tuyến ưu tiên đúng tên; một phần OSRM) |
+| Tham số VN-2000 ⇄ WGS84 (7 tham số) | Quyết định số 05/2007/QĐ-BTNMT ngày 27/02/2007 của Bộ Tài nguyên và Môi trường: Về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000 (cũng là bộ EPSG:6960) |
 
 Chi tiết: mục *Nguồn dữ liệu* trong [docs/HUONG_DAN.md](docs/HUONG_DAN.md).
 
