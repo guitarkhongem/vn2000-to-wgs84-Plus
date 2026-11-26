@@ -1,0 +1,88 @@
+# Tạo lớp quy hoạch PMTiles cho WebGIS (docs/data/quyhoach.pmtiles)
+# Chạy khi dữ liệu quy hoạch / thuật toán / script thay đổi, hoặc bấm tay ở tab Actions.
+name: Build planning tiles
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - data/QHHUONGHOA_30.geojson
+      - functions/converter.py
+      - functions/area.py
+      - scripts/build_planning_geojson.py
+      - .github/workflows/build-planning-tiles.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: planning-tiles
+  cancel-in-progress: true
+
+env:
+  TIPPECANOE_VERSION: "2.79.0"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cài thư viện Python (chỉ cần cho area.py)
+        run: pip install geographiclib
+
+      - name: Test thuật toán trước khi dùng
+        run: |
+          pip install pytest
+          pytest tests/test_converter.py -q
+
+      - name: Đổi VN-2000 → WGS84 bằng converter.py của app
+        run: python scripts/build_planning_geojson.py
+
+      - name: Cache tippecanoe
+        id: cache-tippecanoe
+        uses: actions/cache@v4
+        with:
+          path: ~/tippecanoe-bin
+          key: tippecanoe-${{ env.TIPPECANOE_VERSION }}-ubuntu-24.04
+
+      - name: Build tippecanoe
+        if: steps.cache-tippecanoe.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libsqlite3-dev zlib1g-dev
+          git clone --depth 1 --branch "$TIPPECANOE_VERSION" https://github.com/felt/tippecanoe.git /tmp/tippecanoe
+          make -C /tmp/tippecanoe -j"$(nproc)"
+          mkdir -p ~/tippecanoe-bin
+          cp /tmp/tippecanoe/tippecanoe ~/tippecanoe-bin/
+
+      - name: Tạo PMTiles
+        run: |
+          mkdir -p docs/data
+          ~/tippecanoe-bin/tippecanoe \
+            -o docs/data/quyhoach.pmtiles --force \
+            -l quyhoach -n "Quy hoạch Hướng Hóa" \
+            -Z 10 -z 16 \
+            --use-attribute-for-id=id \
+            --drop-densest-as-needed \
+            --extend-zooms-if-still-dropping \
+            --detect-shared-borders \
+            -P build/quyhoach_wgs84.geojsonl
+          ls -lh docs/data/quyhoach.pmtiles
+
+      - name: Commit file PMTiles (nếu thay đổi)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/data/quyhoach.pmtiles
+          if git diff --cached --quiet; then
+            echo "PMTiles không đổi."
+          else
+            git commit -m "Tự động: cập nhật lớp quy hoạch PMTiles"
+            git push
+          fi

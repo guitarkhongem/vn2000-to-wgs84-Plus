@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VN2000 ⇄ WGS84</title>
+<meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
+<link rel="icon" href="assets/logo.jpg">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
+<script src="js/converter.js"></script>
+<script src="js/parse.js"></script>
+<script src="js/geo.js"></script>
+<script src="js/export.js"></script>
+</head>
+<body>
+<div class="layout">
+  <aside class="panel" aria-label="Bảng điều khiển">
+    <header class="brand">
+      <img src="assets/logo.jpg" alt="" width="44" height="44">
+      <div>
+        <h1>VN2000 ⇄ WGS84</h1>
+        <p>Bất động sản huyện Hướng Hóa</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>Kinh tuyến trục</h2>
+      <div class="row">
+        <label class="field grow">
+          <span>Tỉnh / thành phố</span>
+          <select id="province"><option value="">— Nhập tay —</option></select>
+        </label>
+        <label class="field narrow">
+          <span>Kinh tuyến (°)</span>
+          <input id="lon0" type="number" min="102" max="110" step="0.25" value="106.25" inputmode="decimal">
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="segmented" role="tablist" aria-label="Chiều chuyển đổi">
+        <button role="tab" id="dir-vn" aria-selected="true" data-dir="vn2wgs">VN2000 → WGS84</button>
+        <button role="tab" id="dir-wgs" aria-selected="false" data-dir="wgs2vn">WGS84 → VN2000</button>
+      </div>
+
+      <label class="field">
+        <span id="input-label">Toạ độ VN-2000 (Tên X Y H)</span>
+        <textarea id="coords" rows="7" spellcheck="false" placeholder=""></textarea>
+      </label>
+      <div class="row wrap">
+        <label class="btn ghost file">
+          Mở file TXT/CSV<input id="file" type="file" accept=".txt,.csv,text/plain,text/csv" hidden>
+        </label>
+        <button class="btn ghost" id="sample" type="button">Ví dụ</button>
+        <button class="btn ghost" id="clear" type="button">Xoá</button>
+        <button class="btn primary grow" id="convert" type="button">Chuyển đổi</button>
+      </div>
+      <div id="errors" class="errors" hidden></div>
+    </section>
+
+    <section class="card" id="results-card" hidden>
+      <div class="row between">
+        <h2>Kết quả <span id="count" class="muted"></span></h2>
+        <div class="row tight">
+          <button class="btn small" id="copy" type="button">Sao chép</button>
+          <button class="btn small" id="dl-csv" type="button">CSV</button>
+          <button class="btn small" id="dl-kml" type="button">KML</button>
+          <button class="btn small" id="dl-dxf" type="button">DXF</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="table">
+          <thead><tr><th>Tên</th><th>X (m)</th><th>Y (m)</th><th>Vĩ độ</th><th>Kinh độ</th><th>H (m)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <h2 class="mt">Thửa đất</h2>
+      <div class="row wrap">
+        <label class="toggle"><input type="checkbox" id="join"> Nối điểm</label>
+        <label class="toggle"><input type="checkbox" id="lengths"> Chiều dài cạnh</label>
+      </div>
+      <div id="area" class="area" hidden></div>
+      <div id="qh-info" class="qh-info" hidden></div>
+    </section>
+
+    <footer class="credits">
+      <p>Tác giả: <strong>Trần Trường Sinh</strong> · 0917.750.555</p>
+      <p>Nguồn công thức: <em>Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác</em> — Trần Trung Anh, Quách Mạnh Tuấn (Hội nghị KH Quốc gia về Công nghệ Địa không gian).</p>
+    </footer>
+  </aside>
+
+  <main class="map-wrap">
+    <div id="map" aria-label="Bản đồ"></div>
+    <div class="basemap" role="group" aria-label="Nền bản đồ">
+      <button type="button" data-base="osm" aria-pressed="true">Bản đồ</button>
+      <button type="button" data-base="sat" aria-pressed="false">Vệ tinh</button>
+    </div>
+    <button type="button" id="qh-toggle" class="overlay-toggle" aria-pressed="true" hidden>
+      <span class="swatch" aria-hidden="true"></span>Quy hoạch
+    </button>
+    <div id="toast" class="toast" role="status" hidden></div>
+  </main>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>
