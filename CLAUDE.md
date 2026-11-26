@@ -1,7 +1,12 @@
 # CLAUDE.md — Hướng dẫn cho AI khi làm việc với repo này
 
-Ứng dụng Streamlit chuyển đổi toạ độ **VN-2000 ⇄ WGS84** cho bất động sản huyện Hướng Hóa
-(Quảng Trị). Bản chạy thật: https://vn2000-wgs84.streamlit.app/ (tự deploy khi push lên `main`).
+Ứng dụng chuyển đổi toạ độ **VN-2000 ⇄ WGS84** cho bất động sản huyện Hướng Hóa (Quảng Trị),
+gồm hai bản cùng thuật toán: **WebGIS** (`docs/`, GitHub Pages:
+https://guitarkhongem.github.io/vn2000-to-wgs84-Plus/) và **Streamlit** (`app.py`).
+Repo `guitarkhongem/vn2000-to-wgs84-Plus`, phát triển tiếp từ `guitarkhongem/vn2000-to-wgs84-streamlit`
+(bản Streamlit cũ chạy tại https://vn2000-wgs84.streamlit.app/).
+Hướng dẫn cho người dùng: **`docs/HUONG_DAN.md`** — nguồn duy nhất, `docs/huong-dan.html` đọc và hiển thị
+file này (thư viện marked). Thêm / đổi tính năng thì cập nhật `docs/HUONG_DAN.md`.
 
 Ngôn ngữ giao diện và comment: **tiếng Việt**.
 
@@ -28,7 +33,8 @@ pytest                    # chạy test — PHẢI xanh trước khi commit
 | `functions/background.py`, `footer.py` | Trang trí |
 | `functions/planning_layer.py` | Lớp quy hoạch: nạp GeoJSON, tìm thửa gần điểm (STRtree), đổi sang WGS84, vẽ folium |
 | `data/QHHUONGHOA_30.geojson` | Quy hoạch Hướng Hóa: EPSG:9212 (VN-2000 TM-3, lon0 = 106.25), toạ độ [Đông, Bắc], ~19 800 polygon, ~1 triệu đỉnh, **không có thuộc tính loại đất** |
-| `MAP/` | Bản MapInfo gốc (các lớp `Level N`), cũng không có thuộc tính; chưa dùng |
+| `assets/` | Logo, ảnh nền cho bản Streamlit |
+| `MAP/` | *(chỉ có ở repo cũ)* Bản MapInfo gốc (các lớp `Level N`), cũng không có thuộc tính |
 | `tests/` | pytest |
 
 Module **chưa được dùng** (để lại, đừng xoá nếu chưa hỏi): `mapgen.py`, `ocr.py` (cần `easyocr`,
