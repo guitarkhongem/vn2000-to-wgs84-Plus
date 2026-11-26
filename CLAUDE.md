@@ -75,6 +75,11 @@ data/QHHUONGHOA_30.geojson ──(scripts/build_planning_geojson.py, dùng conve
   ở cả `tests/test_converter.py` và `docs/tests.html`.
 - Mở `index.html` bằng `file://` vẫn chạy, nhưng nên thử qua máy chủ http (vd `python -m http.server -d docs`).
 - Không thêm bước build/npm nếu chưa thật cần.
+- **Sửa file trong `docs/js` hoặc `docs/css` → tăng số `?v=…`** ở các thẻ `<script>`/`<link>` trong
+  `index.html`, `huong-dan.html`, `tests.html`; nếu không, trình duyệt người dùng vẫn chạy bản cũ đã cache.
+- PMTiles: tippecanoe `--use-attribute-for-id=id` biến `id` thành feature id và **bỏ khỏi properties** →
+  nguồn vector KHÔNG dùng `promoteId`, đọc `feature.id`. Thử PMTiles trên máy cần máy chủ hỗ trợ
+  HTTP Range (`python -m http.server` không hỗ trợ; GitHub Pages có).
 
 ## Quy tắc bắt buộc
 

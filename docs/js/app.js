@@ -329,7 +329,9 @@
     if (QH_IS_PM) {
       const protocol = new pmtiles.Protocol();
       maplibregl.addProtocol("pmtiles", protocol.tile);
-      map.addSource("qh", { type: "vector", url: "pmtiles://" + QH_URL, promoteId: "id" });
+      // tippecanoe --use-attribute-for-id=id đã chuyển "id" thành feature id (bỏ khỏi properties)
+      // → dùng feature id có sẵn, KHÔNG promoteId
+      map.addSource("qh", { type: "vector", url: "pmtiles://" + QH_URL });
     } else {
       map.addSource("qh", { type: "geojson", data: QH_URL, promoteId: "id" });
     }
@@ -355,7 +357,7 @@
       if (!f) return;
       const p = f.properties;
       new maplibregl.Popup({ offset: 6 }).setLngLat(e.lngLat)
-        .setHTML(`<b>Thửa quy hoạch số ${escapeHtml(p.id)}</b><br>Diện tích: ${fmt(p.dien_tich, 1)} m²` +
+        .setHTML(`<b>Thửa quy hoạch số ${escapeHtml(f.id ?? p.id)}</b><br>Diện tích: ${fmt(p.dien_tich, 1)} m²` +
           ` <span style="color:#666">(${fmt(p.dien_tich / 10000, 4)} ha)</span>`)
         .addTo(map);
     });
