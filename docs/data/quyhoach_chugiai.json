@@ -1,0 +1,332 @@
+[
+ {
+  "ma": "CLN",
+  "ten": "Đất trồng cây lâu năm",
+  "mau": "#ffd2a0",
+  "so_thua": 3506
+ },
+ {
+  "ma": "LUC",
+  "ten": "Đất chuyên trồng lúa",
+  "mau": "#fffc8c",
+  "so_thua": 3040
+ },
+ {
+  "ma": "HNK",
+  "ten": "Đất trồng cây hằng năm khác",
+  "mau": "#fff0b4",
+  "so_thua": 2666
+ },
+ {
+  "ma": "ONT",
+  "ten": "Đất ở tại nông thôn",
+  "mau": "#ffd0ff",
+  "so_thua": 1747
+ },
+ {
+  "ma": "DCS",
+  "ten": "Đất chưa sử dụng",
+  "mau": "#fffffe",
+  "so_thua": 1444
+ },
+ {
+  "ma": "NTS",
+  "ten": "Đất nuôi trồng thủy sản",
+  "mau": "#aaffff",
+  "so_thua": 1368
+ },
+ {
+  "ma": "ONT+CLN",
+  "ten": "Đất ở tại nông thôn + Đất trồng cây lâu năm",
+  "mau": "#ffd0ff",
+  "so_thua": 1014
+ },
+ {
+  "ma": "RSX",
+  "ten": "Đất rừng sản xuất",
+  "mau": "#b4ffb4",
+  "so_thua": 858
+ },
+ {
+  "ma": "DGT",
+  "ten": "Đất công trình giao thông",
+  "mau": "#ffaa32",
+  "so_thua": 853
+ },
+ {
+  "ma": "ODT+CLN",
+  "ten": "Đất ở tại đô thị + Đất trồng cây lâu năm",
+  "mau": "#ffa0ff",
+  "so_thua": 557
+ },
+ {
+  "ma": "RPH",
+  "ten": "Đất rừng phòng hộ",
+  "mau": "#beff1e",
+  "so_thua": 534
+ },
+ {
+  "ma": "SON",
+  "ten": "Đất có mặt nước dạng sông, ngòi, kênh, rạch, suối",
+  "mau": "#a0ffff",
+  "so_thua": 506
+ },
+ {
+  "ma": "NTD",
+  "ten": "Đất nghĩa trang, nhà tang lễ, cơ sở hỏa táng",
+  "mau": "#d2d2d2",
+  "so_thua": 355
+ },
+ {
+  "ma": "DGD",
+  "ten": "Đất xây dựng cơ sở giáo dục và đào tạo",
+  "mau": "#ffaaa0",
+  "so_thua": 120
+ },
+ {
+  "ma": "ONT+HNK",
+  "ten": "Đất ở tại nông thôn + Đất trồng cây hằng năm khác",
+  "mau": "#ffd0ff",
+  "so_thua": 117
+ },
+ {
+  "ma": "ONT+CLN+HNK",
+  "ten": "Đất ở tại nông thôn + Đất trồng cây lâu năm + Đất trồng cây hằng năm khác",
+  "mau": "#ffd0ff",
+  "so_thua": 105
+ },
+ {
+  "ma": "LUK",
+  "ten": "Đất trồng lúa còn lại",
+  "mau": "#fffc96",
+  "so_thua": 66
+ },
+ {
+  "ma": "RDD",
+  "ten": "Đất rừng đặc dụng",
+  "mau": "#6eff64",
+  "so_thua": 65
+ },
+ {
+  "ma": "DVH",
+  "ten": "Đất xây dựng cơ sở văn hóa",
+  "mau": "#ffaaa0",
+  "so_thua": 53
+ },
+ {
+  "ma": "CQP",
+  "ten": "Đất quốc phòng",
+  "mau": "#ff6450",
+  "so_thua": 53
+ },
+ {
+  "ma": "DNL",
+  "ten": "Đất công trình năng lượng, chiếu sáng công cộng",
+  "mau": "#ffaaa0",
+  "so_thua": 50
+ },
+ {
+  "ma": "TIN",
+  "ten": "Đất tín ngưỡng",
+  "mau": "#ffaaa0",
+  "so_thua": 49
+ },
+ {
+  "ma": "SKC",
+  "ten": "Đất cơ sở sản xuất phi nông nghiệp",
+  "mau": "#faaaa0",
+  "so_thua": 47
+ },
+ {
+  "ma": "DTT",
+  "ten": "Đất xây dựng cơ sở thể dục thể thao",
+  "mau": "#ffaaa0",
+  "so_thua": 34
+ },
+ {
+  "ma": "MNC",
+  "ten": "Đất có mặt nước chuyên dùng",
+  "mau": "#b4ffff",
+  "so_thua": 33
+ },
+ {
+  "ma": "TSC",
+  "ten": "Đất xây dựng trụ sở cơ quan",
+  "mau": "#ffaaa0",
+  "so_thua": 27
+ },
+ {
+  "ma": "DSK",
+  "ten": "Đất xây dựng công trình sự nghiệp khác",
+  "mau": "#ffaaa0",
+  "so_thua": 26
+ },
+ {
+  "ma": "DTL",
+  "ten": "Đất công trình thủy lợi",
+  "mau": "#aaffff",
+  "so_thua": 22
+ },
+ {
+  "ma": "DYT",
+  "ten": "Đất xây dựng cơ sở y tế",
+  "mau": "#ffaaa0",
+  "so_thua": 17
+ },
+ {
+  "ma": "ODT",
+  "ten": "Đất ở tại đô thị",
+  "mau": "#ffa0ff",
+  "so_thua": 11
+ },
+ {
+  "ma": "DBV",
+  "ten": "Đất công trình bưu chính, viễn thông",
+  "mau": "#ffaaa0",
+  "so_thua": 7
+ },
+ {
+  "ma": "DCH",
+  "ten": "Đất chợ dân sinh, chợ đầu mối",
+  "mau": "#ffaaa0",
+  "so_thua": 7
+ },
+ {
+  "ma": "TMD",
+  "ten": "Đất thương mại, dịch vụ",
+  "mau": "#faaaa0",
+  "so_thua": 7
+ },
+ {
+  "ma": "TON",
+  "ten": "Đất tôn giáo",
+  "mau": "#ffaaa0",
+  "so_thua": 6
+ },
+ {
+  "ma": "DDT",
+  "ten": "Đất có di tích lịch sử - văn hóa, danh lam thắng cảnh",
+  "mau": "#ffaaa0",
+  "so_thua": 4
+ },
+ {
+  "ma": "RSX+CLN",
+  "ten": "Đất rừng sản xuất + Đất trồng cây lâu năm",
+  "mau": "#b4ffb4",
+  "so_thua": 3
+ },
+ {
+  "ma": "DXH",
+  "ten": "Đất xây dựng cơ sở dịch vụ xã hội",
+  "mau": "#ffaaa0",
+  "so_thua": 3
+ },
+ {
+  "ma": "NKH",
+  "ten": "Đất nông nghiệp khác",
+  "mau": "#f5ffb4",
+  "so_thua": 3
+ },
+ {
+  "ma": "DRA",
+  "ten": "Đất công trình xử lý chất thải",
+  "mau": "#cdaacd",
+  "so_thua": 3
+ },
+ {
+  "ma": "RPH+RPH",
+  "ten": "Đất rừng phòng hộ + Đất rừng phòng hộ",
+  "mau": "#beff1e",
+  "so_thua": 3
+ },
+ {
+  "ma": "CAN",
+  "ten": "Đất an ninh",
+  "mau": "#ff5046",
+  "so_thua": 2
+ },
+ {
+  "ma": "SKK",
+  "ten": "Đất khu kinh tế",
+  "mau": "#faaaa0",
+  "so_thua": 2
+ },
+ {
+  "ma": "SKN",
+  "ten": "Đất khu công nghiệp",
+  "mau": "#faaaa0",
+  "so_thua": 2
+ },
+ {
+  "ma": "ODT+HNK",
+  "ten": "Đất ở tại đô thị + Đất trồng cây hằng năm khác",
+  "mau": "#ffa0ff",
+  "so_thua": 1
+ },
+ {
+  "ma": "RPH+RSX",
+  "ten": "Đất rừng phòng hộ + Đất rừng sản xuất",
+  "mau": "#beff1e",
+  "so_thua": 1
+ },
+ {
+  "ma": "DKH",
+  "ten": "Đất xây dựng cơ sở khoa học và công nghệ",
+  "mau": "#ffaaa0",
+  "so_thua": 1
+ },
+ {
+  "ma": "RSX+RPH",
+  "ten": "Đất rừng sản xuất + Đất rừng phòng hộ",
+  "mau": "#b4ffb4",
+  "so_thua": 1
+ },
+ {
+  "ma": "RPH+CLN",
+  "ten": "Đất rừng phòng hộ + Đất trồng cây lâu năm",
+  "mau": "#beff1e",
+  "so_thua": 1
+ },
+ {
+  "ma": "DTS",
+  "ten": "Đất xây dựng trụ sở của tổ chức sự nghiệp",
+  "mau": "#faaaa0",
+  "so_thua": 1
+ },
+ {
+  "ma": "SKS",
+  "ten": "Đất sử dụng cho hoạt động khoáng sản",
+  "mau": "#cdaacd",
+  "so_thua": 1
+ },
+ {
+  "ma": "ODT+CLN+HNK",
+  "ten": "Đất ở tại đô thị + Đất trồng cây lâu năm + Đất trồng cây hằng năm khác",
+  "mau": "#ffa0ff",
+  "so_thua": 1
+ },
+ {
+  "ma": "RSX+RSX",
+  "ten": "Đất rừng sản xuất + Đất rừng sản xuất",
+  "mau": "#b4ffb4",
+  "so_thua": 1
+ },
+ {
+  "ma": "DKV",
+  "ten": "Đất khu vui chơi, giải trí công cộng",
+  "mau": "#ffaaa0",
+  "so_thua": 1
+ },
+ {
+  "ma": "RPH+RSX+RSX",
+  "ten": "Đất rừng phòng hộ + Đất rừng sản xuất + Đất rừng sản xuất",
+  "mau": "#beff1e",
+  "so_thua": 1
+ },
+ {
+  "ma": "RDD+RDD",
+  "ten": "Đất rừng đặc dụng + Đất rừng đặc dụng",
+  "mau": "#6eff64",
+  "so_thua": 1
+ }
+]

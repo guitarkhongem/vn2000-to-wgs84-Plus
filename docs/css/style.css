@@ -135,6 +135,23 @@ tbody tr:hover { background: var(--accent-soft); }
 .overlay-toggle[aria-pressed="true"] { color: var(--text); }
 .overlay-toggle[aria-pressed="false"] .swatch { opacity: .35; }
 
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(0,0,0,.35); vertical-align: -1px; margin-right: 6px; flex: none; }
+.qh-list { list-style: none; padding-left: 0 !important; }
+.qh-list li { margin: 4px 0; }
+.qh-pop { display: flex; align-items: center; margin-bottom: 2px; }
+
+.legend {
+  position: absolute; right: 10px; bottom: 34px; max-width: min(320px, calc(100% - 20px));
+  background: var(--card); color: var(--text); border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  font-size: 12px;
+}
+.legend summary { cursor: pointer; font-weight: 600; padding: 7px 12px; list-style-position: inside; }
+.legend ul { list-style: none; margin: 0; padding: 0 12px 10px; max-height: 40vh; overflow-y: auto; }
+.legend li { display: flex; align-items: flex-start; gap: 2px; padding: 2px 0; }
+.legend li b { min-width: 34px; display: inline-block; }
+.legend li small { color: var(--muted); margin-left: auto; padding-left: 6px; white-space: nowrap; }
+@media (max-width: 820px) { .legend { bottom: 30px; } .legend ul { max-height: 30vh; } }
+
 .qh-info { border: 1px solid #f0b46a; background: rgba(255, 145, 0, .08); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
 .qh-info ul { margin: 4px 0 0; padding-left: 18px; }
 .qh-info small { color: var(--muted); }

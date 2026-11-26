@@ -1,1 +1,3 @@
 pytest
+# chỉ cần cho scripts/extract_landuse_mapinfo.py (đọc bản MapInfo của bản đồ quy hoạch)
+pyogrio

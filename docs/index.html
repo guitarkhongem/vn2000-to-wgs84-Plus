@@ -7,14 +7,14 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.26b">
+<link rel="stylesheet" href="css/style.css?v=2026.11.26f">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.26b"></script>
-<script src="js/parse.js?v=2026.11.26b"></script>
-<script src="js/geo.js?v=2026.11.26b"></script>
-<script src="js/export.js?v=2026.11.26b"></script>
+<script src="js/converter.js?v=2026.11.26f"></script>
+<script src="js/parse.js?v=2026.11.26f"></script>
+<script src="js/geo.js?v=2026.11.26f"></script>
+<script src="js/export.js?v=2026.11.26f"></script>
 </head>
 <body>
 <div class="layout">
@@ -104,9 +104,13 @@
     <button type="button" id="qh-toggle" class="overlay-toggle" aria-pressed="true" hidden>
       <span class="swatch" aria-hidden="true"></span>Quy hoạch
     </button>
+    <details id="legend" class="legend" hidden>
+      <summary>Chú giải quy hoạch</summary>
+      <ul></ul>
+    </details>
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.26b"></script>
+<script src="js/app.js?v=2026.11.26f"></script>
 </body>
 </html>

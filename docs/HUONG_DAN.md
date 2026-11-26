@@ -96,13 +96,23 @@ Bảng **Kết quả** có đủ hai hệ cho mỗi điểm: Tên, X, Y, Vĩ đ�
 
 ## 8. Lớp quy hoạch Hướng Hóa
 
-- Nút **Quy hoạch** (dưới nút chọn nền): bật / tắt lớp. Ranh thửa hiện từ **mức zoom 12** trở lên.
-- **Thửa liên quan đến điểm của bạn được tô cam**, bảng điều khiển liệt kê, ví dụ:
-  *Thửa số 1 — 2.491,3 m² · chứa tâm thửa*.
-- Ứng dụng kiểm tra cả **tâm thửa**, vì điểm bạn nhập thường là góc thửa (nằm đúng trên ranh).
-- Thửa nhỏ nhất xếp đầu — dữ liệu có vùng lớn (đường, khu vực) bao trùm thửa nhỏ.
-- **Bấm vào bất kỳ thửa nào** để xem số thửa và diện tích.
-- Lớp này **chưa có thông tin loại đất** (dữ liệu gốc không có).
+Lớp lấy từ **Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa**
+(~19 800 thửa), **tô đúng màu của bản đồ quy hoạch gốc**.
+
+- Nút **Quy hoạch** (dưới nút chọn nền): bật / tắt lớp. Màu hiện từ **mức zoom 10**, ranh thửa từ mức 12.
+- **Chú giải quy hoạch** (góc dưới bên phải bản đồ): bấm để mở danh sách mã đất, tên loại đất, màu và số thửa.
+- **Bấm vào bất kỳ thửa nào** để xem: loại đất (vd *Đất ở tại nông thôn*), mã (vd **ONT**),
+  số thửa và diện tích. Chỗ có vùng lớn (đường…) chồng lên thửa nhỏ, ứng dụng chọn thửa nhỏ nhất.
+- Sau khi chuyển đổi, bảng điều khiển cho biết **quy hoạch tại vị trí thửa của bạn**, ví dụ:
+  *ONT Đất ở tại nông thôn — Thửa số 1 · 2.491,3 m² · chứa tâm thửa*. Thửa chứa **tâm thửa** được
+  **viền cam** trên bản đồ (các điểm góc thường nằm đúng trên ranh nên chỉ liệt kê, không viền).
+- Loại đất được xác định theo thứ tự:
+  1. **nhãn mã đất** ghi trên bản đồ (khoảng một nửa số thửa);
+  2. **suy ra từ màu** khi thửa không có nhãn (ghi rõ *"suy ra từ màu"* trong ô thông tin) — ví dụ màu
+     cam đậm là đất giao thông (DGT), màu hồng là đất ở nông thôn (ONT);
+  3. vài trăm thửa công trình công cộng / sản xuất kinh doanh dùng chung một màu cho nhiều mã → chỉ
+     ghi được **tên nhóm**.
+- Thông tin chỉ để **tham khảo**; khi giao dịch cần đối chiếu bản đồ, văn bản quy hoạch chính thức.
 
 ## 9. Ứng dụng tự nhớ
 
@@ -118,7 +128,7 @@ Kinh tuyến trục, chiều chuyển đổi, dữ liệu nhập lần trước,
 | Thửa vẽ hình chéo, xoắn | Tên điểm không theo thứ tự đi vòng quanh thửa |
 | Khung vàng "Không đúng định dạng" | Dùng dấu phẩy làm dấu thập phân, hoặc có chữ lẫn vào số |
 | Không thấy nút Quy hoạch | Lớp quy hoạch chưa được tạo, hoặc đang mở file trực tiếp trên máy thay vì qua trang web |
-| Lớp quy hoạch không hiện | Zoom quá xa — phóng to tới mức 12 trở lên |
+| Lớp quy hoạch không hiện | Zoom quá xa — phóng to tới mức 10 trở lên (ranh thửa từ mức 12) |
 
 ## Bản Streamlit
 

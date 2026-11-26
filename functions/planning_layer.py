@@ -3,8 +3,8 @@ Lớp quy hoạch Hướng Hóa (data/QHHUONGHOA_30.geojson).
 
 Dữ liệu gốc:
 - CRS: EPSG:9212 (VN-2000 / TM-3, kinh tuyến trục 106°15' = 106.25), toạ độ dạng [Đông, Bắc].
-- ~19 800 polygon, ~1 triệu đỉnh, KHÔNG có thuộc tính loại đất (chỉ có "blank": "").
-  Nếu sau này có dữ liệu kèm thuộc tính, các thuộc tính khác rỗng sẽ tự hiện trong tooltip.
+- ~19 800 polygon, ~1 triệu đỉnh, thuộc tính ma_dat, ten_dat, mau, nguon
+  (tạo bởi scripts/extract_landuse_mapinfo.py từ bản MapInfo của bản đồ quy hoạch).
 
 Vì file rất nặng, chỉ những polygon gần các điểm người dùng nhập mới được
 chuyển sang WGS84 và vẽ lên bản đồ. Không import streamlit ở đây — cache nằm ở app.py.
@@ -97,10 +97,13 @@ class PlanningLayer:
         truncated = total > limit
         features = []
         for i, inside in rows[:limit]:
-            properties = {
+            p = self.props[i]
+            properties = {   # mọi thửa có đủ các khoá này (tooltip folium cần khoá giống nhau)
                 "chua_diem": ", ".join(map(str, inside)),
                 "dien_tich": f"{self.geoms[i].area:,.1f} m²",
-                **{str(k): str(v) for k, v in self.props[i].items()},
+                "ma_dat": str(p.get("ma_dat") or "—"),
+                "ten_dat": str(p.get("ten_dat") or "Chưa xác định"),
+                "mau": str(p.get("mau") or ""),
             }
             features.append({
                 "type": "Feature",
@@ -111,17 +114,16 @@ class PlanningLayer:
 
 
 def add_planning_to_map(map_obj, feature_collection):
-    """Vẽ lớp quy hoạch lên bản đồ folium. Thửa chứa điểm tô cam, còn lại viền vàng."""
+    """Vẽ lớp quy hoạch: tô theo màu quy hoạch gốc (thuộc tính mau); thửa chứa điểm viền cam đậm."""
     if not feature_collection["features"]:
         return
 
-    extra = [k for k in feature_collection["features"][0]["properties"]
-             if k not in ("chua_diem", "dien_tich")]
-
     def style(feat):
-        if feat["properties"].get("chua_diem"):
-            return {"color": "#ff6d00", "weight": 3, "fillColor": "#ff9100", "fillOpacity": 0.35}
-        return {"color": "#ffd600", "weight": 1.5, "fillOpacity": 0.05}
+        p = feat["properties"]
+        fill = p.get("mau") or "#ffd600"
+        if p.get("chua_diem"):
+            return {"color": "#ff3d00", "weight": 4, "fillColor": fill, "fillOpacity": 0.75}
+        return {"color": "#8d6e00", "weight": 1, "fillColor": fill, "fillOpacity": 0.5}
 
     folium.GeoJson(
         feature_collection,
@@ -129,8 +131,8 @@ def add_planning_to_map(map_obj, feature_collection):
         style_function=style,
         highlight_function=lambda _: {"weight": 4, "color": "#00e5ff"},
         tooltip=folium.GeoJsonTooltip(
-            fields=["dien_tich", "chua_diem", *extra],
-            aliases=["Diện tích:", "Chứa điểm:", *[f"{k}:" for k in extra]],
+            fields=["ten_dat", "ma_dat", "dien_tich", "chua_diem"],
+            aliases=["Loại đất:", "Mã:", "Diện tích:", "Chứa điểm:"],
             sticky=True,
         ),
     ).add_to(map_obj)

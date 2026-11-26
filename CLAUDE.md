@@ -32,9 +32,9 @@ pytest                    # chạy test — PHẢI xanh trước khi commit
 | `functions/sort_utils.py` | Sắp tên điểm theo số tự nhiên |
 | `functions/background.py`, `footer.py` | Trang trí |
 | `functions/planning_layer.py` | Lớp quy hoạch: nạp GeoJSON, tìm thửa gần điểm (STRtree), đổi sang WGS84, vẽ folium |
-| `data/QHHUONGHOA_30.geojson` | Quy hoạch Hướng Hóa: EPSG:9212 (VN-2000 TM-3, lon0 = 106.25), toạ độ [Đông, Bắc], ~19 800 polygon, ~1 triệu đỉnh, **không có thuộc tính loại đất** |
+| `data/QHHUONGHOA_30.geojson` | Quy hoạch Hướng Hóa (Điều chỉnh QHSDĐ đến 2030): EPSG:9212 (VN-2000 TM-3, lon0 = 106.25), toạ độ [Đông, Bắc], 19 809 polygon, ~1 triệu đỉnh. Thuộc tính `ma_dat`, `ten_dat`, `mau` (màu gốc), `nguon` (`nhan` / `mau` / `nhom` / null) |
+| `scripts/extract_landuse_mapinfo.py` | Tạo file trên từ bản MapInfo gốc (`Level 30` = vùng tô màu, `Level 33` = nhãn mã đất) + `docs/data/quyhoach_chugiai.json`. Cần `pyogrio` (requirements-dev). Bản MapInfo **không nằm trong repo** (máy tác giả: `Desktop\Thay Tien\MAP`) |
 | `assets/` | Logo, ảnh nền cho bản Streamlit |
-| `MAP/` | *(chỉ có ở repo cũ)* Bản MapInfo gốc (các lớp `Level N`), cũng không có thuộc tính |
 | `tests/` | pytest |
 
 Module **chưa được dùng** (để lại, đừng xoá nếu chưa hỏi): `mapgen.py`, `ocr.py` (cần `easyocr`,
@@ -65,10 +65,12 @@ data/QHHUONGHOA_30.geojson ──(scripts/build_planning_geojson.py, dùng conve
 - Chạy tự động bằng `.github/workflows/build-planning-tiles.yml` khi đổi dữ liệu / converter / script,
   hoặc bấm tay (Actions → Build planning tiles → Run workflow). Workflow tự commit file PMTiles.
 - Đổi hệ bằng **chính `vn2000_to_wgs84_baibao`**, không dùng PROJ/GDAL — để ranh thửa khớp điểm tuyệt đối.
-- Thuộc tính mỗi thửa: `id` (thứ tự trong file gốc, cũng là feature id), `dien_tich` (m², phẳng VN-2000).
-- Trên web: `qh-fill`/`qh-line` (hiện từ zoom 12), feature-state `hit` tô cam các thửa chứa điểm
-  hoặc tâm thửa. Tra bằng `querySourceFeatures` + `VN.pointInGeometry` (không phụ thuộc việc vẽ).
-- Dữ liệu có vùng lớn bao vùng nhỏ chồng lên nhau → danh sách xếp thửa nhỏ trước.
+- Thuộc tính mỗi thửa: `id` (thứ tự trong file gốc, cũng là feature id), `dien_tich` (m², phẳng VN-2000),
+  và `ma_dat`, `ten_dat`, `mau`, `nguon` lấy nguyên từ `data/QHHUONGHOA_30.geojson`.
+- Trên web: `qh-fill` tô theo `["get","mau"]` (từ zoom 10), `qh-line` (từ zoom 12); feature-state `hit`
+  viền cam thửa chứa **tâm thửa** (nếu < 3 điểm: mọi thửa chứa điểm). Tra bằng `querySourceFeatures` +
+  `VN.pointInGeometry` (không phụ thuộc việc vẽ). Chú giải đọc `docs/data/quyhoach_chugiai.json`.
+- Dữ liệu có vùng lớn (đường DGT…) bao / chồng vùng nhỏ → popup và danh sách ưu tiên thửa nhỏ nhất.
 - Thử với file khác: `index.html?qh=duong-dan.geojson` (hoặc `.pmtiles`). Phải chạy qua http(s).
 
 - **Python và JS phải cho cùng kết quả.** Sửa công thức ở một bên → sửa bên kia + cập nhật giá trị chốt

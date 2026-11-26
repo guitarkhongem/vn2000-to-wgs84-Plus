@@ -18,7 +18,8 @@ Repo này phát triển tiếp từ
   `Tên X Y H`, `X Y H`, `X Y`, `X=… / Y=…`, `N…… E……`; chiều ngược lại `[Tên] Vĩ-độ Kinh-độ [H]`.
 - Bản đồ nền giao thông / vệ tinh, nối điểm, chiều dài cạnh, chu vi.
 - Diện tích theo VN-2000 (Shoelace) và WGS84 (trắc địa) để so sánh.
-- Lớp quy hoạch Hướng Hóa (~19 800 thửa): tô thửa chứa điểm, bấm thửa xem diện tích.
+- Lớp quy hoạch Hướng Hóa (Điều chỉnh QHSDĐ đến 2030, ~19 800 thửa): **tô đúng màu bản đồ quy hoạch**,
+  có **loại đất** từng thửa và chú giải; cho biết thửa của bạn nằm trong loại đất nào.
 - Xuất CSV (Excel), KML (Google Earth), DXF (AutoCAD).
 
 ## Hai phiên bản trong repo

@@ -8,7 +8,10 @@ Chạy:  python scripts/build_planning_geojson.py [vào.geojson] [ra.geojsonl]
 Ra: GeoJSON mỗi dòng một feature (tippecanoe đọc nhanh), thuộc tính:
     id         — số thứ tự thửa trong file gốc (bắt đầu từ 1)
     dien_tich  — diện tích phẳng VN-2000 (m², Shoelace, trừ lỗ), giống cách app tính
+    ma_dat, ten_dat, mau, nguon — giữ nguyên từ file gốc nếu có
+                 (do scripts/extract_landuse_mapinfo.py tạo; bỏ qua thuộc tính rỗng)
 """
+GIU_THUOC_TINH = ("ma_dat", "ten_dat", "mau", "nguon")
 import json
 import sys
 import time
@@ -86,7 +89,11 @@ def main(src, dst):
             out.write(json.dumps({
                 "type": "Feature",
                 "id": idx,
-                "properties": {"id": idx, "dien_tich": round(area, 1)},
+                "properties": {
+                    "id": idx, "dien_tich": round(area, 1),
+                    **{k: v for k, v in (feat.get("properties") or {}).items()
+                       if k in GIU_THUOC_TINH and v not in (None, "")},
+                },
                 "geometry": out_geom,
             }, separators=(",", ":")) + "\n")
             n_out += 1

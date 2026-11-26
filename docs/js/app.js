@@ -337,27 +337,36 @@
     }
     const sl = QH_IS_PM ? { "source-layer": "quyhoach" } : {};
     const hit = ["boolean", ["feature-state", "hit"], false];
+    // Tô theo màu gốc của bản đồ quy hoạch (thuộc tính "mau"); thửa chứa điểm đậm hơn, viền cam
     map.addLayer({
-      id: "qh-fill", type: "fill", source: "qh", ...sl, minzoom: 12,
+      id: "qh-fill", type: "fill", source: "qh", ...sl, minzoom: 10,
       paint: {
-        "fill-color": ["case", hit, "#ff9100", "#ffc107"],
-        "fill-opacity": ["case", hit, 0.35, 0.08],
+        "fill-color": ["coalesce", ["get", "mau"], "#ffc107"],
+        // "zoom" phải ở ngoài cùng → interpolate bọc case
+        "fill-opacity": ["interpolate", ["linear"], ["zoom"], 10, ["case", hit, 0.85, 0.7], 16, ["case", hit, 0.85, 0.5]],
       },
     }, "parcel-fill");
     map.addLayer({
       id: "qh-line", type: "line", source: "qh", ...sl, minzoom: 12,
       paint: {
-        "line-color": ["case", hit, "#ff6d00", "#c77700"],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 12, ["case", hit, 2, 0.4], 16, ["case", hit, 3, 1.2], 19, ["case", hit, 4, 2]],
+        "line-color": ["case", hit, "#ff3d00", "#8d6e00"],
+        "line-opacity": ["case", hit, 1, 0.6],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 12, ["case", hit, 2, 0.3], 16, ["case", hit, 3.5, 0.8], 19, ["case", hit, 5, 1.5]],
       },
     }, "parcel-fill");
 
     map.on("click", "qh-fill", (e) => {
-      const f = e.features[0];
+      // Vùng lớn (đường, khu vực) có thể phủ lên thửa nhỏ → lấy thửa nhỏ nhất tại điểm bấm
+      const f = [...e.features].sort((a, b) => (a.properties.dien_tich ?? Infinity) - (b.properties.dien_tich ?? Infinity))[0];
       if (!f) return;
       const p = f.properties;
-      new maplibregl.Popup({ offset: 6 }).setLngLat(e.lngLat)
-        .setHTML(`<b>Thửa quy hoạch số ${escapeHtml(f.id ?? p.id)}</b><br>Diện tích: ${fmt(p.dien_tich, 1)} m²` +
+      const nguon = { nhan: "theo nhãn trên bản đồ", mau: "suy ra từ màu", nhom: "suy ra từ màu (chỉ biết nhóm)" }[p.nguon] || "";
+      new maplibregl.Popup({ offset: 6, maxWidth: "280px" }).setLngLat(e.lngLat)
+        .setHTML(
+          `<div class="qh-pop"><span class="sw" style="background:${escapeHtml(p.mau || "#ffc107")}"></span>` +
+          `<b>${escapeHtml(p.ten_dat || "Chưa xác định loại đất")}</b></div>` +
+          (p.ma_dat ? `Mã: <b>${escapeHtml(p.ma_dat)}</b>${nguon ? ` <span style="color:#666">(${nguon})</span>` : ""}<br>` : "") +
+          `Thửa quy hoạch số ${escapeHtml(f.id ?? p.id)} · ${fmt(p.dien_tich, 1)} m²` +
           ` <span style="color:#666">(${fmt(p.dien_tich / 10000, 4)} ha)</span>`)
         .addTo(map);
     });
@@ -370,6 +379,21 @@
     qhReady = true;
     qhToggle.hidden = false;
     setQhVisible(qhVisible);
+    loadLegend();
+  }
+
+  // Chú giải: data/quyhoach_chugiai.json (do scripts/extract_landuse_mapinfo.py tạo)
+  async function loadLegend() {
+    try {
+      const res = await fetch(new URL("data/quyhoach_chugiai.json", location.href));
+      if (!res.ok) return;
+      const items = await res.json();
+      $("legend").querySelector("ul").innerHTML = items.map((it) =>
+        `<li><span class="sw" style="background:${escapeHtml(it.mau || "#ffc107")}"></span>` +
+        `<span><b>${escapeHtml(it.ma)}</b> ${escapeHtml(it.ten)}</span>` +
+        `<small>${fmt(it.so_thua, 0)}</small></li>`).join("");
+      $("legend").hidden = !qhVisible;
+    } catch (_) { /* không có chú giải thì thôi */ }
   }
 
   let qhTimer;
@@ -384,6 +408,7 @@
     qhToggle.setAttribute("aria-pressed", String(v));
     if (!qhReady) return;
     ["qh-fill", "qh-line"].forEach((id) => map.setLayoutProperty(id, "visibility", v ? "visible" : "none"));
+    if ($("legend").querySelector("li")) $("legend").hidden = !v;
     schedulePlanningHits();
   }
   qhToggle.addEventListener("click", () => setQhVisible(!qhVisible));
@@ -420,25 +445,31 @@
       for (const f of feats) {
         if (!VN.pointInGeometry(r.lon, r.lat, f.geometry)) continue;
         const id = f.id ?? f.properties.id;
-        if (!plots.has(id)) plots.set(id, { area: f.properties.dien_tich, names: [] });
+        if (!plots.has(id)) plots.set(id, { area: f.properties.dien_tich, ma: f.properties.ma_dat,
+          ten: f.properties.ten_dat, mau: f.properties.mau, names: [] });
         const names = plots.get(id).names;
         if (!names.includes(r.name)) names.push(r.name);   // thửa có thể lặp ở nhiều ô tile
         found = true;
       }
       if (!found) outside.push(r.name);
     }
-    qhHitIds = [...plots.keys()];
+    // Chỉ viền cam thửa chứa TÂM thửa (nếu có) — góc thửa nằm trên ranh nên hay "chạm" cả vùng đường
+    // bao quanh, viền hết sẽ rối. Khi < 3 điểm thì viền mọi thửa chứa điểm.
+    const centerIds = [...plots].filter(([, p]) => p.names.includes("tâm thửa")).map(([id]) => id);
+    qhHitIds = centerIds.length ? centerIds : [...plots.keys()];
     qhHitIds.forEach((id) => map.setFeatureState({ ...QH_SRC, id }, { hit: true }));
 
     box.hidden = false;
     // Dữ liệu có vùng lớn bao vùng nhỏ → xếp thửa nhỏ (cụ thể nhất) lên đầu
-    const list = [...plots].sort((a, b) => a[1].area - b[1].area).map(([id, p]) =>
-      `<li>Thửa số <strong>${escapeHtml(id)}</strong> — ${fmt(p.area, 1)} m² · chứa ${p.names.map(escapeHtml).join(", ")}</li>`).join("");
+    const list = [...plots].sort((a, b) => (qhHitIds.includes(b[0]) - qhHitIds.includes(a[0])) || (a[1].area - b[1].area)).map(([id, p]) =>
+      `<li${qhHitIds.includes(id) ? "" : ' style="opacity:.7"'}><span class="sw" style="background:${escapeHtml(p.mau || "#ffc107")}"></span>` +
+      `<strong>${escapeHtml(p.ma || "?")}</strong> ${escapeHtml(p.ten || "Chưa xác định loại đất")}` +
+      `<br><small>Thửa số ${escapeHtml(id)} · ${fmt(p.area, 1)} m² · chứa ${p.names.map(escapeHtml).join(", ")}</small></li>`).join("");
     box.innerHTML = (plots.size
-      ? `<div>Liên quan <strong>${plots.size}</strong> thửa quy hoạch (tô cam):</div><ul>${list}</ul>`
+      ? `<div>Quy hoạch tại vị trí này (viền cam trên bản đồ):</div><ul class="qh-list">${list}</ul>`
       : "<div>Không điểm nào nằm trong thửa quy hoạch.</div>") +
       (outside.length && plots.size ? `<small>Nằm trên ranh hoặc ngoài thửa: ${outside.map(escapeHtml).join(", ")}</small>` : "") +
-      `<small style="display:block;margin-top:4px">Lớp quy hoạch chưa có thông tin loại đất.</small>`;
+      `<small style="display:block;margin-top:4px">Theo Bản đồ điều chỉnh QHSDĐ đến năm 2030 huyện Hướng Hóa. Chỉ để tham khảo.</small>`;
   }
 
   // ---------------- Thông báo ngắn ----------------
