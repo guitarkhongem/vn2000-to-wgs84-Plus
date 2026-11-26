@@ -71,6 +71,18 @@
     return root.geodesic.Geodesic.WGS84.Inverse(lat1, lon1, lat2, lon2).s12;
   }
 
+  // Vòng tròn trắc địa (mọi điểm trên vòng cách tâm đúng `radius` mét trên elipxoit WGS84).
+  // Trả về vòng khép kín [[lon, lat], …] gồm n + 1 điểm.
+  function geodesicCircle(lat, lon, radius, n = 128) {
+    const g = root.geodesic.Geodesic.WGS84;
+    const ring = [];
+    for (let i = 0; i <= n; i++) {
+      const d = g.Direct(lat, lon, (360 * i) / n, radius);
+      ring.push([d.lon2, d.lat2]);
+    }
+    return ring;
+  }
+
   // Điểm (x, y) có nằm trong Polygon/MultiPolygon GeoJSON không (quy tắc chẵn–lẻ, lỗ được tính đúng)
   function pointInGeometry(x, y, geometry) {
     const polys = geometry.type === "Polygon" ? [geometry.coordinates]
@@ -91,5 +103,6 @@
   root.VN = root.VN || {};
   Object.assign(root.VN, {
     LON0_BY_PROVINCE, comparePointNames, shoelaceArea, geodesicArea, geodesicDistance, pointInGeometry,
+    geodesicCircle,
   });
 })(typeof window !== "undefined" ? window : globalThis);

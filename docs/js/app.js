@@ -24,7 +24,10 @@
     rows: [],            // { name, x, y, h, lat, lon, hw }
     markers: [],
     edgeMarkers: [],
+    circles: [],         // { id, name, lat, lon, r } — vòng tròn bán kính quanh điểm
+    circleMarkers: [],
   };
+  let circleSeq = 0;
 
   // ---------------- Kinh tuyến trục ----------------
   const provinceSel = $("province");
@@ -210,6 +213,7 @@
           attribution: "Ảnh vệ tinh © Esri",
         },
         parcel: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
+        circles: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
       },
       layers: [
         { id: "osm", type: "raster", source: "osm" },
@@ -218,6 +222,10 @@
           paint: { "fill-color": "#1e66f5", "fill-opacity": 0.12 } },
         { id: "parcel-line", type: "line", source: "parcel",
           paint: { "line-color": "#1e66f5", "line-width": 3 } },
+        { id: "circle-fill", type: "fill", source: "circles",
+          paint: { "fill-color": "#d81b60", "fill-opacity": 0.08 } },
+        { id: "circle-line", type: "line", source: "circles",
+          paint: { "line-color": "#d81b60", "line-width": 2.5, "line-dasharray": [3, 2] } },
       ],
     },
   });
@@ -235,12 +243,88 @@
   }
   document.querySelectorAll(".basemap button").forEach((b) => b.addEventListener("click", () => setBase(b.dataset.base)));
 
+  // Popup của điểm: toạ độ + tuỳ chọn vẽ vòng tròn bán kính R (m) tâm tại điểm
   function popupFor(r) {
-    return new maplibregl.Popup({ offset: 10, closeButton: true })
-      .setLngLat([r.lon, r.lat])
-      .setHTML(`<b>${escapeHtml(r.name)}</b><br>
+    const popup = new maplibregl.Popup({ offset: 10, closeButton: true, maxWidth: "300px" })
+      .setLngLat([r.lon, r.lat]);
+    const build = () => {
+      const el = document.createElement("div");
+      el.className = "pt-pop";
+      const mine = state.circles.filter((c) => c.lat === r.lat && c.lon === r.lon);
+      el.innerHTML = `<b>${escapeHtml(r.name)}</b><br>
         X: ${r.x.toFixed(3)} · Y: ${r.y.toFixed(3)} · H: ${r.h.toFixed(3)}<br>
-        ${r.lat.toFixed(8)}, ${r.lon.toFixed(8)} · h: ${r.hw.toFixed(3)}`);
+        ${r.lat.toFixed(8)}, ${r.lon.toFixed(8)} · h: ${r.hw.toFixed(3)}
+        <form class="circle-form">
+          <label>Vòng tròn bán kính
+            <input type="text" name="r" inputmode="decimal" autocomplete="off" required
+              value="${escapeHtml(store.get("radius", "50"))}"> m</label>
+          <button type="submit" class="btn small primary">Vẽ</button>
+        </form>
+        ${mine.length ? `<ul class="circle-mine">${mine.map((c) =>
+          `<li>R = ${fmt(c.r, c.r % 1 ? 2 : 0)} m <button type="button" class="link" data-del="${c.id}">Xoá</button></li>`).join("")}</ul>` : ""}`;
+      el.querySelector("form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const radius = Number(String(e.target.r.value).replace(",", "."));
+        if (!(radius > 0 && radius <= 50000)) { toast("Bán kính phải từ 0,1 đến 50 000 m"); return; }
+        store.set("radius", String(radius));
+        popup.remove();            // đóng popup để không che vòng tròn (xoá được ở bảng điều khiển)
+        addCircle(r, radius);
+      });
+      el.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", () => {
+        removeCircle(Number(b.dataset.del));
+        popup.setDOMContent(build());
+      }));
+      return el;
+    };
+    popup.setDOMContent(build());
+    popup.on("open", () => popup.setDOMContent(build()));   // cập nhật danh sách vòng tròn mỗi lần mở
+    return popup;
+  }
+
+  // ---------------- Vòng tròn bán kính ----------------
+  function addCircle(r, radius) {
+    state.circles.push({ id: ++circleSeq, name: r.name, lat: r.lat, lon: r.lon, r: radius });
+    renderCircles();
+    // Phóng / thu bản đồ cho thấy trọn vòng tròn
+    const ring = VN.geodesicCircle(r.lat, r.lon, radius, 32);
+    const b = new maplibregl.LngLatBounds();
+    ring.forEach((c) => b.extend(c));
+    map.fitBounds(b, { padding: 70, maxZoom: 19, duration: 500 });
+  }
+  function removeCircle(id) {
+    state.circles = state.circles.filter((c) => c.id !== id);
+    renderCircles();
+  }
+  function renderCircles() {
+    state.circleMarkers.forEach((m) => m.remove());
+    state.circleMarkers = [];
+    const fc = { type: "FeatureCollection", features: state.circles.map((c) => ({
+      type: "Feature", properties: { id: c.id },
+      geometry: { type: "Polygon", coordinates: [VN.geodesicCircle(c.lat, c.lon, c.r)] },
+    })) };
+    whenStyleReady(() => map.getSource("circles").setData(fc));
+    // Nhãn "R = … m" ở mép trên vòng tròn
+    for (const c of state.circles) {
+      const top = VN.geodesicCircle(c.lat, c.lon, c.r, 4)[0];   // phương vị 0° = hướng Bắc
+      const el = document.createElement("div");
+      el.className = "circle-label";
+      el.textContent = `R = ${fmt(c.r, c.r % 1 ? 2 : 0)} m`;
+      state.circleMarkers.push(new maplibregl.Marker({ element: el, anchor: "bottom" }).setLngLat(top).addTo(map));
+    }
+    // Danh sách trong bảng điều khiển
+    const box = $("circles");
+    box.hidden = !state.circles.length;
+    box.innerHTML = state.circles.length
+      ? `<div class="row between"><strong>Vòng tròn bán kính</strong>
+           <button type="button" class="btn small" id="circles-clear">Xoá tất cả</button></div>
+         <ul>${state.circles.map((c) => `<li><span class="sw" style="background:#d81b60"></span>
+           Tâm <b>${escapeHtml(c.name)}</b> · R = ${fmt(c.r, c.r % 1 ? 2 : 0)} m
+           <small>(≈ ${fmt(Math.PI * c.r * c.r, 0)} m²)</small>
+           <button type="button" class="link" data-del="${c.id}">Xoá</button></li>`).join("")}</ul>`
+      : "";
+    box.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", () => removeCircle(Number(b.dataset.del))));
+    const clr = $("circles-clear");
+    if (clr) clr.addEventListener("click", () => { state.circles = []; renderCircles(); });
   }
 
   function renderMap(fit) {

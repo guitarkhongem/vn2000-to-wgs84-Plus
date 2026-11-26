@@ -10,10 +10,10 @@
   #summary { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.26f"></script>
-<script src="js/parse.js?v=2026.11.26f"></script>
-<script src="js/geo.js?v=2026.11.26f"></script>
-<script src="js/export.js?v=2026.11.26f"></script>
+<script src="js/converter.js?v=2026.11.26i"></script>
+<script src="js/parse.js?v=2026.11.26i"></script>
+<script src="js/geo.js?v=2026.11.26i"></script>
+<script src="js/export.js?v=2026.11.26i"></script>
 </head>
 <body>
 <div id="summary">Đang chạy…</div>
@@ -113,6 +113,17 @@ test("Điểm trong đa giác (có lỗ, MultiPolygon)", () => {
   eq(VN.pointInGeometry(11, 5, poly), false, "ngoài");
   const multi = { type: "MultiPolygon", coordinates: [[sq(0, 1)], [sq(5, 6)]] };
   eq(VN.pointInGeometry(5.5, 5.5, multi), true, "phần thứ 2");
+});
+test("Vòng tròn trắc địa: mọi điểm cách tâm đúng bán kính, diện tích ≈ πr²", () => {
+  const [lat, lon] = [16.6556, 106.6853];
+  for (const r of [10, 150, 2000]) {
+    const ring = VN.geodesicCircle(lat, lon, r, 64);
+    eq(ring.length, 65, "số điểm");
+    eq(JSON.stringify(ring[0]) === JSON.stringify(ring[64]), true, "khép kín");
+    for (const [x, y] of ring) near(VN.geodesicDistance(lat, lon, y, x), r, 1e-6, `khoảng cách R=${r}`);
+    const area = VN.geodesicArea(ring.slice(0, -1).map(([x, y]) => [y, x]));
+    near(area / (Math.PI * r * r), 1, 0.002, `diện tích R=${r}`);   // đa giác 64 cạnh ≈ 0,16 % nhỏ hơn
+  }
 });
 test("Sắp tên điểm theo số", () => {
   eq(["10", "2", "B", "1", "a"].sort(VN.comparePointNames), ["1", "2", "10", "a", "B"], "thứ tự");

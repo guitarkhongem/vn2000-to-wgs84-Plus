@@ -68,7 +68,8 @@ cách, dấu phẩy hoặc dấu chấm phẩy — dán thẳng toạ độ copy
 
 Bảng **Kết quả** có đủ hai hệ cho mỗi điểm: Tên, X, Y, Vĩ độ, Kinh độ, H.
 
-- **Bấm vào một dòng:** bản đồ bay tới điểm đó và hiện toạ độ.
+- **Bấm vào một dòng:** bản đồ bay tới điểm đó và hiện toạ độ, kèm tuỳ chọn **vẽ vòng tròn bán kính**
+  (xem mục 7).
 - **Sao chép:** chép kết quả dạng chữ (mỗi điểm một dòng) để dán vào Zalo, Excel…
 - **CSV:** file mở bằng Excel, đủ hai hệ, không lỗi font tiếng Việt.
 - **KML:** mở bằng Google Earth.
@@ -91,6 +92,13 @@ Bảng **Kết quả** có đủ hai hệ cho mỗi điểm: Tên, X, Y, Vĩ đ�
 
 - **Bản đồ / Vệ tinh** (góc trên trái): đổi nền. Ở vùng nông thôn, ảnh vệ tinh zoom sâu có thể hơi mờ.
 - **Bấm vào dấu + của điểm:** hiện toạ độ hai hệ.
+- **Vòng tròn bán kính:** trong ô thông tin của điểm (bấm dấu + hoặc dòng trong bảng kết quả), gõ bán kính
+  (mét, nhận cả dấu phẩy như `25,5`) vào ô **Vòng tròn bán kính** rồi bấm **Vẽ**.
+  - Bản đồ vẽ vòng tròn nét đứt màu hồng, **tâm tại điểm đó**, ghi `R = … m` ở mép trên, và tự phóng /
+    thu để thấy trọn vòng tròn.
+  - Vẽ được nhiều vòng tròn, ở nhiều điểm, nhiều bán kính khác nhau. Bán kính dùng lần trước được nhớ sẵn.
+  - Danh sách vòng tròn (kèm diện tích ≈ πR²) nằm dưới bảng kết quả; bấm **Xoá** từng cái hoặc **Xoá tất cả**.
+  - Vòng tròn tính trên mặt elipxoit WGS84: mọi điểm trên vòng cách tâm đúng R mét.
 - Phóng to / thu nhỏ bằng con lăn chuột hoặc chụm hai ngón tay; nút la bàn đưa bản đồ về hướng Bắc.
 - Góc dưới trái có **thước tỉ lệ**.
 

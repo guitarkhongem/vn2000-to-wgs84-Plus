@@ -152,6 +152,22 @@ tbody tr:hover { background: var(--accent-soft); }
 .legend li small { color: var(--muted); margin-left: auto; padding-left: 6px; white-space: nowrap; }
 @media (max-width: 820px) { .legend { bottom: 30px; } .legend ul { max-height: 30vh; } }
 
+/* Vòng tròn bán kính */
+.pt-pop .circle-form { display: flex; align-items: center; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e5ea; flex-wrap: wrap; }
+.pt-pop .circle-form label { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+.pt-pop .circle-form input { width: 72px; font: inherit; padding: 3px 6px; border: 1px solid #c9ced6; border-radius: 6px; color: #16181d; background: #fff; }
+.pt-pop .btn.primary { color: #fff; background: #b30000; border-color: #b30000; }
+.pt-pop .circle-mine { margin: 6px 0 0; padding-left: 16px; }
+.link { font: inherit; border: 0; background: none; padding: 0 2px; color: #b30000; cursor: pointer; text-decoration: underline; }
+.circle-label {
+  font-size: 12px; font-weight: 700; color: #ad1457; white-space: nowrap; pointer-events: none;
+  text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff;
+}
+.circles { border: 1px solid #f3a6c4; background: rgba(216, 27, 96, .06); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+.circles ul { list-style: none; margin: 6px 0 0; padding: 0; }
+.circles li { margin: 3px 0; }
+.circles .link { color: var(--accent); }
+
 .qh-info { border: 1px solid #f0b46a; background: rgba(255, 145, 0, .08); border-radius: 8px; padding: 8px 10px; font-size: 13px; }
 .qh-info ul { margin: 4px 0 0; padding-left: 18px; }
 .qh-info small { color: var(--muted); }
