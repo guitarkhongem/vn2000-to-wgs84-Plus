@@ -100,9 +100,28 @@
     return false;
   }
 
+  // Đối tượng (Polygon/MultiPolygon GeoJSON) đầu tiên chứa điểm (lon, lat); không có → null.
+  // Lọc nhanh bằng khung bao (tính một lần, lưu vào feature._bbox).
+  function findFeature(lon, lat, features) {
+    for (const f of features) {
+      if (!f._bbox) {
+        const b = [Infinity, Infinity, -Infinity, -Infinity];
+        const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+        for (const poly of polys) for (const [x, y] of poly[0]) {
+          if (x < b[0]) b[0] = x; if (y < b[1]) b[1] = y; if (x > b[2]) b[2] = x; if (y > b[3]) b[3] = y;
+        }
+        Object.defineProperty(f, "_bbox", { value: b, enumerable: false });
+      }
+      const b = f._bbox;
+      if (lon < b[0] || lon > b[2] || lat < b[1] || lat > b[3]) continue;
+      if (pointInGeometry(lon, lat, f.geometry)) return f;
+    }
+    return null;
+  }
+
   root.VN = root.VN || {};
   Object.assign(root.VN, {
     LON0_BY_PROVINCE, comparePointNames, shoelaceArea, geodesicArea, geodesicDistance, pointInGeometry,
-    geodesicCircle,
+    geodesicCircle, findFeature,
   });
 })(typeof window !== "undefined" ? window : globalThis);

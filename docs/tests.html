@@ -10,10 +10,10 @@
   #summary { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.26i"></script>
-<script src="js/parse.js?v=2026.11.26i"></script>
-<script src="js/geo.js?v=2026.11.26i"></script>
-<script src="js/export.js?v=2026.11.26i"></script>
+<script src="js/converter.js?v=2026.11.26j"></script>
+<script src="js/parse.js?v=2026.11.26j"></script>
+<script src="js/geo.js?v=2026.11.26j"></script>
+<script src="js/export.js?v=2026.11.26j"></script>
 </head>
 <body>
 <div id="summary">Đang chạy…</div>
@@ -125,6 +125,18 @@ test("Vòng tròn trắc địa: mọi điểm cách tâm đúng bán kính, di�
     near(area / (Math.PI * r * r), 1, 0.002, `diện tích R=${r}`);   // đa giác 64 cạnh ≈ 0,16 % nhỏ hơn
   }
 });
+test("findFeature: tìm vùng chứa điểm (lọc khung bao, MultiPolygon)", () => {
+  const sq = (a, b) => [[a, a], [b, a], [b, b], [a, b], [a, a]];
+  const feats = [
+    { properties: { ten: "A" }, geometry: { type: "Polygon", coordinates: [sq(0, 10)] } },
+    { properties: { ten: "B" }, geometry: { type: "MultiPolygon", coordinates: [[sq(20, 21)], [sq(30, 31)]] } },
+  ];
+  eq(VN.findFeature(5, 5, feats).properties.ten, "A", "A");
+  eq(VN.findFeature(30.5, 30.5, feats).properties.ten, "B", "B phần 2");
+  eq(VN.findFeature(15, 15, feats), null, "ngoài");
+  eq(Object.keys(feats[0]).includes("_bbox"), false, "_bbox không lộ ra khi JSON hoá");
+});
+
 test("Sắp tên điểm theo số", () => {
   eq(["10", "2", "B", "1", "a"].sort(VN.comparePointNames), ["1", "2", "10", "a", "B"], "thứ tự");
 });

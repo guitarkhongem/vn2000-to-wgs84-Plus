@@ -7,14 +7,14 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.26i">
+<link rel="stylesheet" href="css/style.css?v=2026.11.26j">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.26i"></script>
-<script src="js/parse.js?v=2026.11.26i"></script>
-<script src="js/geo.js?v=2026.11.26i"></script>
-<script src="js/export.js?v=2026.11.26i"></script>
+<script src="js/converter.js?v=2026.11.26j"></script>
+<script src="js/parse.js?v=2026.11.26j"></script>
+<script src="js/geo.js?v=2026.11.26j"></script>
+<script src="js/export.js?v=2026.11.26j"></script>
 </head>
 <body>
 <div class="layout">
@@ -73,6 +73,7 @@
           <button class="btn small" id="dl-dxf" type="button">DXF</button>
         </div>
       </div>
+      <div id="tinh-moi" class="tinh-moi" hidden></div>
       <div class="table-wrap">
         <table id="table">
           <thead><tr><th>Tên</th><th>X (m)</th><th>Y (m)</th><th>Vĩ độ</th><th>Kinh độ</th><th>H (m)</th></tr></thead>
@@ -93,6 +94,17 @@
     <footer class="credits">
       <p>Tác giả: <strong>Trần Trường Sinh</strong> · 0917.750.555</p>
       <p>Nguồn công thức: <em>Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác</em> — Trần Trung Anh, Quách Mạnh Tuấn (Hội nghị KH Quốc gia về Công nghệ Địa không gian).</p>
+      <details class="sources">
+        <summary>Nguồn dữ liệu bản đồ</summary>
+        <ul>
+          <li><b>Nền hành chính</b> (zoom nhỏ, 34 tỉnh, biên giới, QĐ Hoàng Sa, QĐ Trường Sa): Bản đồ hành chính Việt Nam tỷ lệ 1:1.000.000, Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam (02/2025); ranh tỉnh theo Nghị quyết 202/2025/QH15; biên tập: đề tài NV25-44, Trường ĐH Mỏ - Địa chất (chủ nhiệm TS Trần Trung Anh, 10/2025).</li>
+          <li><b>Bản đồ đường phố</b>: © OpenStreetMap contributors (giấy phép ODbL).</li>
+          <li><b>Ảnh vệ tinh</b>: Esri World Imagery (Esri, Maxar, Earthstar Geographics).</li>
+          <li><b>Lớp quy hoạch</b>: Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa.</li>
+          <li><b>Tham số chuyển đổi</b> VN-2000 → WGS84: 7 tham số Helmert, trùng EPSG:6960.</li>
+        </ul>
+        <a href="huong-dan.html#nguon-du-lieu">Chi tiết trong Hướng dẫn</a>
+      </details>
     </footer>
   </aside>
 
@@ -112,6 +124,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.26i"></script>
+<script src="js/app.js?v=2026.11.26j"></script>
 </body>
 </html>

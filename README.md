@@ -21,6 +21,20 @@ Repo này phát triển tiếp từ
 - Lớp quy hoạch Hướng Hóa (Điều chỉnh QHSDĐ đến 2030, ~19 800 thửa): **tô đúng màu bản đồ quy hoạch**,
   có **loại đất** từng thửa và chú giải; cho biết thửa của bạn nằm trong loại đất nào.
 - Xuất CSV (Excel), KML (Google Earth), DXF (AutoCAD).
+- **Nền hành chính Việt Nam** khi thu nhỏ bản đồ: 34 tỉnh, thành phố mới, biên giới, QĐ. Hoàng Sa, QĐ. Trường Sa;
+  cho biết điểm thuộc tỉnh mới nào.
+
+## Nguồn dữ liệu
+
+| Dữ liệu | Nguồn |
+|---|---|
+| Nền hành chính (zoom ≤ 9) | Bản đồ hành chính Việt Nam tỷ lệ 1:1.000.000, Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam (02/2025); ranh tỉnh theo NQ 202/2025/QH15; biên tập: đề tài NV25-44, Trường ĐH Mỏ - Địa chất (chủ nhiệm TS Trần Trung Anh, 10/2025) |
+| Bản đồ đường phố | © OpenStreetMap contributors (ODbL) |
+| Ảnh vệ tinh | Esri World Imagery (Esri, Maxar, Earthstar Geographics) |
+| Quy hoạch Hướng Hóa | Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa |
+| Tham số VN-2000 → WGS84 | 7 tham số Helmert, trùng EPSG:6960 |
+
+Chi tiết: mục *Nguồn dữ liệu* trong [docs/HUONG_DAN.md](docs/HUONG_DAN.md).
 
 ## Hai phiên bản trong repo
 

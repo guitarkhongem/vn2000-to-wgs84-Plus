@@ -197,6 +197,7 @@
     container: "map",
     center: [106.68, 16.63],    // Khe Sanh, Hướng Hóa
     zoom: 11,
+    minZoom: 3,
     attributionControl: { compact: true },
     style: {
       version: 8,
@@ -210,14 +211,40 @@
           // Esri chưa có ảnh độ phân giải cao ở nhiều vùng nông thôn → dừng ở z17, zoom sâu hơn thì phóng to ảnh z17
           type: "raster", tileSize: 256, maxzoom: 17,
           tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-          attribution: "Ảnh vệ tinh © Esri",
+          attribution: "Ảnh vệ tinh © Esri, Maxar, Earthstar Geographics",
+        },
+        // Nền hành chính (zoom nhỏ) — dữ liệu nạp sau bằng loadBasemap()
+        nen: {
+          type: "geojson", data: { type: "FeatureCollection", features: [] },
+          attribution: '<a href="huong-dan.html#nguon-du-lieu" target="_blank">Nền hành chính: Cục ĐĐ, BĐ &amp; TTĐL Việt Nam, 1:1.000.000 (02/2025); biên tập: đề tài NV25-44, ĐH Mỏ - Địa chất</a>',
         },
         parcel: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
         circles: { type: "geojson", data: { type: "FeatureCollection", features: [] } },
       },
       layers: [
+        // Nền hành chính NV25-44: hiện ở zoom nhỏ, mờ dần từ zoom 9 → 10 để nhường cho OSM / vệ tinh
+        { id: "nen-bien", type: "background", paint: { "background-color": "#a9d6f5" } },
+        { id: "nen-lancan", type: "fill", source: "nen", maxzoom: 10, filter: ["==", ["get", "lop"], "lan_can"],
+          paint: { "fill-color": "#fbe3e3" } },
+        { id: "nen-tinh", type: "fill", source: "nen", maxzoom: 10, filter: ["==", ["get", "lop"], "tinh"],
+          paint: { "fill-color": "#a3e6b4" } },
+        { id: "nen-tinh-chon", type: "fill", source: "nen", maxzoom: 10,
+          filter: ["all", ["==", ["get", "lop"], "tinh"], ["in", ["get", "ma"], ["literal", []]]],
+          paint: { "fill-color": "#c2188f", "fill-opacity": 0.85 } },
         { id: "osm", type: "raster", source: "osm" },
         { id: "sat", type: "raster", source: "sat", layout: { visibility: "none" } },
+        { id: "nen-ranh-tinh", type: "line", source: "nen", maxzoom: 12, filter: ["==", ["get", "lop"], "tinh"],
+          paint: { "line-color": "#6b5b4b", "line-width": ["interpolate", ["linear"], ["zoom"], 4, 0.4, 9, 1.2, 11, 1.6],
+                   "line-dasharray": [4, 2], "line-opacity": 0.8 } },
+        { id: "nen-bien-gioi-lc", type: "line", source: "nen", maxzoom: 10, filter: ["==", ["get", "lop"], "bien_gioi_lc"],
+          paint: { "line-color": "#555", "line-width": 0.8, "line-dasharray": [3, 2] } },
+        { id: "nen-bien-gioi", type: "line", source: "nen", maxzoom: 12, filter: ["==", ["get", "lop"], "bien_gioi"],
+          paint: { "line-color": "#c43bc4", "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1.5, 10, 2.5] } },
+        // Quần đảo Hoàng Sa, Trường Sa: tô đỏ, viền dày để vẫn thấy ở zoom nhỏ
+        { id: "nen-quandao", type: "fill", source: "nen", maxzoom: 10, filter: ["==", ["get", "lop"], "quan_dao"],
+          paint: { "fill-color": "#e0201b" } },
+        { id: "nen-quandao-vien", type: "line", source: "nen", maxzoom: 10, filter: ["==", ["get", "lop"], "quan_dao"],
+          paint: { "line-color": "#e0201b", "line-width": 1.5 } },
         { id: "parcel-fill", type: "fill", source: "parcel", filter: ["==", "$type", "Polygon"],
           paint: { "fill-color": "#1e66f5", "fill-opacity": 0.12 } },
         { id: "parcel-line", type: "line", source: "parcel",
@@ -386,6 +413,7 @@
 
   function render(fit) {
     renderTable();
+    renderProvinces();
     whenStyleReady(() => {
       renderMap(fit);
       schedulePlanningHits();
@@ -397,6 +425,7 @@
   const QH_URL = new URL(new URLSearchParams(location.search).get("qh") || "data/quyhoach.pmtiles", location.href).href;
   const QH_IS_PM = /\.pmtiles$/i.test(QH_URL);
   const QH_SRC = QH_IS_PM ? { source: "qh", sourceLayer: "quyhoach" } : { source: "qh" };
+  const QH_ATTRIBUTION = '<a href="huong-dan.html#nguon-du-lieu" target="_blank">Quy hoạch: Bản đồ điều chỉnh QHSDĐ đến năm 2030 huyện Hướng Hóa</a>';
   const qhToggle = $("qh-toggle");
   let qhReady = false;
   let qhVisible = store.get("qh", "1") === "1";
@@ -415,9 +444,9 @@
       maplibregl.addProtocol("pmtiles", protocol.tile);
       // tippecanoe --use-attribute-for-id=id đã chuyển "id" thành feature id (bỏ khỏi properties)
       // → dùng feature id có sẵn, KHÔNG promoteId
-      map.addSource("qh", { type: "vector", url: "pmtiles://" + QH_URL });
+      map.addSource("qh", { type: "vector", url: "pmtiles://" + QH_URL, attribution: QH_ATTRIBUTION });
     } else {
-      map.addSource("qh", { type: "geojson", data: QH_URL, promoteId: "id" });
+      map.addSource("qh", { type: "geojson", data: QH_URL, promoteId: "id", attribution: QH_ATTRIBUTION });
     }
     const sl = QH_IS_PM ? { "source-layer": "quyhoach" } : {};
     const hit = ["boolean", ["feature-state", "hit"], false];
@@ -566,7 +595,78 @@
     toastTimer = setTimeout(() => { t.hidden = true; }, 2200);
   }
 
-  whenStyleReady(() => { setBase(base); addPlanningLayer(); });
+  // ---------------- Nền hành chính Việt Nam (đề tài NV25-44) ----------------
+  // data/nen_hanhchinh.geojson do scripts/build_basemap_nv2544.py tạo. Nguồn ghi trong mục "nguon" của file.
+  // Zoom ≤ 9: nền hành chính (34 tỉnh, biên giới, Hoàng Sa, Trường Sa); từ zoom 9 → 10 chuyển dần sang OSM / vệ tinh.
+  const nen = { tinh: [], labels: [] };
+
+  async function loadBasemap() {
+    let data;
+    try {
+      const res = await fetch(new URL("data/nen_hanhchinh.geojson", location.href));
+      if (!res.ok) throw new Error(String(res.status));
+      data = await res.json();
+    } catch (_) {
+      return;   // không nạp được (vd mở bằng file://) → giữ nền OSM / vệ tinh ở mọi mức zoom
+    }
+    map.getSource("nen").setData(data);
+    nen.tinh = data.features.filter((f) => f.properties.lop === "tinh");
+    // Chỉ khi có nền hành chính mới ẩn ảnh nền ở zoom nhỏ
+    for (const id of ["osm", "sat"]) {
+      map.setLayerZoomRange(id, 8.5, 24);
+      map.setPaintProperty(id, "raster-opacity", ["interpolate", ["linear"], ["zoom"], 8.5, 0, 10, 1]);
+    }
+    for (const f of data.features) {
+      const p = f.properties;
+      if (!p.lop.startsWith("nhan_")) continue;
+      const el = document.createElement("div");
+      el.className = "vn-lbl " + p.lop.replace("nhan_", "");
+      el.innerHTML = escapeHtml(p.ten) + (p.phu ? `<small>${escapeHtml(p.phu)}</small>` : "");
+      nen.labels.push({ lop: p.lop, mk: new maplibregl.Marker({ element: el, anchor: "center" })
+        .setLngLat(f.geometry.coordinates).addTo(map) });
+    }
+    updateLabels();
+    renderProvinces();
+  }
+
+  // Nhãn tỉnh hiện ở zoom 5,5 – 9,5; nhãn biển, quần đảo, nước láng giềng ở zoom < 9,5
+  function updateLabels() {
+    const z = map.getZoom();
+    for (const { lop, mk } of nen.labels) {
+      const show = lop === "nhan_tinh" ? z >= 5.5 && z < 9.5 : z < 9.5;
+      mk.getElement().style.display = show ? "" : "none";
+    }
+  }
+  map.on("zoom", updateLabels);
+
+  // Điểm thuộc tỉnh nào (34 tỉnh mới) — tô hồng tỉnh đó trên nền hành chính
+  function renderProvinces() {
+    const box = $("tinh-moi");
+    if (!nen.tinh.length || !state.rows.length) {
+      box.hidden = true;
+      if (map.getLayer("nen-tinh-chon")) map.setFilter("nen-tinh-chon", ["all", ["==", ["get", "lop"], "tinh"], ["in", ["get", "ma"], ["literal", []]]]);
+      return;
+    }
+    const found = new Map();   // mã tỉnh → { ten, so điểm }
+    let outside = 0;
+    for (const r of state.rows) {
+      const f = VN.findFeature(r.lon, r.lat, nen.tinh);
+      if (!f) { outside++; continue; }
+      const p = f.properties;
+      if (!found.has(p.ma)) found.set(p.ma, { ten: p.ten, n: 0 });
+      found.get(p.ma).n++;
+    }
+    map.setFilter("nen-tinh-chon", ["all", ["==", ["get", "lop"], "tinh"], ["in", ["get", "ma"], ["literal", [...found.keys()]]]]);
+    const list = [...found.values()].map((t) => `<strong>${escapeHtml(t.ten)}</strong>` +
+      (found.size > 1 ? ` (${t.n} điểm)` : "")).join(", ");
+    box.hidden = false;
+    box.innerHTML = (found.size ? `Thuộc tỉnh/thành phố (34 tỉnh mới): ${list}` : "Không điểm nào nằm trong ranh 34 tỉnh") +
+      (outside && found.size ? ` · ${outside} điểm ngoài ranh` : "") +
+      `<br><small>Theo ranh giới hành chính tỷ lệ 1:1.000.000 — điểm sát ranh tỉnh có thể sai. ` +
+      `Kinh tuyến trục vẫn chọn theo tỉnh cũ.</small>`;
+  }
+
+  whenStyleReady(() => { setBase(base); addPlanningLayer(); loadBasemap(); });
 
   // Lần đầu mở: hiện ví dụ cho người dùng thấy ngay; các lần sau: chạy lại dữ liệu đã lưu
   if (!coords.value.trim()) coords.value = state.dir === "vn2wgs" ? SAMPLES.vn2000 : SAMPLES.wgs84;

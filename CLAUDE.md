@@ -33,6 +33,7 @@ pytest                    # chạy test — PHẢI xanh trước khi commit
 | `functions/background.py`, `footer.py` | Trang trí |
 | `functions/planning_layer.py` | Lớp quy hoạch: nạp GeoJSON, tìm thửa gần điểm (STRtree), đổi sang WGS84, vẽ folium |
 | `data/QHHUONGHOA_30.geojson` | Quy hoạch Hướng Hóa (Điều chỉnh QHSDĐ đến 2030): EPSG:9212 (VN-2000 TM-3, lon0 = 106.25), toạ độ [Đông, Bắc], 19 809 polygon, ~1 triệu đỉnh. Thuộc tính `ma_dat`, `ten_dat`, `mau` (màu gốc), `nguon` (`nhan` / `mau` / `nhom` / null) |
+| `scripts/build_basemap_nv2544.py` | Tạo `docs/data/nen_hanhchinh.geojson` (nền hành chính WebGIS) từ shapefile của đề tài NV25-44 (Lambert *BD1trieu_VN2000*, kinh tuyến 108°). Đổi hệ: Lambert ngược → TM-3 kinh tuyến gần nhất → **gọi nguyên** `vn2000_to_wgs84_baibao`. Thuần Python. Dữ liệu gốc **không nằm trong repo** (máy tác giả: `Desktop\Trung Anh\NV25-44 QGIS\NV25-44 QGIS\Data`) |
 | `scripts/extract_landuse_mapinfo.py` | Tạo file trên từ bản MapInfo gốc (`Level 30` = vùng tô màu, `Level 33` = nhãn mã đất) + `docs/data/quyhoach_chugiai.json`. Cần `pyogrio` (requirements-dev). Bản MapInfo **không nằm trong repo** (máy tác giả: `Desktop\Thay Tien\MAP`) |
 | `assets/` | Logo, ảnh nền cho bản Streamlit |
 | `tests/` | pytest |
@@ -55,6 +56,7 @@ Không cần build: HTML + JS thuần, thư viện lấy từ CDN (MapLibre GL 4
 | `docs/js/export.js` | Xuất CSV (có BOM), KML, DXF R12 (tên tiếng Việt ghi dạng `\U+XXXX`) |
 | `docs/js/app.js` | Ghép giao diện + bản đồ. Lưu tạm lựa chọn người dùng trong localStorage |
 | `docs/tests.html` | Test JS, mở trực tiếp bằng trình duyệt — phải hiện "Tất cả … test đều đạt" |
+| `docs/data/nen_hanhchinh.geojson` | Nền hành chính VN (34 tỉnh, biên giới, Hoàng Sa, Trường Sa, nước láng giềng, nhãn), WGS84, thuộc tính `lop`; mục `nguon` ghi nguồn. Hiện ở zoom ≤ 9 (lớp `nen-*`), OSM / vệ tinh mờ dần vào từ zoom 8,5 → 10. Không có file → app giữ OSM ở mọi zoom |
 
 ### Lớp quy hoạch trên WebGIS
 
@@ -82,6 +84,12 @@ data/QHHUONGHOA_30.geojson ──(scripts/build_planning_geojson.py, dùng conve
 - PMTiles: tippecanoe `--use-attribute-for-id=id` biến `id` thành feature id và **bỏ khỏi properties** →
   nguồn vector KHÔNG dùng `promoteId`, đọc `feature.id`. Thử PMTiles trên máy cần máy chủ hỗ trợ
   HTTP Range (`python -m http.server` không hỗ trợ; GitHub Pages có).
+
+## Nguồn dữ liệu
+
+Mọi dữ liệu đưa vào app phải **ghi rõ nguồn** ở cả bốn chỗ: thuộc tính `attribution` của nguồn bản đồ
+(hiện ở góc bản đồ), mục *Nguồn dữ liệu bản đồ* ở chân bảng điều khiển (`docs/index.html`), mục
+*Nguồn dữ liệu* trong `docs/HUONG_DAN.md` và `README.md`, và docstring của script tạo dữ liệu.
 
 ## Quy tắc bắt buộc
 

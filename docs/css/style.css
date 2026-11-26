@@ -201,3 +201,16 @@ tbody tr:hover { background: var(--accent-soft); }
   .panel { border-right: 0; border-top: 1px solid var(--line); overflow: visible; padding: 12px 16px 24px; }
   .narrow { width: 110px; }
 }
+
+/* Nền hành chính NV25-44: nhãn tỉnh, biển, quần đảo, nước láng giềng */
+.vn-lbl { pointer-events: none; white-space: nowrap; text-align: center; line-height: 1.15;
+  text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff; }
+.vn-lbl.tinh { font: 600 11px system-ui, sans-serif; color: #2b2b2b; }
+.vn-lbl.bien { font: 700 13px Georgia, serif; color: #0d47a1; letter-spacing: .08em; text-shadow: none; }
+.vn-lbl.bien small { display: block; font-size: 10px; font-weight: 600; letter-spacing: 0; }
+.vn-lbl.nuoc { font: 600 12px Georgia, serif; color: #b71c1c; letter-spacing: .15em; text-shadow: none; }
+.tinh-moi { margin: 6px 0 8px; font-size: 13px; }
+.tinh-moi small { color: var(--muted, #666); }
+.credits .sources summary { cursor: pointer; font-weight: 600; }
+.credits .sources ul { margin: 4px 0; padding-left: 18px; }
+.credits .sources li { margin: 2px 0; }

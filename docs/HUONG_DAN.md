@@ -91,6 +91,13 @@ Bảng **Kết quả** có đủ hai hệ cho mỗi điểm: Tên, X, Y, Vĩ đ�
 ## 7. Bản đồ
 
 - **Bản đồ / Vệ tinh** (góc trên trái): đổi nền. Ở vùng nông thôn, ảnh vệ tinh zoom sâu có thể hơi mờ.
+- **Nền hành chính khi thu nhỏ:** từ mức zoom 9 trở xuống, bản đồ chuyển sang **nền hành chính Việt Nam**
+  (34 tỉnh, thành phố mới; biên giới quốc gia; **QĐ. Hoàng Sa** và **QĐ. Trường Sa** tô đỏ). Phóng to qua
+  mức 9–10, nền tự chuyển dần về Bản đồ / Vệ tinh. Nguồn: xem mục *Nguồn dữ liệu*.
+- **Tỉnh của điểm:** sau khi chuyển đổi, dưới chữ *Kết quả* ghi điểm thuộc **tỉnh / thành phố nào (34 tỉnh
+  mới)**, và tỉnh đó được tô hồng trên nền hành chính. Ranh tỉnh lấy từ bản đồ tỷ lệ 1:1.000.000 nên điểm
+  **sát ranh tỉnh** (trong vài trăm mét) có thể bị xếp nhầm tỉnh. **Kinh tuyến trục vẫn chọn theo tỉnh cũ**
+  (mục 2) — tỉnh mới có thể gồm nhiều tỉnh cũ khác kinh tuyến trục.
 - **Bấm vào dấu + của điểm:** hiện toạ độ hai hệ.
 - **Vòng tròn bán kính:** trong ô thông tin của điểm (bấm dấu + hoặc dòng trong bảng kết quả), gõ bán kính
   (mét, nhận cả dấu phẩy như `25,5`) vào ô **Vòng tròn bán kính** rồi bấm **Vẽ**.
@@ -122,12 +129,25 @@ Lớp lấy từ **Bản đồ điều chỉnh quy hoạch sử dụng đất đ
      ghi được **tên nhóm**.
 - Thông tin chỉ để **tham khảo**; khi giao dịch cần đối chiếu bản đồ, văn bản quy hoạch chính thức.
 
-## 9. Ứng dụng tự nhớ
+## 9. Nguồn dữ liệu
+
+| Dữ liệu | Nguồn | Ghi chú |
+|---|---|---|
+| Nền hành chính (zoom ≤ 9): 34 tỉnh, biên giới, QĐ. Hoàng Sa, QĐ. Trường Sa, nước láng giềng | **Bản đồ hành chính Việt Nam tỷ lệ 1:1.000.000** — Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam (Bộ Nông nghiệp và Môi trường), 02/2025. Ranh giới tỉnh theo **Nghị quyết 202/2025/QH15**. Biên tập: **đề tài KH&CN cấp cơ sở NV25-44** *"Xây dựng chuỗi bản đồ hành chính Việt Nam tỷ lệ nhỏ phục vụ công bố khoa học của Trường Đại học Mỏ - Địa chất"*, chủ nhiệm **TS Trần Trung Anh**, 10/2025 | Chuyển từ hệ Lambert *BD1trieu_VN2000* sang WGS84 bằng chính 7 tham số của ứng dụng; đơn giản hoá ranh ~30 m. Tỷ lệ nhỏ: chỉ để xem tổng quan, **không dùng xác định ranh thửa**. Vị trí các nhãn *Biển Đông* và tên nước láng giềng đặt theo bố cục bản đồ NV25-44 |
+| Bản đồ đường phố | © **OpenStreetMap contributors**, giấy phép ODbL | openstreetmap.org/copyright |
+| Ảnh vệ tinh | **Esri World Imagery** (Esri, Maxar, Earthstar Geographics) | Độ phân giải tuỳ vùng |
+| Lớp quy hoạch Hướng Hóa | **Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa** | Chỉ để tham khảo (mục 8) |
+| Tham số chuyển đổi VN-2000 → WGS84 | 7 tham số Helmert, trùng **EPSG:6960** *VN-2000 to WGS 84 (2)* (Coordinate Frame) | |
+| Công thức chuyển đổi | Trần Trung Anh, Quách Mạnh Tuấn — *Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác*, Hội nghị KH Quốc gia về Công nghệ Địa không gian | |
+
+Tên nguồn cũng hiện ở **góc dưới phải bản đồ** (nút ⓘ) và cuối bảng điều khiển (*Nguồn dữ liệu bản đồ*).
+
+## 10. Ứng dụng tự nhớ
 
 Kinh tuyến trục, chiều chuyển đổi, dữ liệu nhập lần trước, nền bản đồ, các ô *Nối điểm*,
 *Chiều dài cạnh* và nút *Quy hoạch* được nhớ cho lần mở sau. Dữ liệu chỉ lưu trên máy bạn, không gửi đi đâu.
 
-## 10. Xử lý sự cố
+## 11. Xử lý sự cố
 
 | Hiện tượng | Nguyên nhân thường gặp |
 |---|---|
