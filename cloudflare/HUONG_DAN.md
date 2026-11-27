@@ -9,6 +9,14 @@ quốc gia, thành phố. Chủ ứng dụng xem số liệu trong tab *📊 Th�
 | `schema.sql` | Tạo bảng `luot` (mỗi dòng = 1 ngày × 1 thành phố: số lượt xem, số lượt khách) |
 | `worker.js` | Máy chủ: `POST /hit` cộng 1 lượt; `GET /stats` trả số liệu (cần khoá quản trị) |
 
+## Bản đang chạy
+
+- Tài khoản Cloudflare: đăng nhập bằng GitHub **guitarkhongem** (Guitarkhongem@gmail.com).
+- Worker **`vn2000-thongke`**: <https://vn2000-thongke.guitarkhongem.workers.dev> — mã = `worker.js` (dán vào
+  *Edit code*, đã bỏ chú thích); biến *Secret* `ADMIN_KEY`; binding `DB`.
+- D1 **`vn2000_thongke`** (id `b76fa99d-50c0-4574-ad0c-7defee68b4ec`), bảng `luot` theo `schema.sql`.
+- Sửa `worker.js` trong repo thì phải dán lại vào *Edit code* của Worker rồi **Deploy** — Cloudflare không tự lấy từ GitHub.
+
 ## Thu thập những gì
 
 - Mỗi lần mở trang, trình duyệt gửi `{"moi":1}` (lần mở đầu tiên trong ngày của máy đó) hoặc `{"moi":0}`.

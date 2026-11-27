@@ -3,4 +3,4 @@
  * Để trống "" thì ứng dụng KHÔNG gửi gì đi cả (tắt thống kê).
  * Ví dụ: window.VN_THONGKE_API = "https://vn2000-thongke.ten-tai-khoan.workers.dev";
  */
-window.VN_THONGKE_API = "";
+window.VN_THONGKE_API = "https://vn2000-thongke.guitarkhongem.workers.dev";
