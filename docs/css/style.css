@@ -251,7 +251,7 @@ tbody tr:hover { background: var(--accent-soft); }
 
 /* Cỡ chữ: --fs do nút A− / A+ đặt (lưu trên máy) */
 .panel { zoom: var(--fs, 1); }
-.maplibregl-popup-content, .legend, .basemap, .overlay-toggle, .opacity-ctl, .toast { zoom: var(--fs, 1); }
+.maplibregl-popup-content, .legend, .map-ctl, .toast { zoom: var(--fs, 1); }
 .pt span { font-size: calc(13px * var(--fs, 1)); }
 .edge { font-size: calc(11px * var(--fs, 1)); }
 .vn-lbl.tinh { font-size: calc(11px * var(--fs, 1)); }
@@ -279,3 +279,13 @@ tbody tr:hover { background: var(--accent-soft); }
   .splitter { order: -1; cursor: row-resize; height: 14px; }
   .splitter span { width: 40px; height: 2px; border-left: 0; border-top: 2px dotted var(--muted); }
 }
+
+/* Nhóm tuỳ chọn bản đồ (nền, quy hoạch, giá đất, độ đậm) — thu gọn / mở bằng nút "Lớp bản đồ" */
+.map-ctl { position: absolute; top: 10px; left: 10px; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.ctl-body { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.ctl-body[hidden], .map-ctl .overlay-toggle[hidden] { display: none; }
+.map-ctl .basemap, .map-ctl .overlay-toggle, .map-ctl .opacity-ctl { position: static; }
+.ctl-toggle { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13px; font-weight: 600; border: 0; border-radius: 8px;
+  padding: 5px 10px; background: var(--card); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.25); cursor: pointer; }
+.ctl-toggle .ctl-ico { font-size: 15px; line-height: 1; }
+.ctl-toggle[aria-expanded="true"] .ctl-mo, .ctl-toggle[aria-expanded="false"] .ctl-dong { display: none; }

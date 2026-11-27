@@ -95,6 +95,8 @@ Bảng **Kết quả** có đủ hai hệ cho mỗi điểm: Tên, X, Y, Vĩ đ�
 ## 7. Bản đồ
 
 - **Bản đồ / Vệ tinh** (góc trên trái): đổi nền. Ở vùng nông thôn, ảnh vệ tinh zoom sâu có thể hơi mờ.
+- **☰ Lớp bản đồ / Thu gọn** (góc trên bên trái bản đồ): bấm để ẩn / hiện cả nhóm tuỳ chọn *Bản đồ – Vệ tinh*,
+  *Quy hoạch*, *Giá đất*, *Độ đậm lớp phủ* cho đỡ che bản đồ. Ứng dụng nhớ lựa chọn; trên điện thoại mặc định thu gọn.
 - **Độ đậm lớp phủ** (thanh trượt dưới nút *Giá đất*): giảm độ đậm của lớp **quy hoạch** và **giá đất** để
   nhìn thấy ảnh vệ tinh / bản đồ bên dưới (0 % = trong suốt, 100 % = mặc định). Khi bật *Vệ tinh* mà chỉ thấy
   màu quy hoạch, hãy kéo thanh này xuống khoảng 30–50 % hoặc tắt nút *Quy hoạch*.

@@ -672,6 +672,16 @@
   }
 
   // ---------------- Độ đậm lớp phủ (quy hoạch, giá đất) trên nền bản đồ / ảnh vệ tinh ----------------
+  // ---------------- Thu gọn / mở nhóm tuỳ chọn bản đồ (nhớ trên máy; màn hình hẹp mặc định thu gọn) ----------------
+  const ctlBtn = $("ctl-toggle"), ctlBody = $("ctl-body");
+  function setCtl(mo) {
+    ctlBody.hidden = !mo;
+    ctlBtn.setAttribute("aria-expanded", String(mo));
+    store.set("ctl", mo ? "1" : "0");
+  }
+  setCtl(store.get("ctl", window.innerWidth <= 820 ? "0" : "1") === "1");
+  ctlBtn.addEventListener("click", () => setCtl(ctlBody.hidden));
+
   const opInput = $("overlay-opacity");
   opInput.value = store.get("opacity", "100");
   function overlayFactor() { return Math.max(0, Math.min(100, Number(opInput.value) || 0)) / 100; }
