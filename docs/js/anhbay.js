@@ -436,8 +436,21 @@
     if (signal && signal.aborted) throw new DOMException("huỷ", "AbortError");
     const cs = src.kieu === "anh" ? docCuaSoAnh(src, li, x0, y0, x1, y1) : await docCuaSoTiff(src, li, x0, y0, x1, y1);
     if (!cs) return oTrong();                             // cần đọc quá nhiều (không có overview) → để trống
-    const out = new Uint8ClampedArray(N * N * 4), cw = cs.w, chh = cs.h, d = cs.rgba;
-    const min = ti < fx;                                   // phóng to quá độ phân giải → nội suy song tuyến
+    // thu nhỏ nhiều hơn 1,5 lần (không có overview phù hợp) → làm mượt bằng canvas trước, tránh đường mảnh bị đứt
+    let kx = 1, ky = 1, cv0 = cs;
+    const tl = ti / fx;
+    if (tl > 1.5) {
+      const w2 = Math.max(1, Math.round(cs.w / tl)), h2 = Math.max(1, Math.round(cs.h / tl));
+      const c1 = new OffscreenCanvas(cs.w, cs.h);
+      c1.getContext("2d").putImageData(new ImageData(cs.rgba instanceof Uint8ClampedArray ? cs.rgba : new Uint8ClampedArray(cs.rgba), cs.w, cs.h), 0, 0);
+      const c2 = new OffscreenCanvas(w2, h2), x2 = c2.getContext("2d", { willReadFrequently: true });
+      x2.imageSmoothingEnabled = true; x2.imageSmoothingQuality = "high";
+      x2.drawImage(c1, 0, 0, w2, h2);
+      cv0 = { w: w2, h: h2, rgba: x2.getImageData(0, 0, w2, h2).data };
+      kx = cs.w / w2; ky = cs.h / h2;
+    }
+    const out = new Uint8ClampedArray(N * N * 4), cw = cv0.w, chh = cv0.h, d = cv0.rgba;
+    const min = true;                                     // nội suy song tuyến (sau khi đã đưa về ~1 điểm ảnh / điểm ảnh ô)
     for (let py = 0; py < N; py++) {
       const v = ((py + 0.5) / N) * G, j = Math.min(G - 1, Math.floor(v)), fv = v - j;
       for (let px = 0; px < N; px++) {
@@ -447,7 +460,7 @@
         const cy = (gy[k] * (1 - fu) + gy[k + 1] * fu) * (1 - fv) + (gy[k2] * (1 - fu) + gy[k2 + 1] * fu) * fv;
         if (cx < 0 || cy < 0 || cx >= W || cy >= H) continue;
         const o = (py * N + px) * 4;
-        let lx = cx / fx - x0, ly = cy / fy - y0;
+        let lx = (cx / fx - x0) / kx, ly = (cy / fy - y0) / ky;
         if (!min) {
           const ix = Math.min(cw - 1, Math.max(0, Math.floor(lx))), iy = Math.min(chh - 1, Math.max(0, Math.floor(ly)));
           const s = (iy * cw + ix) * 4;
