@@ -7,17 +7,18 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.27j">
+<link rel="stylesheet" href="css/style.css?v=2026.11.27k">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27j"></script>
-<script src="js/parse.js?v=2026.11.27j"></script>
-<script src="js/geo.js?v=2026.11.27j"></script>
-<script src="js/export.js?v=2026.11.27j"></script>
-<script src="js/giadat.js?v=2026.11.27j"></script>
-<script src="js/lopfile.js?v=2026.11.27j"></script>
-<script src="js/chupanh.js?v=2026.11.27j"></script>
+<script src="js/converter.js?v=2026.11.27k"></script>
+<script src="js/parse.js?v=2026.11.27k"></script>
+<script src="js/geo.js?v=2026.11.27k"></script>
+<script src="js/export.js?v=2026.11.27k"></script>
+<script src="js/giadat.js?v=2026.11.27k"></script>
+<script src="js/lopfile.js?v=2026.11.27k"></script>
+<script src="js/chupanh.js?v=2026.11.27k"></script>
+<script src="js/ocrtoado.js?v=2026.11.27k"></script>
 </head>
 <body>
 <div class="layout">
@@ -65,8 +66,8 @@
         <label class="btn ghost file">
           Mở file TXT/CSV<input id="file" type="file" accept=".txt,.csv,text/plain,text/csv" hidden>
         </label>
-        <label class="btn ghost file" title="Đọc toạ độ GPS ghi trong ảnh (EXIF) — chọn được nhiều ảnh">
-          Nhập ảnh có toạ độ<input id="anh-file" type="file" accept="image/*,.jpg,.jpeg,.heic,.heif,.png,.webp" multiple hidden>
+        <label class="btn ghost file" title="Nhận dạng toạ độ in trên ảnh (ảnh chụp màn hình máy RTK, bộ điều khiển drone, sổ đo…) — chọn được nhiều ảnh">
+          Nhận dạng toạ độ từ ảnh<input id="ocr-file" type="file" accept="image/*" multiple hidden>
         </label>
         <button class="btn ghost" id="sample" type="button">Ví dụ</button>
         <button class="btn ghost" id="clear" type="button">Xoá</button>
@@ -203,6 +204,25 @@
         <button type="button" id="geo-close" class="geo-x" title="Đóng" aria-label="Đóng">×</button></div>
       <div id="geo-body"></div>
     </div>
+    <dialog id="ocr-dlg" class="ca-dlg ocr-dlg">
+      <h3>Nhận dạng toạ độ từ ảnh</h3>
+      <p id="ocr-tt" class="muted small"></p>
+      <div id="ocr-anh" class="ocr-anh"></div>
+      <div class="row wrap">
+        <label class="field"><span>Toạ độ nhận được</span>
+          <select id="ocr-chieu">
+            <option value="wgs2vn">Vĩ độ – Kinh độ (WGS84) → VN-2000</option>
+            <option value="vn2wgs">X – Y (VN-2000) → WGS84</option>
+          </select></label>
+      </div>
+      <label class="field"><span>Mỗi dòng: Tên, toạ độ, độ cao — sửa trực tiếp nếu nhận sai</span>
+        <textarea id="ocr-ds" rows="5" spellcheck="false"></textarea></label>
+      <p class="muted small">Khung xanh lá: vĩ độ / X · xanh dương: kinh độ / Y · cam: độ cao (số có chữ "m"). Nhận dạng chữ bằng Tesseract.js (tải lần đầu ~ vài MB); ảnh chỉ xử lý trên máy. Hãy đối chiếu với ảnh trước khi dùng.</p>
+      <div class="row ca-nut-hang">
+        <button type="button" id="ocr-huy" class="btn ghost">Huỷ</button>
+        <button type="button" id="ocr-ok" class="btn primary">Đưa vào khung chuyển đổi</button>
+      </div>
+    </dialog>
     <input type="file" id="ca-input" accept="image/*" capture="environment" hidden>
     <dialog id="ca-dlg" class="ca-dlg">
       <canvas id="ca-canvas"></canvas>
@@ -219,6 +239,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.27j"></script>
+<script src="js/app.js?v=2026.11.27k"></script>
 </body>
 </html>

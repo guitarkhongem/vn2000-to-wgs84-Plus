@@ -341,3 +341,10 @@ tbody tr:hover { background: var(--accent-soft); }
 .ca-mk { font-size: 20px; line-height: 1; cursor: pointer; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
 .ca-pop img { display: block; width: 100%; max-width: 240px; border-radius: 6px; margin-bottom: 4px; }
 .geo-head #geo-chup { font-weight: 600; }
+
+/* Nhận dạng toạ độ từ ảnh (OCR) */
+.ocr-dlg h3 { margin: 0 0 4px; }
+.ocr-anh { display: flex; gap: 8px; overflow-x: auto; }
+.ocr-anh canvas { max-height: 38vh; width: auto; max-width: 100%; border-radius: 8px; background: #111; flex: none; }
+.ocr-dlg textarea { width: 100%; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+.ocr-dlg select { width: auto; }

@@ -66,10 +66,14 @@ cách, dấu phẩy hoặc dấu chấm phẩy — dán thẳng toạ độ copy
 ### Các nút
 
 - **Ví dụ:** điền dữ liệu mẫu. **Xoá:** xoá ô nhập và kết quả. **Chuyển đổi:** thực hiện.
-- **Nhập ảnh có toạ độ:** chọn một hoặc nhiều ảnh (JPEG, HEIC của iPhone, PNG, WebP) có lưu vị trí GPS. Ứng dụng
-  đọc toạ độ ghi trong ảnh (EXIF), mỗi ảnh thành một dòng `Tên-ảnh Vĩ-độ Kinh-độ H` (xếp theo giờ chụp), tự chuyển
-  sang chiều **WGS84 → VN2000** và chuyển đổi bằng thuật toán của ứng dụng với kinh tuyến trục đang chọn. H là độ cao
-  GPS ghi trong ảnh (kém tin cậy; không có thì 0). Ảnh không có GPS được liệt kê trong khung vàng. Ảnh chỉ đọc trên máy.
+- **Nhận dạng toạ độ từ ảnh:** chọn một hoặc nhiều ảnh **có in toạ độ** — ảnh chụp màn hình máy RTK / GNSS, bộ điều
+  khiển drone (DJI…), sổ đo, bảng toạ độ. Ứng dụng nhận dạng chữ trong ảnh (OCR) rồi tìm các cặp **Vĩ độ – Kinh độ**
+  (số thập phân hoặc độ-phút-giây, có N/E) hoặc **X – Y VN-2000** (X 7 chữ số, Y 6 chữ số; nhận cả kiểu 1.842.173,70),
+  kèm **độ cao** nếu là số có chữ "m" đứng sau (vd *Ellipsoidal Height 676.421m*). Hộp thoại hiện ảnh với khung màu
+  quanh các số nhận được và danh sách `Tên toạ-độ độ-cao` — **kiểm tra, sửa nếu nhận sai**, rồi bấm *Đưa vào khung
+  chuyển đổi*: ứng dụng chọn đúng chiều và chuyển đổi bằng thuật toán của ứng dụng. Nhận dạng bằng **Tesseract.js**
+  (Apache-2.0, tải từ CDN lần đầu); ảnh chỉ xử lý trên máy. Mẹo: chụp thẳng, rõ nét, tránh loá; màn hình chữ trắng
+  trên nền màu cũng đọc được. Độ cao từ máy GNSS là **độ cao elipxoit WGS84** — đúng loại H mà thuật toán dùng.
 - Dòng sai hiện trong **khung vàng** kèm lý do; các dòng đúng vẫn được chuyển đổi.
 
 ## 5. Đọc và xuất kết quả
@@ -245,6 +249,7 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
 | Lớp quy hoạch Hướng Hóa | **Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa** | Chỉ để tham khảo (mục 8) |
 | Giá đất 2026 | **Nghị quyết 12/2025/NQ-HĐND** ngày 11/12/2025 của HĐND tỉnh Quảng Trị — Bảng giá đất áp dụng từ 01/01/2026 (Phụ lục I: đất nông nghiệp; II: đất ở; III: đất TMDV, đất cơ sở SXKD phi nông nghiệp), qua bản tổng hợp Excel *"BANG GIA DAT 2026"* | Liên kết Google Maps điểm đầu – cuối từng đoạn lấy từ bản tổng hợp; hình đoạn đường dò theo mạng đường © **OpenStreetMap contributors** (ODbL) dữ liệu tải qua **Overpass API** (maps.mail.ru), dò tuyến trên máy; một phần bằng **OSRM** (máy chủ routing.openstreetmap.de của FOSSGIS). Mục 9 |
 | Tham số chuyển đổi VN-2000 ⇄ WGS84 (7 tham số) | **Quyết định số 05/2007/QĐ-BTNMT** ngày 27/02/2007 của Bộ Tài nguyên và Môi trường *về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000* | Dịch gốc −191,90441429 m; −39,30318279 m; −111,45032835 m · góc xoay −0,00928836″; 0,01975479″; −0,00427372″ · tỉ lệ k = 1,000000252906278 (cũng là bộ EPSG:6960, Coordinate Frame) |
+| Nhận dạng chữ (OCR) | **Tesseract.js 7.0.0** (Apache-2.0) và dữ liệu tiếng Anh *eng* của Tesseract, tải từ jsDelivr khi dùng | Mục 4 |
 | Bộ đọc DWG | **LibreDWG** (GNU, GPL-3.0) bản WebAssembly *@mlightcad/libredwg-web 0.9.4* (GPL-2.0), tải từ jsDelivr khi mở file .dwg | Không nằm trong mã nguồn ứng dụng. Mục 10 |
 | Công thức chuyển đổi | Trần Trung Anh, Quách Mạnh Tuấn — *Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác*, Hội nghị KH Quốc gia về Công nghệ Địa không gian | |
 

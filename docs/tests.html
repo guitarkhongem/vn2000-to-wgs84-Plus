@@ -10,13 +10,14 @@
   #summary { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27j"></script>
-<script src="js/parse.js?v=2026.11.27j"></script>
-<script src="js/geo.js?v=2026.11.27j"></script>
-<script src="js/export.js?v=2026.11.27j"></script>
-<script src="js/giadat.js?v=2026.11.27j"></script>
-<script src="js/lopfile.js?v=2026.11.27j"></script>
-<script src="js/chupanh.js?v=2026.11.27j"></script>
+<script src="js/converter.js?v=2026.11.27k"></script>
+<script src="js/parse.js?v=2026.11.27k"></script>
+<script src="js/geo.js?v=2026.11.27k"></script>
+<script src="js/export.js?v=2026.11.27k"></script>
+<script src="js/giadat.js?v=2026.11.27k"></script>
+<script src="js/lopfile.js?v=2026.11.27k"></script>
+<script src="js/chupanh.js?v=2026.11.27k"></script>
+<script src="js/ocrtoado.js?v=2026.11.27k"></script>
 </head>
 <body>
 <div id="summary">Đang chạy…</div>
@@ -232,6 +233,25 @@ test("Chụp ảnh: ghi rồi đọc lại EXIF GPS, dòng chữ in lên ảnh",
   eq(L[1].startsWith("VN-2000 KTT 106°15': X = "), true, "dòng VN-2000");
   eq(L[1].includes(x.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })), true, "X đúng hàm app");
   eq(L[L.length - 1], "Thửa 12", "ghi chú");
+});
+
+test("Nhận dạng toạ độ từ ảnh: tách, phân loại, ghép cặp theo vị trí chữ", () => {
+  const W = (t, x, y) => ({ text: t, x0: x, y0: y, x1: x + t.length * 12, y1: y + 20, conf: 90 });
+  // bố cục 2 cột như màn hình DJI RTK (cột máy bay, cột trạm RTK); lượt B đọc thiếu số → bỏ vì trùng vị trí
+  const A = [W("16.753240601", 267, 1154), W("N", 420, 1154), W("16.753344127", 675, 1156), W("N", 830, 1156),
+    W("106.593057412", 264, 1232), W("E", 430, 1232), W("106.593170198", 674, 1235), W("E", 840, 1235),
+    W("676.421m", 260, 1310), W("573.974m", 672, 1314), W("11", 254, 1504)];
+  const B = [W("6.593057412", 300, 1231)];
+  const r = VN.ocrTimToaDo([A, B]);
+  eq(r.wgs.length, 2, "2 điểm");
+  near(r.wgs[0].lat, 16.753240601, 0, "lat 1"); near(r.wgs[0].lon, 106.593057412, 0, "lon 1"); near(r.wgs[0].h, 676.421, 0, "h 1");
+  near(r.wgs[1].lat, 16.753344127, 0, "lat 2"); near(r.wgs[1].lon, 106.593170198, 0, "lon 2"); near(r.wgs[1].h, 573.974, 0, "h 2");
+  // sổ đo VN-2000, số kiểu Việt và lỗi OCR O → 0
+  const v = VN.ocrTimToaDo([W("X=", 10, 10), W("1.842.173,70", 40, 10), W("Y=", 220, 10), W("546243.5O", 250, 10)]);
+  near(v.vn[0].x, 1842173.70, 1e-9, "X"); near(v.vn[0].y, 546243.50, 1e-9, "Y");
+  // độ-phút-giây
+  const d = VN.ocrTimToaDo([W("16°45'11.67\"N", 60, 10), W("106°35'35.01\"E", 60, 50)]);
+  near(d.wgs[0].lat, 16 + 45 / 60 + 11.67 / 3600, 1e-9, "DMS lat"); near(d.wgs[0].lon, 106 + 35 / 60 + 35.01 / 3600, 1e-9, "DMS lon");
 });
 
 for (const [name, ok, msg] of results) {
