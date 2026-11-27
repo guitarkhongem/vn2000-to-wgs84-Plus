@@ -7,20 +7,21 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.27n">
+<link rel="stylesheet" href="css/style.css?v=2026.11.27o">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27n"></script>
-<script src="js/parse.js?v=2026.11.27n"></script>
-<script src="js/geo.js?v=2026.11.27n"></script>
-<script src="js/export.js?v=2026.11.27n"></script>
-<script src="js/giadat.js?v=2026.11.27n"></script>
-<script src="js/lopfile.js?v=2026.11.27n"></script>
-<script src="js/chupanh.js?v=2026.11.27n"></script>
-<script src="js/ocrtoado.js?v=2026.11.27n"></script>
-<script src="js/thongke-config.js?v=2026.11.27n"></script>
-<script src="js/thongke.js?v=2026.11.27n"></script>
+<script src="js/converter.js?v=2026.11.27o"></script>
+<script src="js/parse.js?v=2026.11.27o"></script>
+<script src="js/geo.js?v=2026.11.27o"></script>
+<script src="js/export.js?v=2026.11.27o"></script>
+<script src="js/giadat.js?v=2026.11.27o"></script>
+<script src="js/lopfile.js?v=2026.11.27o"></script>
+<script src="js/chupanh.js?v=2026.11.27o"></script>
+<script src="js/ocrtoado.js?v=2026.11.27o"></script>
+<script src="js/thongke-config.js?v=2026.11.27o"></script>
+<script src="js/thongke.js?v=2026.11.27o"></script>
+<script src="js/google.js?v=2026.11.27o"></script>
 </head>
 <body>
 <div class="layout">
@@ -201,6 +202,7 @@
           <li><b>Nền hành chính</b> (zoom nhỏ, 34 tỉnh, biên giới, QĐ Hoàng Sa, QĐ Trường Sa): Bản đồ hành chính Việt Nam tỷ lệ 1:1.000.000, Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam (02/2025); ranh tỉnh theo Nghị quyết 202/2025/QH15; biên tập: đề tài NV25-44, Trường ĐH Mỏ - Địa chất (chủ nhiệm TS Trần Trung Anh, 10/2025).</li>
           <li><b>Bản đồ đường phố</b>: © OpenStreetMap contributors (giấy phép ODbL).</li>
           <li><b>Ảnh vệ tinh</b>: Esri World Imagery (Esri, Maxar, Earthstar Geographics).</li>
+          <li><b>Ảnh vệ tinh Google</b> (nút <i>Google</i>): Google Maps Platform — Map Tiles API; nguồn ảnh theo từng vùng hiện ở góc dưới trái bản đồ.</li>
           <li><b>Lớp quy hoạch</b>: Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa.</li>
           <li><b>Giá đất 2026</b>: Nghị quyết 12/2025/NQ-HĐND ngày 11/12/2025 của HĐND tỉnh Quảng Trị (bản tổng hợp Excel "BANG GIA DAT 2026"); vị trí đoạn đường dò theo mạng đường © OpenStreetMap contributors bằng OSRM.</li>
           <li><b>Tham số chuyển đổi</b> VN-2000 ⇄ WGS84 (7 tham số): Quyết định số 05/2007/QĐ-BTNMT ngày 27/02/2007 của Bộ Tài nguyên và Môi trường về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000.</li>
@@ -221,7 +223,8 @@
     <div id="ctl-body" class="ctl-body">
     <div class="basemap" role="group" aria-label="Nền bản đồ">
       <button type="button" data-base="osm" aria-pressed="true">Bản đồ</button>
-      <button type="button" data-base="sat" aria-pressed="false">Vệ tinh</button>
+      <button type="button" data-base="sat" aria-pressed="false" title="Ảnh vệ tinh Esri World Imagery">Vệ tinh</button>
+      <button type="button" data-base="gsat" aria-pressed="false" hidden title="Ảnh vệ tinh Google (Google Maps Platform)">Google</button>
     </div>
     <button type="button" id="qh-toggle" class="overlay-toggle" aria-pressed="true" hidden>
       <span class="swatch" aria-hidden="true"></span>Quy hoạch
@@ -285,6 +288,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.27n"></script>
+<script src="js/app.js?v=2026.11.27o"></script>
 </body>
 </html>

@@ -16,6 +16,7 @@ quốc gia, thành phố. Chủ ứng dụng xem số liệu trong tab *📊 Th�
   *Edit code*, đã bỏ chú thích); biến *Secret* `ADMIN_KEY`; binding `DB`.
 - D1 **`vn2000_thongke`** (id `b76fa99d-50c0-4574-ad0c-7defee68b4ec`), bảng `luot` theo `schema.sql`.
 - Sửa `worker.js` trong repo thì phải dán lại vào *Edit code* của Worker rồi **Deploy** — Cloudflare không tự lấy từ GitHub.
+- Worker còn cấp khoá ảnh vệ tinh Google cho ứng dụng: `GET /google` (Secret `GOOGLE_MAPS_KEY`) — xem mục cuối.
 
 ## Thu thập những gì
 
@@ -87,6 +88,28 @@ Bảng chỉ có 1 dòng cho mỗi (ngày × thành phố) nên dung lượng r�
 - Xoá số liệu cũ: Console của D1, ví dụ `DELETE FROM luot WHERE ngay < '2026-01-01';`
 - Đổi khoá: sửa Secret `ADMIN_KEY` (Settings → Variables and Secrets), rồi nhập khoá mới trong tab.
 
+## Ảnh vệ tinh Google (Secret `GOOGLE_MAPS_KEY`)
+
+Nút **Google** trên bản đồ dùng **Google Maps Platform — Map Tiles API** (cách chính thức, hợp lệ). Khoá API để trong
+Worker, không nằm trong mã nguồn GitHub; nút chỉ hiện khi Worker đã có khoá.
+
+1. <https://console.cloud.google.com> → tạo dự án (vd `vn2000-ban-do`).
+2. **Billing** (Thanh toán): gắn tài khoản thanh toán (thẻ) — Google bắt buộc, kể cả khi chỉ dùng mức miễn phí.
+   Nên tạo **Budget** (ngân sách) vài USD có cảnh báo email.
+3. **APIs & Services → Library** → tìm **Map Tiles API** → **Enable**.
+4. **APIs & Services → Credentials → Create credentials → API key**. Bấm vào khoá vừa tạo:
+   - *Application restrictions*: **Websites** → thêm `https://guitarkhongem.github.io/*`
+   - *API restrictions*: **Restrict key** → chỉ chọn **Map Tiles API** → **Save**.
+5. **Hạn mức theo ngày** (để không vượt mức miễn phí 100 000 ô ảnh/tháng): *Google Maps Platform → Quotas* → chọn
+   **Map Tiles API** → mục số yêu cầu 2D Tiles **mỗi ngày** → *Edit* → đặt **3000** → *Submit*. Hết hạn mức trong ngày,
+   ứng dụng tự quay về ảnh Esri.
+6. Cloudflare → Worker `vn2000-thongke` → *Settings → Variables and Secrets → Add* → **Secret** `GOOGLE_MAPS_KEY`
+   = khoá API ở bước 4 → **Deploy**. Mở lại ứng dụng: nút **Google** hiện cạnh *Bản đồ | Vệ tinh*.
+
+Hiển thị theo chính sách Map Tiles API: chữ **Google Maps** và chuỗi bản quyền ảnh của khung nhìn (lấy từ viewport
+info) ở góc dưới trái; không tải trước / lưu ảnh. Mỗi ô ảnh 256 px tải về là 1 lượt tính phí; một lần xem bản đồ vệ
+tinh thường tốn vài chục đến vài trăm ô.
+
 ## Nguồn
 
 - Cloudflare D1 — *Getting started* (tạo cơ sở dữ liệu, Console, binding): <https://developers.cloudflare.com/d1/get-started/>
@@ -95,3 +118,11 @@ Bảng chỉ có 1 dòng cho mỗi (ngày × thành phố) nên dung lượng r�
 - Cloudflare Workers — *Request* / `IncomingRequestCfProperties` (country, city, region, latitude, longitude):
   <https://developers.cloudflare.com/workers/runtime-apis/request/>
 - Cloudflare Workers — *Secrets*: <https://developers.cloudflare.com/workers/configuration/secrets/>
+- Google Maps Platform — Map Tiles API, *2D Tiles overview* (session token, viewport info, copyright):
+  <https://developers.google.com/maps/documentation/tile/2d-tiles-overview>
+- Google Maps Platform — *Map Tiles API Policies* (logo / chữ Google Maps, bản quyền, không lưu ảnh):
+  <https://developers.google.com/maps/documentation/tile/policies>
+- Google Maps Platform — *Pricing* (Map Tiles API: 2D Map Tiles miễn phí 100 000 lượt/tháng):
+  <https://developers.google.com/maps/billing-and-pricing/pricing>
+- Google Maps Platform — *Usage and billing* của Map Tiles API (hạn mức theo ngày, cách sửa quota):
+  <https://developers.google.com/maps/documentation/tile/usage-and-billing>

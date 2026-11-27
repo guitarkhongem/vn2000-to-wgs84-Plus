@@ -16,7 +16,7 @@ Repo này phát triển tiếp từ
 - Chọn kinh tuyến trục theo tỉnh hoặc nhập tay.
 - Nhập toạ độ bằng cách dán hoặc mở file TXT/CSV. Hỗ trợ nhiều định dạng:
   `Tên X Y H`, `X Y H`, `X Y`, `X=… / Y=…`, `N…… E……`; chiều ngược lại `[Tên] Vĩ-độ Kinh-độ [H]`.
-- Bản đồ nền giao thông / vệ tinh, nối điểm, chiều dài cạnh, chu vi.
+- Bản đồ nền giao thông / vệ tinh (Esri, và **ảnh vệ tinh Google** chính thức qua Map Tiles API), nối điểm, chiều dài cạnh, chu vi.
 - Diện tích theo VN-2000 (Shoelace) và WGS84 (trắc địa) để so sánh.
 - Lớp quy hoạch Hướng Hóa (Điều chỉnh QHSDĐ đến 2030, ~19 800 thửa): **tô đúng màu bản đồ quy hoạch**,
   có **loại đất** từng thửa và chú giải; cho biết thửa của bạn nằm trong loại đất nào.
@@ -38,6 +38,7 @@ Repo này phát triển tiếp từ
 | Nền hành chính (zoom ≤ 9) | Bản đồ hành chính Việt Nam tỷ lệ 1:1.000.000, Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam (02/2025); ranh tỉnh theo NQ 202/2025/QH15; biên tập: đề tài NV25-44, Trường ĐH Mỏ - Địa chất (chủ nhiệm TS Trần Trung Anh, 10/2025) |
 | Bản đồ đường phố | © OpenStreetMap contributors (ODbL) |
 | Ảnh vệ tinh | Esri World Imagery (Esri, Maxar, Earthstar Geographics) |
+| Ảnh vệ tinh Google | Google Maps Platform — Map Tiles API (2D Tiles); nguồn ảnh từng vùng hiện ở góc dưới trái bản đồ |
 | Quy hoạch Hướng Hóa | Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa |
 | Giá đất 2026 | Nghị quyết 12/2025/NQ-HĐND tỉnh Quảng Trị (bản tổng hợp Excel "BANG GIA DAT 2026"); hình đoạn đường dò theo mạng đường © OpenStreetMap contributors (Overpass API + dò tuyến ưu tiên đúng tên; một phần OSRM) |
 | Vị trí lượt truy cập (tab Thống kê) | Cloudflare — quốc gia, thành phố ước tính theo địa chỉ mạng (`request.cf`) |

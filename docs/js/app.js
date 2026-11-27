@@ -275,6 +275,8 @@
   VN.map = map;   // để gỡ lỗi từ console
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");
+  // Ảnh vệ tinh Google chính thức (Map Tiles API) — docs/js/google.js; lỗi / hết hạn mức thì về ảnh Esri
+  if (VN.googleInit) VN.googleInit(map, { toast, veEsri: () => setBase("sat") });
 
   // ---------------- Định vị vị trí của tôi (như Google Maps) ----------------
   // Chấm xanh + vòng độ chính xác + hướng nhìn; bấm lần nữa để bám theo khi di chuyển.
@@ -332,7 +334,9 @@
     document.querySelectorAll(".basemap button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.base === b)));
     if (!map.getLayer("osm")) return;
     map.setLayoutProperty("osm", "visibility", b === "osm" ? "visible" : "none");
-    map.setLayoutProperty("sat", "visibility", b === "sat" ? "visible" : "none");
+    // nền Google: ảnh Esri vẫn bật bên dưới để chỗ Google chưa có ảnh / đang tải không bị trống
+    map.setLayoutProperty("sat", "visibility", b === "sat" || b === "gsat" ? "visible" : "none");
+    if (VN.googleBat) VN.googleBat(b === "gsat");
   }
   document.querySelectorAll(".basemap button").forEach((b) => b.addEventListener("click", () => setBase(b.dataset.base)));
 
@@ -680,7 +684,8 @@
     map.getSource("nen").setData(data);
     nen.tinh = data.features.filter((f) => f.properties.lop === "tinh");
     // Chỉ khi có nền hành chính mới ẩn ảnh nền ở zoom nhỏ
-    for (const id of ["osm", "sat"]) {
+    for (const id of ["osm", "sat", "gsat"]) {
+      if (!map.getLayer(id)) continue;
       map.setLayerZoomRange(id, 8.5, 24);
       map.setPaintProperty(id, "raster-opacity", ["interpolate", ["linear"], ["zoom"], 8.5, 0, 10, 1]);
     }

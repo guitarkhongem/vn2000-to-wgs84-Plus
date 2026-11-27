@@ -3,12 +3,15 @@
  *
  *   POST /hit    (ứng dụng gửi khi mở trang)  → +1 lượt cho thành phố của người xem
  *   GET  /stats?tu=YYYY-MM-DD&den=YYYY-MM-DD   (cần khoá quản trị) → số liệu tổng hợp
+ *   GET  /google  → khoá Google Maps (Map Tiles API) cho nút ảnh vệ tinh Google của ứng dụng
  *
  * Thành phố / quốc gia lấy từ request.cf do chính Cloudflare cung cấp; KHÔNG lưu IP, không cookie,
  * không mã định danh. Liên kết (binding) cần có:
  *   DB              — cơ sở dữ liệu D1 (bảng trong schema.sql)
  *   ADMIN_KEY       — bí mật (Secret): khoá quản trị để xem thống kê
  *   ALLOWED_ORIGIN  — (tuỳ chọn) trang được phép gửi lượt, mặc định https://guitarkhongem.github.io
+ *   GOOGLE_MAPS_KEY — (tuỳ chọn) bí mật: khoá API trình duyệt của Google Maps Platform, đã giới hạn theo trang web
+ *                     (HTTP referrer) và chỉ cho Map Tiles API. Để ngoài mã nguồn GitHub, đổi khoá không cần sửa mã.
  */
 export default {
   async fetch(request, env) {
@@ -26,6 +29,12 @@ export default {
       status, headers: { ...cors, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
+
+    if (url.pathname === "/google" && request.method === "GET") {
+      if (!cho.includes(origin)) return json({ ok: false, loi: "origin" }, 403);
+      if (!env.GOOGLE_MAPS_KEY) return json({ ok: false, loi: "chua-co-khoa" }, 404);
+      return json({ ok: true, key: env.GOOGLE_MAPS_KEY });
+    }
 
     if (url.pathname === "/hit" && request.method === "POST") {
       if (!cho.includes(origin)) return json({ ok: false, loi: "origin" }, 403);

@@ -10,15 +10,16 @@
   #summary { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27n"></script>
-<script src="js/parse.js?v=2026.11.27n"></script>
-<script src="js/geo.js?v=2026.11.27n"></script>
-<script src="js/export.js?v=2026.11.27n"></script>
-<script src="js/giadat.js?v=2026.11.27n"></script>
-<script src="js/lopfile.js?v=2026.11.27n"></script>
-<script src="js/chupanh.js?v=2026.11.27n"></script>
-<script src="js/ocrtoado.js?v=2026.11.27n"></script>
-<script src="js/thongke.js?v=2026.11.27n"></script>
+<script src="js/converter.js?v=2026.11.27o"></script>
+<script src="js/parse.js?v=2026.11.27o"></script>
+<script src="js/geo.js?v=2026.11.27o"></script>
+<script src="js/export.js?v=2026.11.27o"></script>
+<script src="js/giadat.js?v=2026.11.27o"></script>
+<script src="js/lopfile.js?v=2026.11.27o"></script>
+<script src="js/chupanh.js?v=2026.11.27o"></script>
+<script src="js/ocrtoado.js?v=2026.11.27o"></script>
+<script src="js/thongke.js?v=2026.11.27o"></script>
+<script src="js/google.js?v=2026.11.27o"></script>
 </head>
 <body>
 <div id="summary">Đang chạy…</div>
@@ -263,6 +264,17 @@ test("Thống kê truy cập: cờ, tên nước, dãy ngày (không gửi gì k
     theo_ngay: [{ ngay: "2026-11-01", luot: 2, moi: 1 }, { ngay: "2026-11-04", luot: 4, moi: 2 }] });
   eq(r.map((x) => x.luot).join(","), "2,0,0,4,0", "điền ngày trống, bắt đầu từ ngày có lượt");
   eq(VN.tkDayNgay({ tu: "0000-01-01", den: "9999-12-31", theo_ngay: [] }).length, 0, "không có dữ liệu");
+});
+
+test("Ảnh Google: mức zoom tối đa theo maxZoomRects, địa chỉ ô ảnh", () => {
+  const R = [{ maxZoom: 18, north: 17, south: 16, east: 107, west: 106 },
+    { maxZoom: 21, north: 16.9, south: 16.7, east: 107.2, west: 107.0 },
+    { maxZoom: 15, north: 10, south: -10, east: -170, west: 170 }];   // qua kinh tuyến 180
+  eq(VN.gsatMaxZoomTai(R, 106.5, 16.5), 18, "trong ô 1");
+  eq(VN.gsatMaxZoomTai(R, 107.05, 16.8), 21, "chồng ô → lấy mức cao nhất");
+  eq(VN.gsatMaxZoomTai(R, 179.5, 0), 15, "qua kinh tuyến 180");
+  eq(VN.gsatMaxZoomTai(R, 100, 50), 0, "ngoài mọi ô");
+  eq(VN.gsatUrlO("a b", "K"), "https://tile.googleapis.com/v1/2dtiles/{z}/{x}/{y}?session=a%20b&key=K", "địa chỉ ô ảnh");
 });
 
 for (const [name, ok, msg] of results) {

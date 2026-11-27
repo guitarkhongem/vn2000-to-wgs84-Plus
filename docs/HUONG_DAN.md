@@ -102,7 +102,12 @@ Bảng **Kết quả** có đủ hai hệ cho mỗi điểm: Tên, X, Y, Vĩ đ�
 
 ## 7. Bản đồ
 
-- **Bản đồ / Vệ tinh** (góc trên trái): đổi nền. Ở vùng nông thôn, ảnh vệ tinh zoom sâu có thể hơi mờ.
+- **Bản đồ / Vệ tinh / Google** (góc trên trái): đổi nền. *Vệ tinh* là ảnh **Esri**; **Google** là ảnh vệ tinh
+  **Google** (lấy chính thức qua Google Maps Platform — Map Tiles API, ảnh như trên Google Maps; ở nhiều nơi mới và nét
+  hơn Esri). Khi dùng Google, góc dưới trái bản đồ ghi **Google Maps** và nguồn ảnh của vùng đang xem (vd *Ảnh ©2026
+  Airbus, Maxar Technologies*) — bấm vào để xem đủ. Chỗ Google chưa có ảnh vẫn thấy ảnh Esri bên dưới. Ảnh Google có
+  hạn mức miễn phí mỗi ngày: hết hạn mức thì ứng dụng báo và tự chuyển về ảnh Esri (hôm sau dùng lại được). Nút
+  *Google* chỉ hiện khi chủ ứng dụng đã cài khoá Google. Ở vùng nông thôn, ảnh zoom sâu có thể hơi mờ.
 - **◎ Định vị vị trí của tôi** (nút dưới nút la bàn, góc trên bên phải): như Google Maps — chấm xanh là vị trí
   thiết bị, vòng mờ là phạm vi sai số, mũi nhọn là hướng đang nhìn (điện thoại). Bấm lần 1: bay tới vị trí và
   bám theo khi di chuyển; kéo bản đồ thì thôi bám (bấm lại để bám tiếp); bấm khi đang bám để tắt. Ô **📍 Vị trí
@@ -246,6 +251,7 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
 | Nền hành chính (zoom ≤ 9): 34 tỉnh, biên giới, QĐ. Hoàng Sa, QĐ. Trường Sa, nước láng giềng | **Bản đồ hành chính Việt Nam tỷ lệ 1:1.000.000** — Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam (Bộ Nông nghiệp và Môi trường), 02/2025. Ranh giới tỉnh theo **Nghị quyết 202/2025/QH15**. Biên tập: **đề tài KH&CN cấp cơ sở NV25-44** *"Xây dựng chuỗi bản đồ hành chính Việt Nam tỷ lệ nhỏ phục vụ công bố khoa học của Trường Đại học Mỏ - Địa chất"*, chủ nhiệm **TS Trần Trung Anh**, 10/2025 | Chuyển từ hệ Lambert *BD1trieu_VN2000* sang WGS84 bằng chính 7 tham số của ứng dụng; đơn giản hoá ranh ~30 m. Tỷ lệ nhỏ: chỉ để xem tổng quan, **không dùng xác định ranh thửa**. Vị trí các nhãn *Biển Đông* và tên nước láng giềng đặt theo bố cục bản đồ NV25-44 |
 | Bản đồ đường phố | © **OpenStreetMap contributors**, giấy phép ODbL | openstreetmap.org/copyright |
 | Ảnh vệ tinh | **Esri World Imagery** (Esri, Maxar, Earthstar Geographics) | Độ phân giải tuỳ vùng |
+| Ảnh vệ tinh Google (nút *Google*) | **Google Maps Platform — Map Tiles API** (2D Tiles, ảnh vệ tinh); nhà cung cấp ảnh từng vùng theo chuỗi bản quyền Google trả về, hiện ở góc dưới trái bản đồ | Dùng theo điều khoản Google Maps Platform: không tải trước / lưu ảnh; khoá của chủ ứng dụng, giới hạn theo trang web và hạn mức theo ngày. Mục 7 |
 | Lớp quy hoạch Hướng Hóa | **Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa** | Chỉ để tham khảo (mục 8) |
 | Giá đất 2026 | **Nghị quyết 12/2025/NQ-HĐND** ngày 11/12/2025 của HĐND tỉnh Quảng Trị — Bảng giá đất áp dụng từ 01/01/2026 (Phụ lục I: đất nông nghiệp; II: đất ở; III: đất TMDV, đất cơ sở SXKD phi nông nghiệp), qua bản tổng hợp Excel *"BANG GIA DAT 2026"* | Liên kết Google Maps điểm đầu – cuối từng đoạn lấy từ bản tổng hợp; hình đoạn đường dò theo mạng đường © **OpenStreetMap contributors** (ODbL) dữ liệu tải qua **Overpass API** (maps.mail.ru), dò tuyến trên máy; một phần bằng **OSRM** (máy chủ routing.openstreetmap.de của FOSSGIS). Mục 9 |
 | Tham số chuyển đổi VN-2000 ⇄ WGS84 (7 tham số) | **Quyết định số 05/2007/QĐ-BTNMT** ngày 27/02/2007 của Bộ Tài nguyên và Môi trường *về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000* | Dịch gốc −191,90441429 m; −39,30318279 m; −111,45032835 m · góc xoay −0,00928836″; 0,01975479″; −0,00427372″ · tỉ lệ k = 1,000000252906278 (cũng là bộ EPSG:6960, Coordinate Frame) |
@@ -272,6 +278,7 @@ Kinh tuyến trục, chiều chuyển đổi, dữ liệu nhập lần trước,
 | Khung vàng "Không đúng định dạng" | Dùng dấu phẩy làm dấu thập phân, hoặc có chữ lẫn vào số |
 | Không thấy nút Quy hoạch | Lớp quy hoạch chưa được tạo, hoặc đang mở file trực tiếp trên máy thay vì qua trang web |
 | Lớp quy hoạch không hiện | Zoom quá xa — phóng to tới mức 10 trở lên (ranh thửa từ mức 12) |
+| Không thấy nút *Google*, hoặc báo "hết hạn mức" | Chủ ứng dụng chưa cài khoá Google, hoặc ảnh Google đã dùng hết hạn mức miễn phí trong ngày — dùng *Vệ tinh* (Esri), hôm sau thử lại |
 
 ## 14. Thống kê truy cập
 
