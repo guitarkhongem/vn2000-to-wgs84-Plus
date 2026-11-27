@@ -647,8 +647,18 @@
   function init(map, helpers) {
     S.map = map; S.h = helpers;
     const inp = document.getElementById("lf-input");
-    document.getElementById("lf-add").addEventListener("click", () => inp.click());
-    inp.addEventListener("change", () => { moFiles([...inp.files]); inp.value = ""; });
+    document.getElementById("lf-add").addEventListener("click", () => { CHO.t = Date.now(); inp.click(); });
+    // Điện thoại (Android) chép cả file vào trình duyệt trước khi báo đã chọn (sự kiện change) — file lớn trên USB OTG /
+    // thẻ nhớ / Google Drive mất vài phút → khi quay lại trang mà chưa có change thì báo ngay "đang lấy file…"
+    const quayLai = () => {
+      if (!CHO.t || document.visibilityState === "hidden") return;
+      clearTimeout(CHO.hen);
+      CHO.hen = setTimeout(() => { if (CHO.t && !TD.dangMo && !TD.xuat) hienCho(); }, 700);
+    };
+    root.addEventListener("focus", quayLai);
+    document.addEventListener("visibilitychange", quayLai);
+    inp.addEventListener("cancel", boCho);
+    inp.addEventListener("change", () => { boCho(); moFiles([...inp.files]); inp.value = ""; });
     const zone = map.getContainer();
     zone.addEventListener("dragover", (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) { e.preventDefault(); zone.classList.add("lf-drop"); } });
     zone.addEventListener("dragleave", () => zone.classList.remove("lf-drop"));
@@ -662,7 +672,7 @@
   }
 
   // Ảnh bay / ảnh trực giao (docs/js/anhbay.js): ảnh + file world / .prj cùng tên chọn cùng lúc
-  const ANH = /\.(tif|tiff|jpe?g|png)$/i, PHU = /\.(tfw|tifw|tiffw|jgw|jpgw|jpegw|pgw|pngw|wld|prj|ovr)$/i;
+  const ANH = /\.(tif|tiff|jpe?g|png)$/i, PHU = /\.(tfw|tifw|tiffw|jgw|jpgw|jpegw|pgw|pngw|wld|prj|ovr)$/i, GOI = /\.pmtiles$/i;
   const tenGoc = (n) => n.replace(/\.[^.]+$/, "").toLowerCase();
   async function moFiles(files) {
     const phu = files.filter((f) => PHU.test(f.name));
@@ -680,7 +690,8 @@
       td(0, "bắt đầu…");
       await nhuong();
       try {
-        if (ANH.test(f.name)) {
+        if (GOI.test(f.name)) await moGoi(f, td);
+        else if (ANH.test(f.name)) {
           const kem = phu.filter((p) => tenGoc(p.name) === tenGoc(f.name) || tenGoc(p.name) === f.name.toLowerCase());
           await moAnh(f, { world: kem.find((p) => !/\.(prj|ovr)$/i.test(p.name)), prj: kem.find((p) => /\.prj$/i.test(p.name)),
             ovr: kem.find((p) => /\.ovr$/i.test(p.name)) }, { nhoHe, nhieuAnh }, td);
@@ -702,7 +713,7 @@
   }
 
   // ---------- thanh tiến trình thêm file (dưới nút "Thêm file…") ----------
-  const TD = { n: 0, i: 0, ten: "", dangMo: false, loi: 0, hen: 0, ve: null };
+  const TD = { n: 0, i: 0, ten: "", dangMo: false, loi: 0, hen: 0, ve: null, xuat: false };
   // nhường luồng để trình duyệt kịp vẽ thanh tiến trình trước bước nặng
   const nhuong = () => new Promise((r) => { let x = false; const f = () => { if (!x) { x = true; setTimeout(r, 0); } };
     requestAnimationFrame(f); setTimeout(f, 60); });
@@ -720,10 +731,39 @@
     thanh.firstElementChild.style.width = tong == null ? "" : (tong * 100).toFixed(1) + "%";
     el.setAttribute("aria-valuenow", tong == null ? "" : String(Math.round(tong * 100)));
   }
-  function anTienDo() { const el = document.getElementById("lf-tien"); if (el && !TD.dangMo && !TD.ve) el.hidden = true; }
+  function anTienDo() { const el = document.getElementById("lf-tien"); if (el && !TD.dangMo && !TD.ve && !TD.xuat && !CHO.hien) { el.hidden = true; nutTien(null); } }
+  // nút nhỏ bên phải thanh tiến trình ("Huỷ" khi xuất gói ảnh, "Ẩn" khi chờ điện thoại chép file); null = ẩn nút
+  function nutTien(chu, fn) {
+    const b = document.querySelector("#lf-tien .lf-tien-nut"); if (!b) return;
+    b.hidden = !chu; b.textContent = chu || ""; b.onclick = chu ? fn : null;
+  }
+  // ---------- chờ điện thoại chép file vừa chọn ----------
+  const CHO = { t: 0, hen: 0, dem: 0, hien: false };
+  function hienCho() {
+    const el = document.getElementById("lf-tien"); if (!el) return;
+    CHO.hien = true; clearTimeout(TD.hen);
+    el.hidden = false;
+    el.querySelector(".lf-tien-pt").textContent = "";
+    const thanh = el.querySelector(".lf-tien-thanh");
+    thanh.classList.add("vo-dinh"); thanh.firstElementChild.style.width = "";
+    nutTien("Ẩn", boCho);
+    const viet = () => {
+      if (!CHO.hien) return;
+      const s = Math.round((Date.now() - CHO.t) / 1000), dh = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+      el.querySelector(".lf-tien-chu").textContent = `Đang lấy file từ bộ nhớ của máy (${dh})… Điện thoại phải chép xong file (từ USB, thẻ nhớ, Google Drive…) mới mở được — file lớn có thể mất vài phút.` +
+        (s >= 20 ? " Mẹo: chép ảnh vào bộ nhớ trong của điện thoại, hoặc trên máy tính bấm 📦 để xuất gói ảnh .pmtiles nhẹ hơn rồi mở gói đó trên điện thoại." : "");
+    };
+    viet(); clearInterval(CHO.dem); CHO.dem = setInterval(viet, 1000);
+  }
+  function boCho() {
+    CHO.t = 0; clearTimeout(CHO.hen); clearInterval(CHO.dem);
+    if (!CHO.hien) return;
+    CHO.hien = false;
+    if (!TD.dangMo && !TD.xuat) { nutTien(null); anTienDo(); }
+  }
   // vẽ ô ảnh trực giao (anhbay.js báo số ô đã vẽ / đang chờ) — bước tốn thời gian nhất với ảnh lớn
   function tienDoVe(xong, tong) {
-    if (TD.dangMo) return;                                // đang mở file: thanh mở file ưu tiên
+    if (TD.dangMo || TD.xuat || CHO.hien) return;         // đang mở / xuất file: thanh đó ưu tiên
     const el = document.getElementById("lf-tien"); if (!el) return;
     if (xong >= tong) { TD.ve = null; clearTimeout(TD.hen); TD.hen = setTimeout(anTienDo, 500); return; }
     TD.ve = { xong, tong }; clearTimeout(TD.hen);
@@ -822,12 +862,105 @@
     };
     const r = await root.VN.anhBayMo(file, kem, { map: S.map, h: S.h, hoiHeToaDo: hoi });
     if (!r) return;                                      // người dùng huỷ
+    themAnh(r, r.zMin > 12 ? " — ảnh không có overview: phóng to để thấy ảnh, xa hơn chỉ hiện khung" : "");
+  }
+  // gói ảnh .pmtiles (docs/js/goianh.js): ô ảnh đã vẽ sẵn → không hỏi hệ toạ độ, hiện ngay
+  async function moGoi(file, td) {
+    if (!root.VN.goiAnh) throw new Error("Thiếu bộ đọc gói ảnh (goianh.js)");
+    document.getElementById("lf-loi").hidden = true;
+    td(0.3, "đang đọc gói ảnh…");
+    themAnh(await root.VN.goiAnh.mo(file, { map: S.map, h: S.h }), "");
+  }
+  function themAnh(r, them) {
     const lop = { id: r.id, name: r.ten, loai: r.loai, kind: "anh", anh: r, bb: r.bb, visible: true, op: 100,
       n: 0, nVung: 0, chu: [], mau: "#ff7a00" };
     S.files.push(lop);
     S.map.fitBounds([[r.bb[0], r.bb[1]], [r.bb[2], r.bb[3]]], { padding: 30, maxZoom: 19, duration: 600 });
-    S.h.toast(`Đã thêm ảnh ${r.ten}` + (r.zMin > 12 ? " — ảnh không có overview: phóng to để thấy ảnh, xa hơn chỉ hiện khung" : ""), 5000);
+    S.h.toast(`Đã thêm ${r.goi ? "gói ảnh" : "ảnh"} ${r.ten}` + them, 5000);
     danhSach();
+  }
+
+  // ---------- xuất gói ảnh .pmtiles cho điện thoại (docs/js/goianh.js) ----------
+  const coMB = (b) => b >= 1073741824 ? (b / 1073741824).toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + " GB"
+    : Math.max(1, Math.round(b / 1048576)).toLocaleString("vi-VN") + " MB";
+  const thoiGian = (s) => s < 60 ? `${Math.max(5, Math.round(s / 5) * 5)} giây` : s < 3600 ? `${Math.round(s / 60)} phút` : `${(s / 3600).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} giờ`;
+  async function xuatGoi(f) {
+    const G = root.VN.goiAnh;
+    if (!G) { S.h.toast("Thiếu bộ xuất gói ảnh (goianh.js)"); return; }
+    if (TD.xuat) { S.h.toast("Đang xuất một gói ảnh khác — chờ xong hoặc bấm Huỷ"); return; }
+    const dlg = document.getElementById("ga-dlg"), box = document.getElementById("ga-muc"), uoc = document.getElementById("ga-uoc");
+    const ok = document.getElementById("ga-ok"), e = S.h.escapeHtml;
+    document.getElementById("ga-ten").textContent = f.name;
+    box.innerHTML = '<legend class="small">Mức chi tiết</legend>'; ok.disabled = true;
+    uoc.textContent = "Đang vẽ thử vài ô để ước tính dung lượng và thời gian…";
+    const acUoc = new AbortController();
+    let cac = [];
+    const chon = new Promise((resolve) => {
+      ok.onclick = () => { const r = box.querySelector("input:checked"); resolve(r ? Number(r.value) : null); };
+      document.getElementById("ga-huy").onclick = () => resolve(null);
+      dlg.oncancel = () => resolve(null);
+    });
+    dlg.showModal();
+    G.uocTinh(f.anh.id, acUoc.signal).then((u) => {
+      const L = u.L;
+      cac = u.cac.map((z) => G.uocMuc(u, z));
+      // nên chọn: mức gọn nhất mà điểm ảnh ô vẫn ≤ 1,25 lần điểm ảnh gốc (giữ đủ chi tiết), file ≤ 2 GB
+      let nen = -1;
+      cac.forEach((c, i) => { if (c.tiLe <= 1.25) nen = i; });
+      if (nen < 0) nen = 0;
+      while (nen < cac.length - 1 && cac[nen].byte > 2 * 1073741824) nen++;
+      const ten = (c, i) => c.tiLe <= 1.25 ? (i === nen ? "Giữ đủ chi tiết của ảnh gốc (nên chọn)" : "Nét hơn ảnh gốc — file lớn hơn nhưng không rõ thêm")
+        : c.tiLe <= 2.5 ? "Gọn hơn khoảng 4 lần — hơi mờ khi phóng thật sát" : "Gọn hơn nhiều — để xem tổng quan";
+      box.innerHTML = '<legend class="small">Mức chi tiết</legend>' + cac.map((c, i) => `<label><input type="radio" name="ga-z" value="${c.z}" ${i === nen ? "checked" : ""}>
+        <span><b>${ten(c, i)}</b><small>Zoom ${c.z} · ${c.cm.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} cm/điểm ảnh · ~${c.nLa.toLocaleString("vi-VN")} ô · ~${coMB(c.byte)} · ~${thoiGian(c.giay)}</small></span></label>`).join("");
+      uoc.innerHTML = `Ước tính từ ${e(u.dd.ten)} chất lượng 85%, ảnh gốc ${(L.gsd * 100).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} cm/điểm ảnh — số thật có thể khác. ` +
+        (u.dd.ten === "PNG" ? "Trình duyệt này không tạo được WebP nên gói sẽ lớn hơn — nên dùng Chrome / Edge trên máy tính." : "");
+      ok.disabled = false;
+    }).catch((err) => { if (err && err.name === "AbortError") return; uoc.textContent = "Không ước tính được: " + (err && err.message ? err.message : err); });
+    const z = await chon;
+    acUoc.abort();
+    if (z == null) { dlg.close(); return; }
+    // chọn nơi lưu ngay lúc bấm (Chrome / Edge máy tính); trình duyệt khác tải về thư mục Tải xuống khi xong
+    const L0 = root.VN.abLop(f.anh.id), tenFile = (L0 ? L0.ten : f.name).replace(/\.[^.]+$/, "") + `_z${z}.pmtiles`;
+    let noiLuu = null;
+    if (root.showSaveFilePicker) {
+      try { noiLuu = await root.showSaveFilePicker({ suggestedName: tenFile, types: [{ description: "Gói ảnh PMTiles", accept: { "application/octet-stream": [".pmtiles"] } }] }); }
+      catch (err) { if (err && err.name === "AbortError") { dlg.close(); return; } noiLuu = null; }
+    }
+    dlg.close();
+    const ac = new AbortController(), el = document.getElementById("lf-tien"), t0 = performance.now();
+    TD.xuat = true; clearTimeout(TD.hen); boCho();
+    el.hidden = false;
+    nutTien("Huỷ", () => ac.abort());
+    let lan = 0;
+    const bao = (xong, tong, buoc, byte) => {
+      const now = performance.now(); if (now - lan < 150 && xong < tong) return; lan = now;
+      const pt = tong ? Math.min(1, xong / tong) : 0, giay = (now - t0) / 1000;
+      const con = pt > 0.03 && xong < tong ? ` · còn ~${thoiGian((giay / pt) * (1 - pt))}` : "";
+      el.querySelector(".lf-tien-chu").textContent = `Xuất gói ảnh ${f.name} — ${buoc} · ${xong.toLocaleString("vi-VN")}/${tong.toLocaleString("vi-VN")} ô · ${coMB(byte)}${con}`;
+      el.querySelector(".lf-tien-pt").textContent = Math.round(pt * 100) + "%";
+      const thanh = el.querySelector(".lf-tien-thanh");
+      thanh.classList.remove("vo-dinh"); thanh.firstElementChild.style.width = (pt * 100).toFixed(1) + "%";
+    };
+    try {
+      const r = await G.xuat(f.anh.id, z, { signal: ac.signal, tienDo: bao });
+      el.querySelector(".lf-tien-chu").textContent = `Đang lưu ${tenFile} (${coMB(r.byte)})…`;
+      if (noiLuu) { const w = await noiLuu.createWritable(); await w.write(r.blob); await w.close(); }
+      else {
+        const a = document.createElement("a"); a.href = URL.createObjectURL(r.blob); a.download = tenFile;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 120000);
+      }
+      bao(1, 1, "xong", r.byte);
+      S.h.toast(`Đã xuất ${tenFile}: ${r.soO.toLocaleString("vi-VN")} ô, ${coMB(r.byte)}, zoom ${r.minZ}–${r.maxZ}, mất ${thoiGian((performance.now() - t0) / 1000)}. ` +
+        "Chép file này sang điện thoại rồi mở trong Lớp từ file.", 9000);
+    } catch (err) {
+      if (err && err.name === "AbortError") S.h.toast("Đã huỷ xuất gói ảnh");
+      else { S.h.toast("Xuất gói ảnh lỗi: " + (err && err.message ? err.message : err), 6000); hienLoi(f.name, err); }
+    } finally {
+      TD.xuat = false; nutTien(null);
+      clearTimeout(TD.hen); TD.hen = setTimeout(anTienDo, 2500);
+    }
   }
 
   // Hộp thoại chọn hệ toạ độ + kinh tuyến trục cho file CAD / ảnh (mỗi lần mở file).
@@ -923,6 +1056,7 @@
         <label class="lf-ten"><input type="checkbox" ${f.visible ? "checked" : ""} data-act="an">
           <span class="lf-sw lf-sw-anh" aria-hidden="true">🖼</span><span><b>${e(f.name)}</b>
           <small class="muted">${e(f.loai)}</small></span></label>
+        ${f.anh.xuat ? `<button type="button" class="btn small ghost" data-act="goi" title="Xuất gói ảnh .pmtiles (vẽ sẵn, nhẹ) để mở nhanh trên điện thoại">📦</button>` : ""}
         <button type="button" class="btn small ghost" data-act="zoom" title="Phóng tới ảnh">⤢</button>
         <button type="button" class="btn small ghost" data-act="xoa" title="Gỡ ảnh khỏi bản đồ">×</button></div>
         <div class="lf-to"><label class="lf-op" title="Độ rõ của ảnh (giảm để thấy nền bên dưới)">Độ rõ
@@ -945,6 +1079,7 @@
       const b = ev.target.closest("[data-act]"); if (!b) return;
       const li = b.closest("li"), f = S.files.find((x) => x.id === li.dataset.id); if (!f) return;
       if (b.dataset.act === "zoom") S.map.fitBounds([[f.bb[0], f.bb[1]], [f.bb[2], f.bb[3]]], { padding: 40, maxZoom: 18 });
+      else if (b.dataset.act === "goi") xuatGoi(f);
       else if (b.dataset.act === "xoa") {
         if (f.kind === "anh") f.anh.go();
         else {

@@ -13,10 +13,18 @@
  * Đổi toạ độ: mỗi ô bản đồ 256 px lấy lưới 9×9 điểm, đổi WGS84 → VN-2000 bằng VN.wgs84ToVn2000 (thuật toán của
  * ứng dụng, docs/js/converter.js — không viết lại công thức), nội suy song tuyến cho từng điểm ảnh. Khung bao ảnh
  * đổi ngược bằng VN.vn2000ToWgs84. Ô ảnh vẽ qua giao thức "anhbay://" của MapLibre (addProtocol).
+ *
+ * Vẽ song song: file này đồng thời là script của Web Worker (2–4 luồng theo số nhân CPU). Mỗi worker nạp
+ * converter.js (cùng thuật toán), đọc thẳng file ảnh (File/Blob chuyển sang worker không phải chép) và vẽ ô
+ * trên luồng riêng → bản đồ không bị đứng khi giải mã ảnh lớn. Trình duyệt không có worker / OffscreenCanvas
+ * trong worker → vẽ trên luồng chính như trước.
  */
 (function (root) {
   "use strict";
   root.VN = root.VN || {};
+  // chạy như script của Web Worker (vẽ song song) hay trên trang
+  const LA_WORKER = typeof window === "undefined" && typeof importScripts === "function";
+  const BASE = !LA_WORKER && typeof document !== "undefined" && document.currentScript ? document.currentScript.src : "";
 
   // ======================================================================= đọc TIFF
   const KT = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 6: 1, 7: 1, 8: 2, 9: 4, 10: 8, 11: 4, 12: 8, 16: 8, 17: 8, 18: 8 };
@@ -266,7 +274,10 @@
   }
 
   // ---------- bộ nhớ đệm các mảnh đã giải mã ----------
-  const DEM = new Map(); let demByte = 0; const DEM_MAX = 96 * 1024 * 1024;
+  const DEM = new Map(); let demByte = 0, DEM_MAX = 96 * 1024 * 1024;
+  function xoaDem(id) {
+    for (const [k, p] of [...DEM]) if (k.startsWith(id + ":")) { DEM.delete(k); p.then((x) => { demByte -= x ? x.rgba.length : 0; }).catch(() => {}); }
+  }
   async function manh(src, li, idx) {
     const k = src.id + ":" + li + ":" + idx;
     if (DEM.has(k)) { const v = DEM.get(k); DEM.delete(k); DEM.set(k, v); return v; }
@@ -407,16 +418,18 @@
   const DS = new Map();          // id lớp → lớp ảnh
   let rong = null, demLop = 0;
   async function oTrong() {
-    if (rong) return rong;
+    if (rong) return rong.slice(0);           // bản sao: bộ đệm trả cho MapLibre / worker có thể bị chuyển đi
     const cv = new OffscreenCanvas(1, 1);
     cv.getContext("2d").clearRect(0, 0, 1, 1);
     rong = await (await cv.convertToBlob({ type: "image/png" })).arrayBuffer();
-    return rong;
+    return rong.slice(0);
   }
   const lonTile = (x, n) => (x / n) * 360 - 180;
   const latTile = (y, n) => (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n))) * 180) / Math.PI;
 
-  async function veO(lop, z, x, y, signal) {
+  // fmt (khi xuất gói ảnh): "image/webp" | "image/png" → trả null nếu ô trống; không có fmt (hiện bản đồ) → PNG, ô trống = PNG trong suốt
+  async function veO(lop, z, x, y, signal, fmt) {
+    const trong = () => (fmt ? null : oTrong());
     const G = 8, N = 256, n = 2 ** z, src = lop.src, W = src.W, H = src.H;
     const gx = new Float64Array((G + 1) * (G + 1)), gy = new Float64Array((G + 1) * (G + 1));
     let mnx = Infinity, mny = Infinity, mxx = -Infinity, mxy = -Infinity;
@@ -425,7 +438,7 @@
       const k = j * (G + 1) + i; gx[k] = cx; gy[k] = cy;
       if (cx < mnx) mnx = cx; if (cx > mxx) mxx = cx; if (cy < mny) mny = cy; if (cy > mxy) mxy = cy;
     }
-    if (mxx < 0 || mxy < 0 || mnx > W || mny > H || !isFinite(mnx)) return oTrong();
+    if (mxx < 0 || mxy < 0 || mnx > W || mny > H || !isFinite(mnx)) return trong();
     // chọn mức overview: ≥ 1 điểm ảnh của mức cho mỗi điểm ảnh ô bản đồ
     const ti = Math.max(mxx - mnx, mxy - mny) / N;
     let li = 0;
@@ -435,7 +448,8 @@
     const x1 = Math.min(L.w, Math.ceil(mxx / fx) + 2), y1 = Math.min(L.h, Math.ceil(mxy / fy) + 2);
     if (signal && signal.aborted) throw new DOMException("huỷ", "AbortError");
     const cs = src.kieu === "anh" ? docCuaSoAnh(src, li, x0, y0, x1, y1) : await docCuaSoTiff(src, li, x0, y0, x1, y1);
-    if (!cs) return oTrong();                             // cần đọc quá nhiều (không có overview) → để trống
+    if (!cs) return trong();                              // cần đọc quá nhiều (không có overview) → để trống
+    if (signal && signal.aborted) throw new DOMException("huỷ", "AbortError");
     // thu nhỏ nhiều hơn 1,5 lần (không có overview phù hợp) → làm mượt bằng canvas trước, tránh đường mảnh bị đứt
     let kx = 1, ky = 1, cv0 = cs;
     const tl = ti / fx;
@@ -475,9 +489,122 @@
         }
       }
     }
+    let co = false;                                       // ô toàn điểm trong suốt (vùng nodata) → không mã hoá ảnh
+    for (let i = 3; i < out.length; i += 4) if (out[i]) { co = true; break; }
+    if (!co) return trong();
     const cv = new OffscreenCanvas(N, N);
     cv.getContext("2d").putImageData(new ImageData(out, N, N), 0, 0);
-    return (await cv.convertToBlob({ type: "image/png" })).arrayBuffer();
+    return (await cv.convertToBlob(fmt ? { type: fmt, quality: 0.85 } : { type: "image/png" })).arrayBuffer();
+  }
+
+  // Ghép 4 ô con (trên trái, trên phải, dưới trái, dưới phải; Blob ảnh hoặc null) thành ô mức zoom nhỏ hơn — dùng khi xuất gói ảnh
+  async function ghep4(con, fmt) {
+    const cv = new OffscreenCanvas(256, 256), cx = cv.getContext("2d");
+    cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = "high";
+    let co = false;
+    for (let k = 0; k < 4; k++) {
+      const b = con[k]; if (!b) continue;
+      const bmp = await createImageBitmap(b instanceof Blob ? b : new Blob([b]));
+      cx.drawImage(bmp, (k & 1) * 128, (k >> 1) * 128, 128, 128);
+      if (bmp.close) bmp.close();
+      co = true;
+    }
+    if (!co) return null;
+    return (await cv.convertToBlob({ type: fmt || "image/png", quality: 0.85 })).arrayBuffer();
+  }
+
+  // hàm đổi: kinh/vĩ độ → điểm ảnh gốc (cột, hàng) và ngược lại, theo hệ số affine + hệ toạ độ người dùng chọn
+  function taoToPx(aff, opt) {
+    const det = aff[1] * aff[5] - aff[2] * aff[4];
+    const nghich = (X, Y) => { const dx = X - aff[0], dy = Y - aff[3]; return [(aff[5] * dx - aff[2] * dy) / det, (-aff[4] * dx + aff[1] * dy) / det]; };
+    if (opt.crs === "wgs84") return { det, toPx: (lon, lat) => nghich(lon, lat), toLonLat: (X, Y) => [X, Y] };
+    const dao = opt.crs === "vn2000-dao", l0 = opt.lon0;
+    return {
+      det,
+      toPx: (lon, lat) => { const [xb, yd] = root.VN.wgs84ToVn2000(lat, lon, 0, l0); return dao ? nghich(xb, yd) : nghich(yd, xb); },
+      toLonLat: (X, Y) => { const [la, lo] = dao ? root.VN.vn2000ToWgs84(X, Y, 0, l0) : root.VN.vn2000ToWgs84(Y, X, 0, l0); return [lo, la]; },
+    };
+  }
+
+  // ======================================================================= nhóm worker vẽ song song
+  const POOL = { ws: null, hong: LA_WORKER || !BASE, q: 0, cho: new Map() };
+  const loiHuy = () => new DOMException("huỷ", "AbortError");
+  function poolTao() {
+    if (POOL.ws || POOL.hong) return POOL.ws;
+    if (typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined") { POOL.hong = true; return null; }
+    const n = Math.max(1, Math.min(4, ((root.navigator && navigator.hardwareConcurrency) || 2) - 1));
+    POOL.ws = [];
+    try {
+      for (let i = 0; i < n; i++) {
+        const o = { w: new Worker(BASE), ban: 0 };
+        o.w.onmessage = (ev) => poolNhan(o, ev.data);
+        o.w.onerror = (ev) => { if (ev && ev.preventDefault) ev.preventDefault(); poolHong(); };
+        POOL.ws.push(o);
+      }
+    } catch (_) { poolHong(); }
+    return POOL.ws;
+  }
+  // worker không chạy được (trình duyệt cũ) → mọi ô đang chờ vẽ lại trên luồng chính
+  function poolHong() {
+    if (POOL.hong) return;
+    POOL.hong = true;
+    const ws = POOL.ws || []; POOL.ws = null;
+    for (const o of ws) try { o.w.terminate(); } catch (_) { /* bỏ qua */ }
+    const cho = [...POOL.cho.values()]; POOL.cho.clear();
+    for (const c of cho) c.res({ hong: true });
+  }
+  function poolNhan(o, m) {
+    if (m.t === "san") { if (!m.ok) poolHong(); return; }
+    const c = POOL.cho.get(m.q); if (!c) return;
+    POOL.cho.delete(m.q); o.ban--;
+    if (m.hong) { c.res({ hong: true }); poolHong(); }
+    else if (m.loi) c.rej(m.loi === "AbortError" ? loiHuy() : new Error(m.loi));
+    else c.res({ buf: m.buf || null });
+  }
+  function poolGui(o, msg, signal) {
+    return new Promise((res, rej) => {
+      if (signal && signal.aborted) { rej(loiHuy()); return; }
+      const q = ++POOL.q; msg.q = q;
+      POOL.cho.set(q, { res, rej }); o.ban++;
+      if (signal) signal.addEventListener("abort", () => {
+        if (!POOL.cho.has(q)) return;
+        POOL.cho.delete(q); o.ban--;
+        try { o.w.postMessage({ t: "huy", q }); } catch (_) { /* bỏ qua */ }
+        rej(loiHuy());
+      }, { once: true });
+      try { o.w.postMessage(msg); } catch (e) { POOL.cho.delete(q); o.ban--; res({ hong: true }); }
+    });
+  }
+  // ô gần nhau (chung mảnh TIFF) vào cùng worker để dùng lại bộ đệm; worker đó bận quá thì chọn worker rảnh nhất
+  function poolChon(x, y) {
+    const ws = POOL.ws;
+    let rot = ws[0]; for (const o of ws) if (o.ban < rot.ban) rot = o;
+    if (x == null) return rot;
+    const k = ws[Math.abs(((x >> 1) * 73856093) ^ ((y >> 1) * 19349663)) % ws.length];
+    return k.ban > rot.ban + 2 ? rot : k;
+  }
+  function poolDangKy(lop, aff, opt) {
+    const ws = poolTao(); if (!ws || !ws.length) return false;
+    const s = lop.src;
+    try {
+      for (const o of ws) o.w.postMessage({ t: "mo", id: lop.id, src: { id: s.id, kieu: s.kieu, W: s.W, H: s.H, muc: s.muc, blob: s.blob }, aff, opt: { crs: opt.crs, lon0: opt.lon0 } });
+      return true;
+    } catch (_) { return false; }
+  }
+  async function veLop(lop, z, x, y, signal, fmt) {
+    if (lop.pool && POOL.ws && !POOL.hong) {
+      const r = await poolGui(poolChon(x, y), { t: "ve", id: lop.id, z, x, y, fmt }, signal);
+      if (!r.hong) return r.buf;
+    }
+    return veO(lop, z, x, y, signal, fmt);
+  }
+  async function ghepLop(con, fmt, signal) {
+    if (poolTao() && !POOL.hong) {
+      const r = await poolGui(poolChon(), { t: "ghep", con, fmt }, signal);
+      if (!r.hong) return r.buf;
+    }
+    if (signal && signal.aborted) throw loiHuy();
+    return ghep4(con, fmt);
   }
 
   let daDangKy = false;
@@ -491,7 +618,7 @@
       const lop = m && DS.get(m[1]);
       if (!lop) return { data: await oTrong() };
       TDV.tong++; TDV.dang++; bao();
-      try { return { data: await veO(lop, +m[2], +m[3], +m[4], ac && ac.signal) }; }
+      try { return { data: await veLop(lop, +m[2], +m[3], +m[4], ac && ac.signal) }; }
       finally { TDV.dang--; bao(); if (!TDV.dang) TDV.tong = 0; }
     });
   }
@@ -531,16 +658,7 @@
     if (!opt) { if (src.bmp) src.bmp.close(); return null; }
 
     // hàm đổi: kinh/vĩ độ → điểm ảnh gốc (cột, hàng)
-    const det = aff[1] * aff[5] - aff[2] * aff[4];
-    const nghich = (X, Y) => { const dx = X - aff[0], dy = Y - aff[3]; return [(aff[5] * dx - aff[2] * dy) / det, (-aff[4] * dx + aff[1] * dy) / det]; };
-    const VN = root.VN;
-    let toPx, toLonLat;
-    if (opt.crs === "wgs84") { toPx = (lon, lat) => nghich(lon, lat); toLonLat = (X, Y) => [X, Y]; }
-    else {
-      const dao = opt.crs === "vn2000-dao", l0 = opt.lon0;
-      toPx = (lon, lat) => { const [xb, yd] = VN.wgs84ToVn2000(lat, lon, 0, l0); return dao ? nghich(xb, yd) : nghich(yd, xb); };
-      toLonLat = (X, Y) => { const [la, lo] = dao ? VN.vn2000ToWgs84(X, Y, 0, l0) : VN.vn2000ToWgs84(Y, X, 0, l0); return [lo, la]; };
-    }
+    const { det, toPx, toLonLat } = taoToPx(aff, opt);
     // khung bao ảnh (mỗi cạnh 8 đoạn) theo WGS84
     const vien = [];
     for (let s = 0; s < 4; s++) for (let t = 0; t < 8; t++) {
@@ -561,8 +679,10 @@
     const gh = src.kieu === "tiff" && src.muc.length === 1 && !src.muc[0].tiled ? 1024 : 2048;
     const zMin = Math.max(0, Math.min(zMax, Math.ceil(Math.log2((156543.034 * cosL * 256) / (thoNhat * gh)))));
 
-    const lop = { id: src.id, src, toPx, ten };
+    const tenHe = opt.crs === "wgs84" ? "WGS84" : `VN-2000 KTT ${opt.lon0}°`;
+    const lop = { id: src.id, src, toPx, ten, bb, vien, zMin, zMax, gsd, tenHe, kieu: src.kieu };
     DS.set(src.id, lop);
+    lop.pool = src.kieu === "tiff" && poolDangKy(lop, aff, opt);   // ảnh TIFF: vẽ trên các worker
     dangKyGiaoThuc();
     const map = ctx.map, id = src.id;
     map.addSource(id, { type: "raster", tiles: [`anhbay://${id}/{z}/{x}/{y}`], tileSize: 256, minzoom: 0, maxzoom: zMax,
@@ -574,9 +694,8 @@
     map.addLayer({ id: id + "-vien", type: "line", source: id + "-v",
       paint: { "line-color": "#ff7a00", "line-width": 1.5, "line-dasharray": [3, 2], "line-opacity": ["interpolate", ["linear"], ["zoom"], zMin, 1, zMin + 1, 0.35] } });
 
-    const tenHe = opt.crs === "wgs84" ? "WGS84" : `VN-2000 KTT ${opt.lon0}°`;
     return {
-      id, ten, bb, zMin,
+      id, ten, bb, zMin, xuat: true,
       loai: `${src.kieu === "tiff" ? (kem && kem.world ? "TIFF + world" : "GeoTIFF") : "Ảnh + world"} · ${kichThuoc} · ${(gsd * 100).toFixed(gsd < 1 ? 1 : 0)} cm/điểm ảnh · ${tenHe}`,
       hien(v) { for (const s of ["-anh", "-vien"]) if (map.getLayer(id + s)) map.setLayoutProperty(id + s, "visibility", v ? "visible" : "none"); },
       datDoRo(v) { if (map.getLayer(id + "-anh")) map.setPaintProperty(id + "-anh", "raster-opacity", v); },
@@ -584,7 +703,8 @@
         for (const s of ["-anh", "-vien"]) if (map.getLayer(id + s)) map.removeLayer(id + s);
         for (const s of ["", "-v"]) if (map.getSource(id + s)) map.removeSource(id + s);
         DS.delete(id);
-        for (const k of [...DEM.keys()]) if (k.startsWith(id + ":")) DEM.delete(k);
+        xoaDem(id);
+        if (POOL.ws) for (const o of POOL.ws) try { o.w.postMessage({ t: "dong", id }); } catch (_) { /* bỏ qua */ }
         if (src.bmp) src.bmp.close();
       },
     };
@@ -593,5 +713,40 @@
   Object.assign(root.VN, { anhBayMo: mo, abDocTiff: docTiff, abDocWorld: docWorld, abDoanCrs: doanCrs, abGeoKeys: geoKeys,
     abAffineTiff: affineTiff, abLzw: lzw, abPackbits: packbits, abDoanTuPhamVi: doanTuPhamVi,
     abDocCuaSo: (src, li, x0, y0, x1, y1) => (src.kieu === "anh" ? docCuaSoAnh(src, li, x0, y0, x1, y1) : docCuaSoTiff(src, li, x0, y0, x1, y1)),
-    abVeO: (id, z, x, y) => veO(DS.get(id), z, x, y) });
+    abVeO: (id, z, x, y) => veO(DS.get(id), z, x, y),
+    // dùng cho xuất gói ảnh (goianh.js)
+    abLop: (id) => { const l = DS.get(id); return l && { id: l.id, ten: l.ten, bb: l.bb, vien: l.vien, zMin: l.zMin, zMax: l.zMax, gsd: l.gsd, tenHe: l.tenHe, kieu: l.kieu }; },
+    abVe: (id, z, x, y, o = {}) => { const l = DS.get(id); if (!l) throw new Error("Ảnh đã bị gỡ khỏi bản đồ"); return veLop(l, z, x, y, o.signal, o.fmt); },
+    abGhep: (con, fmt, signal) => ghepLop(con, fmt, signal),
+    abOTrong: oTrong,
+    abSoLuong: () => (POOL.ws && !POOL.hong ? POOL.ws.length : 0),
+    abThuWorker: () => { poolTao(); return !!(POOL.ws && !POOL.hong); } });
+
+  // ======================================================================= khi là script của worker
+  if (LA_WORKER) {
+    DEM_MAX = 40 * 1024 * 1024;                           // 2–4 worker × 40 MB bộ đệm mảnh ảnh
+    let ok = typeof OffscreenCanvas !== "undefined" && typeof OffscreenCanvas.prototype.convertToBlob === "function" && typeof createImageBitmap === "function";
+    try { importScripts(new URL("converter.js" + root.location.search, root.location.href).href); }   // thuật toán đổi toạ độ của ứng dụng
+    catch (_) { ok = false; }
+    if (!root.VN.wgs84ToVn2000) ok = false;
+    const HUY = new Map();
+    root.onmessage = async (ev) => {
+      const m = ev.data;
+      if (m.t === "mo") { DS.set(m.id, { id: m.id, src: m.src, toPx: taoToPx(m.aff, m.opt).toPx }); return; }
+      if (m.t === "dong") { DS.delete(m.id); xoaDem(m.id); return; }
+      if (m.t === "huy") { const a = HUY.get(m.q); if (a) a.abort(); return; }
+      if (m.t !== "ve" && m.t !== "ghep") return;
+      if (!ok) { root.postMessage({ q: m.q, hong: true }); return; }
+      const ac = new AbortController(); HUY.set(m.q, ac);
+      try {
+        let buf;
+        if (m.t === "ve") { const lop = DS.get(m.id); if (!lop) throw new Error("Ảnh đã bị gỡ khỏi bản đồ"); buf = await veO(lop, m.z, m.x, m.y, ac.signal, m.fmt); }
+        else buf = await ghep4(m.con, m.fmt);
+        root.postMessage({ q: m.q, buf }, buf ? [buf] : []);
+      } catch (e) {
+        root.postMessage({ q: m.q, loi: e && e.name === "AbortError" ? "AbortError" : String((e && e.message) || e) });
+      } finally { HUY.delete(m.q); }
+    };
+    root.postMessage({ t: "san", ok });
+  }
 })(typeof window !== "undefined" ? window : globalThis);

@@ -261,7 +261,25 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
     đủ gần (xa hơn chỉ thấy **khung cam** bao ảnh). Tạo overview trong **QGIS**: chuột phải lớp ảnh → *Properties →
     Pyramids* → chọn các mức → *Build pyramids* (QGIS ghi file `anh.tif.ovr` — chọn kèm file này khi mở), hoặc menu
     *Raster → Miscellaneous → Build Overviews*.
-  - Trong danh sách lớp: thanh **Độ rõ** 10–100 % để thấy nền / bản vẽ bên dưới; ⤢ phóng tới ảnh; × gỡ ảnh.
+  - Trong danh sách lớp: thanh **Độ rõ** 10–100 % để thấy nền / bản vẽ bên dưới; 📦 xuất gói ảnh cho điện thoại
+    (xem dưới); ⤢ phóng tới ảnh; × gỡ ảnh.
+  - **Vẽ song song**: ảnh TIFF được giải mã và đổi toạ độ trên 2–4 luồng riêng (Web Worker, theo số nhân CPU của máy),
+    mỗi luồng dùng cùng thuật toán chuyển đổi của ứng dụng → bản đồ không bị đứng khi vẽ ảnh lớn. Trình duyệt cũ
+    không có Web Worker thì vẽ như trước trên luồng chính.
+  - **Gói ảnh cho điện thoại (.pmtiles)** — nên làm trên **máy tính** (Chrome / Edge): mở ảnh như thường, bấm **📦**
+    ở dòng ảnh trong danh sách lớp. Hộp thoại vẽ thử vài ô rồi ước tính cho từng **mức chi tiết** (zoom, cm/điểm ảnh,
+    số ô, dung lượng, thời gian); mức *Giữ đủ chi tiết của ảnh gốc* được chọn sẵn. Bấm **Xuất file .pmtiles**, chọn
+    nơi lưu (trình duyệt khác: tải vào thư mục *Tải xuống*). Ứng dụng vẽ sẵn toàn bộ ảnh thành ô bản đồ 256 điểm ảnh
+    (WebP chất lượng 85 %, bỏ ô trống) **bằng đúng thuật toán đổi toạ độ của ứng dụng**, các mức zoom nhỏ hơn ghép từ
+    4 ô con, rồi gói vào một file theo đặc tả **PMTiles v3**; thanh tiến trình báo số ô, dung lượng, thời gian còn lại,
+    có nút **Huỷ**. Chép file .pmtiles sang điện thoại, mở trong *Lớp từ file* như file thường: **không hỏi kinh tuyến
+    trục, không giải mã ảnh** — hiện gần như ngay ở mọi mức zoom (từ mức cả ảnh vừa 1 ô tới mức chi tiết đã chọn).
+    Ví dụ ảnh Metashape 3,4 cm/điểm ảnh 10 628 × 20 000 điểm ảnh, xuất ở zoom 21 (7 cm/điểm ảnh): 428 ô, khoảng 5 MB.
+    Gói chỉ là ảnh đã đổi sang WGS84 để xem — số đo, toạ độ chính xác vẫn lấy từ ảnh gốc.
+  - **Trên điện thoại** (Android), khi chọn file từ **USB OTG, thẻ nhớ, Google Drive**, hệ điều hành phải chép xong cả file
+    vào trình duyệt rồi mới trao cho ứng dụng — file TIFF 1–2 GB có thể mất vài phút. Trong lúc đó thanh tiến trình
+    báo *Đang lấy file từ bộ nhớ của máy (thời gian chờ)…* để biết máy vẫn đang chạy. Nhanh hơn: chép ảnh vào bộ nhớ
+    trong của điện thoại trước, hoặc dùng gói .pmtiles (nhỏ hơn nhiều).
   - Ảnh **ECW, MrSID, JPEG 2000** trình duyệt không đọc được — đổi sang GeoTIFF trước (QGIS: *Raster → Conversion →
     Translate*, nén JPEG hoặc LZW, tick *Create overviews* nếu có).
 - **File DWG**: lần đầu mở, ứng dụng tải bộ đọc **LibreDWG** (thư viện GNU, giấy phép GPL; bản WebAssembly
@@ -282,6 +300,7 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
 | Tham số chuyển đổi VN-2000 ⇄ WGS84 (7 tham số) | **Quyết định số 05/2007/QĐ-BTNMT** ngày 27/02/2007 của Bộ Tài nguyên và Môi trường *về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000* | Dịch gốc −191,90441429 m; −39,30318279 m; −111,45032835 m · góc xoay −0,00928836″; 0,01975479″; −0,00427372″ · tỉ lệ k = 1,000000252906278 (cũng là bộ EPSG:6960, Coordinate Frame) |
 | Nhận dạng chữ (OCR) | **Tesseract.js 7.0.0** (Apache-2.0) và dữ liệu tiếng Anh *eng* của Tesseract, tải từ jsDelivr khi dùng | Mục 4 |
 | Ảnh bay / ảnh trực giao | **File của chính người dùng** (mục *Lớp từ file*) — chỉ đọc trên máy, không tải lên mạng; bộ đọc TIFF / GeoTIFF do ứng dụng tự viết (không thư viện ngoài) | Tên file ghi ở góc bản đồ khi bật. Mục 10 |
+| Định dạng gói ảnh .pmtiles | **Đặc tả PMTiles phiên bản 3** của Protomaps — github.com/protomaps/PMTiles/blob/main/spec/v3/spec.md (mã ô theo đường Hilbert, thư mục ô, giá trị thử); bộ ghi / đọc do ứng dụng tự viết theo đặc tả | Ảnh trong gói là ảnh của người dùng, vẽ bằng thuật toán của ứng dụng. Mục 10 |
 | Bộ đọc DWG | **LibreDWG** (GNU, GPL-3.0) bản WebAssembly *@mlightcad/libredwg-web 0.9.4* (GPL-2.0), tải từ jsDelivr khi mở file .dwg | Không nằm trong mã nguồn ứng dụng. Mục 10 |
 | Vị trí lượt truy cập (tab Thống kê, chỉ chủ ứng dụng thấy) | **Cloudflare** — quốc gia, thành phố ước tính theo địa chỉ mạng (`request.cf` của Cloudflare Workers) | Mức thành phố, có thể lệch; không lưu IP. Mục 14 |
 | Công thức chuyển đổi | Trần Trung Anh, Quách Mạnh Tuấn — *Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác*, Hội nghị KH Quốc gia về Công nghệ Địa không gian | |
@@ -304,6 +323,7 @@ Kinh tuyến trục, chiều chuyển đổi, dữ liệu nhập lần trước,
 | Khung vàng "Không đúng định dạng" | Dùng dấu phẩy làm dấu thập phân, hoặc có chữ lẫn vào số |
 | Không thấy nút Quy hoạch | Lớp quy hoạch chưa được tạo, hoặc đang mở file trực tiếp trên máy thay vì qua trang web |
 | Lớp quy hoạch không hiện | Zoom quá xa — phóng to tới mức 10 trở lên (ranh thửa từ mức 12) |
+| Điện thoại: bấm *Thêm file* chọn ảnh lớn xong phải chờ lâu mới có % | Android đang chép cả file (từ USB OTG, thẻ nhớ, Drive) vào trình duyệt — thanh báo *Đang lấy file…*. Chép ảnh vào bộ nhớ trong, hoặc xuất **gói ảnh .pmtiles** (nút 📦) trên máy tính rồi mở gói trên điện thoại |
 | Không thấy nút *Google*, hoặc báo "hết hạn mức" | Chủ ứng dụng chưa cài khoá Google, hoặc ảnh Google đã dùng hết hạn mức miễn phí trong ngày — dùng *Vệ tinh* (Esri), hôm sau thử lại |
 
 ## 14. Thống kê truy cập
