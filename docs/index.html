@@ -7,23 +7,23 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.27t">
+<link rel="stylesheet" href="css/style.css?v=2026.11.27u">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27t"></script>
-<script src="js/parse.js?v=2026.11.27t"></script>
-<script src="js/geo.js?v=2026.11.27t"></script>
-<script src="js/export.js?v=2026.11.27t"></script>
-<script src="js/giadat.js?v=2026.11.27t"></script>
-<script src="js/lopfile.js?v=2026.11.27t"></script>
-<script src="js/anhbay.js?v=2026.11.27t"></script>
-<script src="js/goianh.js?v=2026.11.27t"></script>
-<script src="js/chupanh.js?v=2026.11.27t"></script>
-<script src="js/ocrtoado.js?v=2026.11.27t"></script>
-<script src="js/thongke-config.js?v=2026.11.27t"></script>
-<script src="js/thongke.js?v=2026.11.27t"></script>
-<script src="js/google.js?v=2026.11.27t"></script>
+<script src="js/converter.js?v=2026.11.27u"></script>
+<script src="js/parse.js?v=2026.11.27u"></script>
+<script src="js/geo.js?v=2026.11.27u"></script>
+<script src="js/export.js?v=2026.11.27u"></script>
+<script src="js/giadat.js?v=2026.11.27u"></script>
+<script src="js/lopfile.js?v=2026.11.27u"></script>
+<script src="js/anhbay.js?v=2026.11.27u"></script>
+<script src="js/goianh.js?v=2026.11.27u"></script>
+<script src="js/chupanh.js?v=2026.11.27u"></script>
+<script src="js/ocrtoado.js?v=2026.11.27u"></script>
+<script src="js/thongke-config.js?v=2026.11.27u"></script>
+<script src="js/thongke.js?v=2026.11.27u"></script>
+<script src="js/google.js?v=2026.11.27u"></script>
 </head>
 <body>
 <div class="layout">
@@ -132,6 +132,7 @@
       <input type="file" id="lf-input" accept=".kml,.kmz,.dxf,.dgn,.dwg,.tif,.tiff,.jpg,.jpeg,.png,.tfw,.tifw,.jgw,.jpgw,.pgw,.pngw,.wld,.prj,.ovr,.pmtiles" multiple hidden>
       <div id="lf-loi" class="lf-loi" hidden></div>
       <ul id="lf-ds" class="lf-ds" hidden></ul>
+      <button type="button" id="lf-xuat-tat" class="btn small lf-xuat-tat" hidden title="Gộp mọi ảnh trực giao đang mở thành 1 file .pmtiles để mở nhanh trên điện thoại"></button>
     </section>
 
     <button type="button" id="tk-mo" class="tk-mo" hidden title="Xem thống kê lượt truy cập (chỉ chủ ứng dụng)">📊 Thống kê truy cập</button>
@@ -200,7 +201,8 @@
     <dialog id="ga-dlg" class="lf-dlg ga-dlg" aria-labelledby="ga-tieude">
       <h3 id="ga-tieude">📦 Xuất gói ảnh cho điện thoại</h3>
       <p><b id="ga-ten"></b></p>
-      <p class="muted small">Vẽ sẵn ảnh thành các ô bản đồ — đổi toạ độ bằng thuật toán VN-2000 của ứng dụng, đúng như khi xem trên bản đồ — và gói vào <b>một file .pmtiles</b>. Trên điện thoại chỉ cần mở file này trong <i>Lớp từ file</i>: không phải giải mã và đổi toạ độ lại nên hiện gần như ngay, file nhẹ hơn ảnh gốc. Nên làm trên máy tính (Chrome / Edge).</p>
+      <p class="muted small">Vẽ sẵn ảnh thành các ô bản đồ — đổi toạ độ bằng thuật toán VN-2000 của ứng dụng, đúng như khi xem trên bản đồ — và gói vào <b>một file .pmtiles</b>. Trên điện thoại chỉ cần mở file này trong <i>Lớp từ file</i>: không phải giải mã và đổi toạ độ lại nên hiện gần như ngay, file nhẹ hơn ảnh gốc. Chọn nhiều ảnh (vd cả bộ tấm do Metashape chia) thì gộp thành 1 file. Nên làm trên máy tính (Chrome / Edge).</p>
+      <fieldset id="ga-anh" class="ga-muc ga-anh" hidden></fieldset>
       <fieldset id="ga-muc" class="ga-muc"><legend class="small">Mức chi tiết</legend></fieldset>
       <p class="muted small" id="ga-uoc"></p>
       <div class="row lf-dlg-nut">
@@ -307,6 +309,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.27t"></script>
+<script src="js/app.js?v=2026.11.27u"></script>
 </body>
 </html>

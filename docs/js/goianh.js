@@ -1,7 +1,8 @@
 /*
  * Gói ảnh cho điện thoại — file .pmtiles (PMTiles phiên bản 3).
  *
- *   Xuất (nên làm trên máy tính): ảnh trực giao đang mở (anhbay.js) được vẽ sẵn thành các ô bản đồ 256 px
+ *   Xuất (nên làm trên máy tính): một hoặc nhiều ảnh trực giao đang mở (anhbay.js; nhiều ảnh gộp thành 1 gói, chỗ
+ *   giáp / chồng nhau ghép liền, ảnh sau nằm trên) được vẽ sẵn thành các ô bản đồ 256 px
  *   (Web Mercator, WGS84) ở mức zoom chi tiết nhất bằng đúng hàm vẽ ô của ứng dụng — đổi toạ độ bằng
  *   VN.wgs84ToVn2000 (thuật toán của ứng dụng, docs/js/converter.js), vẽ song song trên các worker; các mức zoom
  *   nhỏ hơn ghép từ 4 ô con. Ô ảnh mã hoá WebP (trình duyệt không mã hoá được WebP → PNG), ô trống bỏ qua.
@@ -168,57 +169,98 @@
   const songSong = () => Math.max(1, VN.abSoLuong ? VN.abSoLuong() : 0);
 
   const cmDiem = (bb, z) => ((156543.034 * Math.cos((((bb[1] + bb[3]) / 2) * Math.PI) / 180)) / 2 ** z) * 100;
-  // các mức chi tiết nhất có thể chọn: từ mức zoom tối đa của ảnh xuống, tối đa 4 mức, điểm ảnh ô ≤ 5 lần điểm ảnh gốc
-  function cacMuc(L) {
+  const boDuoi = (t) => t.replace(/\.[^.]+$/, "");
+  // tên gói: 1 ảnh → tên ảnh; nhiều ảnh → phần đầu chung của tên (vd "TC" từ TC-0-0 … TC-2-1) + số ảnh
+  function tenGoi(Ls) {
+    const ds = Ls.map((L) => boDuoi(L.ten));
+    if (ds.length === 1) return ds[0];
+    let p = ds[0];
+    for (const t of ds) while (p && !t.startsWith(p)) p = p.slice(0, -1);
+    p = p.replace(/[-_ .(]+$/, "");
+    return (p.length >= 2 ? p : "goi_anh") + `_${ds.length}anh`;
+  }
+  // các ảnh đưa vào gói (thứ tự lớp trên bản đồ: ảnh sau nằm trên ảnh trước) + thông tin chung
+  function gop(ids) {
+    const Ls = [].concat(ids).map((id) => VN.abLop(id));
+    if (!Ls.length || Ls.some((L) => !L)) throw new Error("Ảnh đã bị gỡ khỏi bản đồ");
+    const bb = [Math.min(...Ls.map((L) => L.bb[0])), Math.min(...Ls.map((L) => L.bb[1])), Math.max(...Ls.map((L) => L.bb[2])), Math.max(...Ls.map((L) => L.bb[3]))];
+    return { Ls, bb, ten: tenGoi(Ls), zMax: Math.max(...Ls.map((L) => L.zMax)), zMin: Math.max(...Ls.map((L) => L.zMin)), gsd: Math.min(...Ls.map((L) => L.gsd)) };
+  }
+  // các mức chi tiết nhất có thể chọn: từ mức zoom tối đa xuống, tối đa 4 mức, điểm ảnh ô ≤ 5 lần điểm ảnh gốc nét nhất,
+  // không dưới mức zMin của ảnh nào (ảnh không có overview chỉ vẽ được từ mức đó trở lên)
+  function cacMuc(T) {
     const ds = [];
-    for (let z = L.zMax; z >= Math.max(0, L.zMin) && ds.length < 4; z--) { if (ds.length && cmDiem(L.bb, z) > 5 * L.gsd * 100) break; ds.push(z); }
+    for (let z = T.zMax; z >= Math.max(0, T.zMin) && ds.length < 4; z--) { if (ds.length && cmDiem(T.bb, z) > 5 * T.gsd * 100) break; ds.push(z); }
     return ds;
   }
-  // vẽ thử 12 ô rải đều ở mỗi mức có thể chọn → tỉ lệ ô có ảnh, dung lượng trung bình, thời gian mỗi ô
-  async function uocTinh(id, signal) {
-    const L = VN.abLop(id); if (!L) throw new Error("Ảnh đã bị gỡ khỏi bản đồ");
-    if (VN.abThuWorker) VN.abThuWorker();
-    const d = await dinhDang(), muc = {}, cac = cacMuc(L);
-    for (const z of cac) {
-      const r = khoang(L.bb, z), mau = [], da = new Set();
-      for (let j = 0; j < 4; j++) for (let i = 0; i < 3; i++) {
-        const x = r.x0 + Math.floor(((i + 0.5) * (r.x1 - r.x0 + 1)) / 3), y = r.y0 + Math.floor(((j + 0.5) * (r.y1 - r.y0 + 1)) / 4);
-        if (!da.has(x + "/" + y)) { da.add(x + "/" + y); mau.push([x, y]); }
-      }
-      let co = 0, byte = 0;
-      const t0 = performance.now();
-      await chay(mau, songSong() * 2, async ([x, y]) => {
-        const b = await VN.abVe(id, z, x, y, { fmt: d.mime, signal });
-        if (b) { co++; byte += b.byteLength; }
-      }, signal);
-      muc[z] = { tyLe: co ? co / mau.length : 0.3, tbByte: co ? byte / co : 25000, msO: (performance.now() - t0) / mau.length };
+  // k×k ô rải đều trong khoảng r
+  function mauO(r, k) {
+    const ds = [], da = new Set();
+    for (let j = 0; j < k; j++) for (let i = 0; i < k; i++) {
+      const x = r.x0 + Math.floor(((i + 0.5) * (r.x1 - r.x0 + 1)) / k), y = r.y0 + Math.floor(((j + 0.5) * (r.y1 - r.y0 + 1)) / k);
+      if (!da.has(x + "/" + y)) { da.add(x + "/" + y); ds.push([x, y]); }
     }
-    return { L, dd: d, zMax: L.zMax, muc, cac };
+    return ds;
+  }
+  // vẽ thử vài ô rải đều trên từng ảnh ở mỗi mức có thể chọn → tỉ lệ ô có ảnh, dung lượng trung bình, thời gian mỗi ô
+  async function uocTinh(ids, signal) {
+    const T = gop(ids);
+    if (VN.abThuWorker) VN.abThuWorker();
+    const d = await dinhDang(), muc = {}, cac = cacMuc(T), k = T.Ls.length === 1 ? 4 : T.Ls.length <= 4 ? 3 : 2;
+    for (const z of cac) {
+      const viec = [], anh = T.Ls.map((L) => ({ n: khoang(L.bb, z).n, mau: 0, co: 0, byte: 0 }));
+      T.Ls.forEach((L, i) => { for (const [x, y] of mauO(khoang(L.bb, z), k)) { viec.push([i, x, y]); anh[i].mau++; } });
+      const t0 = performance.now();
+      await chay(viec, songSong() * 2, async ([i, x, y]) => {
+        const b = await VN.abVe(T.Ls[i].id, z, x, y, { fmt: d.mime, signal });
+        if (b) { anh[i].co++; anh[i].byte += b.byteLength; }
+      }, signal);
+      const msO = (performance.now() - t0) / viec.length;
+      let nLa = 0, byte = 0;
+      for (const a of anh) {
+        const tyLe = a.co ? a.co / a.mau : 0.3, tb = a.co ? a.byte / a.co : 25000;
+        nLa += a.n * tyLe; byte += a.n * tyLe * tb;
+      }
+      muc[z] = { nLa: Math.max(1, Math.round(nLa)), byte, msO };
+    }
+    return { T, L: T, dd: d, zMax: T.zMax, muc, cac };
   }
   // ước tính cho gói có mức chi tiết nhất zHi (các mức nhỏ hơn ≈ 1/3 số ô, mỗi ô nhiều chi tiết hơn)
   function uocMuc(u, zHi) {
-    const m = u.muc[zHi] || u.muc[u.zMax];
-    const nLa = Math.max(1, Math.round(khoang(u.L.bb, zHi).n * m.tyLe));
-    const byte = nLa * m.tbByte * 1.5;
+    const m = u.muc[zHi] || u.muc[u.zMax], nLa = m.nLa;
+    const byte = m.byte * 1.5;
     const giay = (nLa * m.msO * 1.2 + (nLa / 3) * (25 / songSong())) / 1000;
-    const cm = cmDiem(u.L.bb, zHi);
-    return { z: zHi, nLa, byte, giay, cm, tiLe: cm / (u.L.gsd * 100) };
+    const cm = cmDiem(u.T.bb, zHi);
+    return { z: zHi, nLa, byte, giay, cm, tiLe: cm / (u.T.gsd * 100) };
   }
 
-  // o: { signal, tienDo(xong, tong, buoc, byte) } → { blob, soO, minZ, maxZ, byte, dinhDang }
-  async function xuat(id, zHi, o = {}) {
-    const L = VN.abLop(id); if (!L) throw new Error("Ảnh đã bị gỡ khỏi bản đồ");
+  // ids: 1 ảnh hoặc danh sách ảnh (gộp thành 1 gói; chỗ chồng nhau ảnh sau nằm trên)
+  // o: { signal, tienDo(xong, tong, buoc, byte) } → { blob, soO, minZ, maxZ, byte, dinhDang, ten }
+  async function xuat(ids, zHi, o = {}) {
+    const T = gop(ids), Ls = T.Ls;
     if (VN.abThuWorker) VN.abThuWorker();
     const d = await dinhDang(), sig = o.signal, bao = o.tienDo || (() => {});
-    const zLo = mucThap(L.bb, zHi), C = songSong() * 3;
-    const r = khoang(L.bb, zHi), n = 2 ** zHi, la = [];
-    for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) la.push([maO(zHi, x, y), x, y]);
+    const zLo = mucThap(T.bb, zHi), C = songSong() * 3, n = 2 ** zHi;
+    // ô mức chi tiết nhất: hợp các ô phủ khung bao từng ảnh, mỗi ô nhớ những ảnh phủ nó
+    const phu = new Map();
+    Ls.forEach((L, i) => {
+      const r = khoang(L.bb, zHi);
+      for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) { const k = y * n + x, a = phu.get(k); if (a) a.push(i); else phu.set(k, [i]); }
+    });
+    const la = [];
+    for (const [k, a] of phu) { const x = k % n, y = Math.floor(k / n); la.push([maO(zHi, x, y), x, y, a]); }
+    phu.clear();
     la.sort((a, b) => a[0] - b[0]);                       // thứ tự Hilbert: ô kề nhau vẽ liền nhau → dùng lại mảnh ảnh đã giải mã
     const ra = [];                                        // [tileId, Blob]
     let xong = 0, tong = Math.round((la.length * 4) / 3), byte = 0;
     let con = new Map();
-    await chay(la, C, async ([tid, x, y]) => {
-      const b = await VN.abVe(id, zHi, x, y, { fmt: d.mime, signal: sig });
+    await chay(la, C, async ([tid, x, y, a]) => {
+      let b;
+      if (a.length === 1) b = await VN.abVe(Ls[a[0]].id, zHi, x, y, { fmt: d.mime, signal: sig });
+      else {                                              // ô ở chỗ giáp / chồng nhau của nhiều ảnh: vẽ từng ảnh (PNG) rồi chồng lên nhau
+        const lop = (await Promise.all(a.map((i) => VN.abVe(Ls[i].id, zHi, x, y, { fmt: "image/png", signal: sig })))).filter(Boolean).map((p) => new Blob([p]));
+        b = lop.length ? await VN.abGhep(lop, d.mime, sig, "chong") : null;
+      }
       xong++;
       if (b) { const bl = new Blob([b]); con.set(y * n + x, bl); ra.push([tid, bl]); byte += bl.size; }
       bao(xong, tong, `vẽ ô mức ${zHi}`, byte);
@@ -243,23 +285,24 @@
     let off = 0;
     const ent = ra.map(([tid, bl]) => { const e = { tileId: tid, offset: off, length: bl.size, runLength: 1 }; off += bl.size; return e; });
     const { goc, la: thuMucLa } = await taoThuMuc(ent);
-    const c = [(L.bb[0] + L.bb[2]) / 2, (L.bb[1] + L.bb[3]) / 2], tenGoc = L.ten.replace(/\.[^.]+$/, "");
-    const r7 = (v) => Math.round(v * 1e7) / 1e7;
+    const bb = T.bb, c = [(bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2], ten = Ls.map((L) => L.ten).join(", ");
+    const r7 = (v) => Math.round(v * 1e7) / 1e7, vien = (L) => L.vien.map((p) => [r7(p[0]), r7(p[1])]);
     const meta = await nen(new TextEncoder().encode(JSON.stringify({
-      name: tenGoc,
-      description: `Ảnh trực giao ${L.ten} vẽ sẵn thành ô bản đồ (Web Mercator, WGS84) bằng ứng dụng Chuyển đổi VN-2000 ↔ WGS84 — đổi toạ độ bằng thuật toán VN-2000 của ứng dụng`,
-      attribution: `Ảnh: ${L.ten}`,
+      name: T.ten,
+      description: `Ảnh trực giao ${ten} vẽ sẵn thành ô bản đồ (Web Mercator, WGS84) bằng ứng dụng Chuyển đổi VN-2000 ↔ WGS84 — đổi toạ độ bằng thuật toán VN-2000 của ứng dụng`,
+      attribution: `Ảnh: ${ten}`,
       type: "overlay", version: "1.0.0", format: d.ten.toLowerCase(),
-      minzoom: zLo, maxzoom: zHi, bounds: L.bb.map(r7), center: [r7(c[0]), r7(c[1]), Math.min(zHi, zLo + 3)],
-      vn2000_nguon: L.ten, vn2000_he_toa_do_goc: L.tenHe, vn2000_do_phan_giai_goc_cm: Math.round(L.gsd * 1000) / 10,
-      vn2000_vien: L.vien.map((p) => [r7(p[0]), r7(p[1])]),
+      minzoom: zLo, maxzoom: zHi, bounds: bb.map(r7), center: [r7(c[0]), r7(c[1]), Math.min(zHi, zLo + 3)],
+      vn2000_nguon: ten, vn2000_so_anh: Ls.length, vn2000_he_toa_do_goc: [...new Set(Ls.map((L) => L.tenHe))].join("; "),
+      vn2000_do_phan_giai_goc_cm: Math.round(T.gsd * 1000) / 10,
+      ...(Ls.length === 1 ? { vn2000_vien: vien(Ls[0]) } : { vn2000_vien_ds: Ls.map(vien) }),
       vn2000_tao_luc: new Date().toISOString(), vn2000_ung_dung: "https://guitarkhongem.github.io/vn2000-to-wgs84-Plus/",
     })));
     const gocOff = 127, metaOff = gocOff + goc.length, laOff = metaOff + meta.length, dataOff = laOff + thuMucLa.length;
     const dau = taoDau({ gocOff, gocLen: goc.length, metaOff, metaLen: meta.length, laOff, laLen: thuMucLa.length, dataOff, dataLen: off,
-      soO: ra.length, tt: d.tt, minZ: zLo, maxZ: zHi, bb: L.bb, cz: Math.min(zHi, zLo + 3), c });
+      soO: ra.length, tt: d.tt, minZ: zLo, maxZ: zHi, bb, cz: Math.min(zHi, zLo + 3), c });
     const blob = new Blob([dau, goc, meta, thuMucLa, ...ra.map((x) => x[1])], { type: "application/octet-stream" });
-    return { blob, soO: ra.length, minZ: zLo, maxZ: zHi, byte: blob.size, dinhDang: d.ten, ten: tenGoc + ".pmtiles" };
+    return { blob, soO: ra.length, minZ: zLo, maxZ: zHi, byte: blob.size, dinhDang: d.ten, ten: T.ten, soAnh: Ls.length };
   }
 
   // ======================================================================= mở gói ảnh .pmtiles lên bản đồ
@@ -321,12 +364,14 @@
     const lopIds = map.getStyle().layers.map((l) => l.id);
     const truoc = ["nen-ranh-tinh"].find((x) => lopIds.includes(x));
     map.addLayer({ id: id + "-anh", type: "raster", source: id, paint: { "raster-fade-duration": 0 } }, truoc);
-    const vien = Array.isArray(meta.vn2000_vien) && meta.vn2000_vien.length > 3 ? meta.vn2000_vien
-      : [[bb[0], bb[1]], [bb[2], bb[1]], [bb[2], bb[3]], [bb[0], bb[3]], [bb[0], bb[1]]];
-    map.addSource(id + "-v", { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: vien } } });
+    const hop = (v) => Array.isArray(v) && v.length > 3 && v.every((p) => Array.isArray(p) && isFinite(p[0]) && isFinite(p[1]));
+    const vien = Array.isArray(meta.vn2000_vien_ds) && meta.vn2000_vien_ds.length && meta.vn2000_vien_ds.every(hop) ? meta.vn2000_vien_ds
+      : [hop(meta.vn2000_vien) ? meta.vn2000_vien : [[bb[0], bb[1]], [bb[2], bb[1]], [bb[2], bb[3]], [bb[0], bb[3]], [bb[0], bb[1]]]];
+    map.addSource(id + "-v", { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "MultiLineString", coordinates: vien } } });
     map.addLayer({ id: id + "-vien", type: "line", source: id + "-v",
       paint: { "line-color": "#ff7a00", "line-width": 1.5, "line-dasharray": [3, 2], "line-opacity": ["interpolate", ["linear"], ["zoom"], h.minZ, 1, h.minZ + 1, 0.35] } });
-    const goc = meta.vn2000_nguon ? ` · vẽ sẵn từ ${meta.vn2000_nguon}${meta.vn2000_he_toa_do_goc ? " (" + meta.vn2000_he_toa_do_goc + ")" : ""}` : "";
+    const nguon = meta.vn2000_so_anh > 1 ? `${meta.vn2000_so_anh} ảnh (${meta.vn2000_nguon})` : meta.vn2000_nguon;
+    const goc = nguon ? ` · vẽ sẵn từ ${nguon}${meta.vn2000_he_toa_do_goc ? " — " + meta.vn2000_he_toa_do_goc : ""}` : "";
     return {
       id, ten, bb, zMin: h.minZ, goi: true,
       loai: `Gói ảnh .pmtiles · ${(h.soO || 0).toLocaleString("vi-VN")} ô ${TEN_KIEU[h.tt]} · zoom ${h.minZ}–${h.maxZ}${goc}`,
@@ -340,6 +385,6 @@
     };
   }
 
-  VN.goiAnh = { uocTinh, uocMuc, cacMuc, xuat, mo, doc, layO, soO: (bb, z) => khoang(bb, z).n, mucThap,
+  VN.goiAnh = { uocTinh, uocMuc, xuat, tenGoi: (ids) => gop(ids).ten, mo, doc, layO, soO: (bb, z) => khoang(bb, z).n, mucThap,
     _maO: maO, _vietDir: vietDir, _docDir: docDir, _timO: timO, _taoThuMuc: taoThuMuc, _taoDau: taoDau, _docDau: docDau };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -275,6 +275,12 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
     có nút **Huỷ**. Chép file .pmtiles sang điện thoại, mở trong *Lớp từ file* như file thường: **không hỏi kinh tuyến
     trục, không giải mã ảnh** — hiện gần như ngay ở mọi mức zoom (từ mức cả ảnh vừa 1 ô tới mức chi tiết đã chọn).
     Ví dụ ảnh Metashape 3,4 cm/điểm ảnh 10 628 × 20 000 điểm ảnh, xuất ở zoom 21 (7 cm/điểm ảnh): 428 ô, khoảng 5 MB.
+  - **Xuất đồng loạt nhiều ảnh thành 1 gói**: khi đang mở từ 2 ảnh trở lên, dưới danh sách lớp có nút **📦 Xuất N ảnh
+    thành 1 gói .pmtiles…** (hoặc bấm 📦 ở một dòng rồi tích thêm ảnh trong hộp thoại; có *Chọn tất cả* / *Bỏ chọn*).
+    Chỉ chọn **mức chi tiết một lần cho cả gói** — ước tính tính trên tất cả ảnh đã chọn, mức *nên chọn* theo ảnh nét nhất.
+    Cả bộ (vd `TC-0-0 … TC-2-1` do Metashape chia tấm) ra **một file** (tên theo phần đầu chung, vd `TC_7anh_z22.pmtiles`):
+    chỗ các tấm giáp nhau ghép liền trong cùng ô; chỗ chồng nhau, ảnh đứng sau trong danh sách lớp nằm trên (giống trên
+    bản đồ). Khung cam của từng tấm vẫn hiện khi mở gói.
     Gói chỉ là ảnh đã đổi sang WGS84 để xem — số đo, toạ độ chính xác vẫn lấy từ ảnh gốc.
   - **Trên điện thoại** (Android), khi chọn file từ **USB OTG, thẻ nhớ, Google Drive**, hệ điều hành phải chép xong cả file
     vào trình duyệt rồi mới trao cho ứng dụng — file TIFF 1–2 GB có thể mất vài phút. Trong lúc đó thanh tiến trình
@@ -323,6 +329,7 @@ Kinh tuyến trục, chiều chuyển đổi, dữ liệu nhập lần trước,
 | Khung vàng "Không đúng định dạng" | Dùng dấu phẩy làm dấu thập phân, hoặc có chữ lẫn vào số |
 | Không thấy nút Quy hoạch | Lớp quy hoạch chưa được tạo, hoặc đang mở file trực tiếp trên máy thay vì qua trang web |
 | Lớp quy hoạch không hiện | Zoom quá xa — phóng to tới mức 10 trở lên (ranh thửa từ mức 12) |
+| Điện thoại báo "Chỉ mở được file .kml, .kmz, .dxf, .dgn, .dwg" khi mở file .pmtiles | Trang trên điện thoại còn là bản cũ — kéo trang xuống để tải lại (hoặc đóng tab, mở lại). Bản mới có dòng "…hoặc gói ảnh .pmtiles…" trong mục *Lớp từ file* |
 | Điện thoại: bấm *Thêm file* chọn ảnh lớn xong phải chờ lâu mới có % | Android đang chép cả file (từ USB OTG, thẻ nhớ, Drive) vào trình duyệt — thanh báo *Đang lấy file…*. Chép ảnh vào bộ nhớ trong, hoặc xuất **gói ảnh .pmtiles** (nút 📦) trên máy tính rồi mở gói trên điện thoại |
 | Không thấy nút *Google*, hoặc báo "hết hạn mức" | Chủ ứng dụng chưa cài khoá Google, hoặc ảnh Google đã dùng hết hạn mức miễn phí trong ngày — dùng *Vệ tinh* (Esri), hôm sau thử lại |
 

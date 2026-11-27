@@ -399,3 +399,10 @@ tbody tr:hover { background: var(--accent-soft); }
 .ga-muc label:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .ga-muc input { margin-top: 3px; flex: none; }
 .ga-muc small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.ga-anh { max-height: 34vh; overflow: auto; gap: 4px; }
+.ga-anh label { padding: 6px 10px; align-items: center; }
+.ga-anh label span { overflow-wrap: anywhere; }
+.ga-anh-nut { display: flex; gap: 6px; }
+.ga-anh[hidden] { display: none; }
+.lf-xuat-tat { margin-top: 8px; width: 100%; }
+.lf-xuat-tat[hidden] { display: none; }

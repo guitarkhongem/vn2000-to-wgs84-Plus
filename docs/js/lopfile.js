@@ -659,6 +659,8 @@
     document.addEventListener("visibilitychange", quayLai);
     inp.addEventListener("cancel", boCho);
     inp.addEventListener("change", () => { boCho(); moFiles([...inp.files]); inp.value = ""; });
+    const nutTat = document.getElementById("lf-xuat-tat");
+    if (nutTat) nutTat.addEventListener("click", () => xuatGoi(null));
     const zone = map.getContainer();
     zone.addEventListener("dragover", (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) { e.preventDefault(); zone.classList.add("lf-drop"); } });
     zone.addEventListener("dragleave", () => zone.classList.remove("lf-drop"));
@@ -884,44 +886,72 @@
   const coMB = (b) => b >= 1073741824 ? (b / 1073741824).toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + " GB"
     : Math.max(1, Math.round(b / 1048576)).toLocaleString("vi-VN") + " MB";
   const thoiGian = (s) => s < 60 ? `${Math.max(5, Math.round(s / 5) * 5)} giây` : s < 3600 ? `${Math.round(s / 60)} phút` : `${(s / 3600).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} giờ`;
-  async function xuatGoi(f) {
+  // fChon: dòng ảnh bấm 📦 (chỉ ảnh đó được chọn sẵn); null = nút "Xuất tất cả" (chọn sẵn mọi ảnh). Nhiều ảnh → gộp 1 gói
+  async function xuatGoi(fChon) {
     const G = root.VN.goiAnh;
     if (!G) { S.h.toast("Thiếu bộ xuất gói ảnh (goianh.js)"); return; }
     if (TD.xuat) { S.h.toast("Đang xuất một gói ảnh khác — chờ xong hoặc bấm Huỷ"); return; }
+    const dsAnh = S.files.filter((x) => x.kind === "anh" && x.anh.xuat);
+    if (!dsAnh.length) return;
     const dlg = document.getElementById("ga-dlg"), box = document.getElementById("ga-muc"), uoc = document.getElementById("ga-uoc");
-    const ok = document.getElementById("ga-ok"), e = S.h.escapeHtml;
-    document.getElementById("ga-ten").textContent = f.name;
-    box.innerHTML = '<legend class="small">Mức chi tiết</legend>'; ok.disabled = true;
-    uoc.textContent = "Đang vẽ thử vài ô để ước tính dung lượng và thời gian…";
-    const acUoc = new AbortController();
-    let cac = [];
+    const boxAnh = document.getElementById("ga-anh"), ok = document.getElementById("ga-ok"), e = S.h.escapeHtml;
+    const chonSan = new Set(fChon ? [fChon.id] : dsAnh.map((x) => x.id));
+    boxAnh.hidden = dsAnh.length < 2;
+    boxAnh.innerHTML = `<legend class="small">Ảnh đưa vào gói — chọn nhiều ảnh thì gộp thành 1 file, chỗ giáp nhau ghép liền</legend>
+      <div class="ga-anh-nut"><button type="button" class="btn small ghost" data-chon="1">Chọn tất cả</button><button type="button" class="btn small ghost" data-chon="0">Bỏ chọn</button></div>` +
+      dsAnh.map((x) => `<label><input type="checkbox" value="${e(x.id)}" ${chonSan.has(x.id) ? "checked" : ""}><span>${e(x.name)}</span></label>`).join("");
+    const dangChon = () => [...boxAnh.querySelectorAll("input:checked")].map((i) => dsAnh.find((x) => x.id === i.value)).filter(Boolean);
+    let acUoc = null, hen = 0, cac = [];
+    const uocLai = () => {
+      if (acUoc) acUoc.abort();
+      acUoc = new AbortController();
+      const sig = acUoc.signal, ds = dangChon();
+      box.innerHTML = '<legend class="small">Mức chi tiết (áp dụng cho cả gói)</legend>'; ok.disabled = true; cac = [];
+      document.getElementById("ga-ten").textContent = ds.length === 1 ? ds[0].name : ds.length ? `${ds.length} ảnh → 1 gói: ${G.tenGoi(ds.map((x) => x.id))}.pmtiles` : "";
+      if (!ds.length) { uoc.textContent = "Chọn ít nhất 1 ảnh."; return; }
+      uoc.textContent = `Đang vẽ thử vài ô${ds.length > 1 ? " trên từng ảnh" : ""} để ước tính dung lượng và thời gian…`;
+      G.uocTinh(ds.map((x) => x.id), sig).then((u) => {
+        if (sig.aborted) return;
+        const T = u.T;
+        cac = u.cac.map((z) => G.uocMuc(u, z));
+        if (!cac.length) { uoc.textContent = "Không có mức zoom nào chung cho các ảnh đã chọn."; return; }
+        // nên chọn: mức gọn nhất mà điểm ảnh ô vẫn ≤ 1,25 lần điểm ảnh gốc nét nhất (giữ đủ chi tiết), file ≤ 2 GB
+        let nen = -1;
+        cac.forEach((c, i) => { if (c.tiLe <= 1.25) nen = i; });
+        if (nen < 0) nen = 0;
+        while (nen < cac.length - 1 && cac[nen].byte > 2 * 1073741824) nen++;
+        const goc = ds.length > 1 ? "ảnh gốc nét nhất" : "ảnh gốc";
+        const ten = (c, i) => c.tiLe <= 1.25 ? (i === nen ? `Giữ đủ chi tiết của ${goc} (nên chọn)` : `Nét hơn ${goc} — file lớn hơn nhưng không rõ thêm`)
+          : c.tiLe <= 2.5 ? "Gọn hơn khoảng 4 lần — hơi mờ khi phóng thật sát" : "Gọn hơn nhiều — để xem tổng quan";
+        box.innerHTML = '<legend class="small">Mức chi tiết (áp dụng cho cả gói)</legend>' + cac.map((c, i) => `<label><input type="radio" name="ga-z" value="${c.z}" ${i === nen ? "checked" : ""}>
+          <span><b>${ten(c, i)}</b><small>Zoom ${c.z} · ${c.cm.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} cm/điểm ảnh · ~${c.nLa.toLocaleString("vi-VN")} ô · ~${coMB(c.byte)} · ~${thoiGian(c.giay)}</small></span></label>`).join("");
+        uoc.innerHTML = `Ước tính từ ${e(u.dd.ten)} chất lượng 85%, ${goc} ${(T.gsd * 100).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} cm/điểm ảnh — số thật có thể khác.` +
+          (ds.length > 1 ? " Chỗ các ảnh chồng nhau, ảnh đứng sau trong danh sách lớp nằm trên." : "") +
+          (u.dd.ten === "PNG" ? " Trình duyệt này không tạo được WebP nên gói sẽ lớn hơn — nên dùng Chrome / Edge trên máy tính." : "");
+        ok.disabled = false;
+      }).catch((err) => { if (err && err.name === "AbortError") return; uoc.textContent = "Không ước tính được: " + (err && err.message ? err.message : err); });
+    };
+    boxAnh.onchange = () => { clearTimeout(hen); hen = setTimeout(uocLai, 300); };
+    boxAnh.onclick = (ev) => {
+      const b = ev.target.closest("[data-chon]"); if (!b) return;
+      boxAnh.querySelectorAll("input[type=checkbox]").forEach((i) => { i.checked = b.dataset.chon === "1"; });
+      clearTimeout(hen); hen = setTimeout(uocLai, 300);
+    };
     const chon = new Promise((resolve) => {
       ok.onclick = () => { const r = box.querySelector("input:checked"); resolve(r ? Number(r.value) : null); };
       document.getElementById("ga-huy").onclick = () => resolve(null);
       dlg.oncancel = () => resolve(null);
     });
     dlg.showModal();
-    G.uocTinh(f.anh.id, acUoc.signal).then((u) => {
-      const L = u.L;
-      cac = u.cac.map((z) => G.uocMuc(u, z));
-      // nên chọn: mức gọn nhất mà điểm ảnh ô vẫn ≤ 1,25 lần điểm ảnh gốc (giữ đủ chi tiết), file ≤ 2 GB
-      let nen = -1;
-      cac.forEach((c, i) => { if (c.tiLe <= 1.25) nen = i; });
-      if (nen < 0) nen = 0;
-      while (nen < cac.length - 1 && cac[nen].byte > 2 * 1073741824) nen++;
-      const ten = (c, i) => c.tiLe <= 1.25 ? (i === nen ? "Giữ đủ chi tiết của ảnh gốc (nên chọn)" : "Nét hơn ảnh gốc — file lớn hơn nhưng không rõ thêm")
-        : c.tiLe <= 2.5 ? "Gọn hơn khoảng 4 lần — hơi mờ khi phóng thật sát" : "Gọn hơn nhiều — để xem tổng quan";
-      box.innerHTML = '<legend class="small">Mức chi tiết</legend>' + cac.map((c, i) => `<label><input type="radio" name="ga-z" value="${c.z}" ${i === nen ? "checked" : ""}>
-        <span><b>${ten(c, i)}</b><small>Zoom ${c.z} · ${c.cm.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} cm/điểm ảnh · ~${c.nLa.toLocaleString("vi-VN")} ô · ~${coMB(c.byte)} · ~${thoiGian(c.giay)}</small></span></label>`).join("");
-      uoc.innerHTML = `Ước tính từ ${e(u.dd.ten)} chất lượng 85%, ảnh gốc ${(L.gsd * 100).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} cm/điểm ảnh — số thật có thể khác. ` +
-        (u.dd.ten === "PNG" ? "Trình duyệt này không tạo được WebP nên gói sẽ lớn hơn — nên dùng Chrome / Edge trên máy tính." : "");
-      ok.disabled = false;
-    }).catch((err) => { if (err && err.name === "AbortError") return; uoc.textContent = "Không ước tính được: " + (err && err.message ? err.message : err); });
+    uocLai();
     const z = await chon;
-    acUoc.abort();
-    if (z == null) { dlg.close(); return; }
+    clearTimeout(hen);
+    if (acUoc) acUoc.abort();
+    const ds = dangChon();
+    if (z == null || !ds.length) { dlg.close(); return; }
+    const ids = ds.map((x) => x.id), nhan = ds.length === 1 ? ds[0].name : `${ds.length} ảnh`;
     // chọn nơi lưu ngay lúc bấm (Chrome / Edge máy tính); trình duyệt khác tải về thư mục Tải xuống khi xong
-    const L0 = root.VN.abLop(f.anh.id), tenFile = (L0 ? L0.ten : f.name).replace(/\.[^.]+$/, "") + `_z${z}.pmtiles`;
+    const tenFile = G.tenGoi(ids) + `_z${z}.pmtiles`;
     let noiLuu = null;
     if (root.showSaveFilePicker) {
       try { noiLuu = await root.showSaveFilePicker({ suggestedName: tenFile, types: [{ description: "Gói ảnh PMTiles", accept: { "application/octet-stream": [".pmtiles"] } }] }); }
@@ -937,13 +967,13 @@
       const now = performance.now(); if (now - lan < 150 && xong < tong) return; lan = now;
       const pt = tong ? Math.min(1, xong / tong) : 0, giay = (now - t0) / 1000;
       const con = pt > 0.03 && xong < tong ? ` · còn ~${thoiGian((giay / pt) * (1 - pt))}` : "";
-      el.querySelector(".lf-tien-chu").textContent = `Xuất gói ảnh ${f.name} — ${buoc} · ${xong.toLocaleString("vi-VN")}/${tong.toLocaleString("vi-VN")} ô · ${coMB(byte)}${con}`;
+      el.querySelector(".lf-tien-chu").textContent = `Xuất gói ảnh ${nhan} — ${buoc} · ${xong.toLocaleString("vi-VN")}/${tong.toLocaleString("vi-VN")} ô · ${coMB(byte)}${con}`;
       el.querySelector(".lf-tien-pt").textContent = Math.round(pt * 100) + "%";
       const thanh = el.querySelector(".lf-tien-thanh");
       thanh.classList.remove("vo-dinh"); thanh.firstElementChild.style.width = (pt * 100).toFixed(1) + "%";
     };
     try {
-      const r = await G.xuat(f.anh.id, z, { signal: ac.signal, tienDo: bao });
+      const r = await G.xuat(ids, z, { signal: ac.signal, tienDo: bao });
       el.querySelector(".lf-tien-chu").textContent = `Đang lưu ${tenFile} (${coMB(r.byte)})…`;
       if (noiLuu) { const w = await noiLuu.createWritable(); await w.write(r.blob); await w.close(); }
       else {
@@ -952,11 +982,11 @@
         setTimeout(() => URL.revokeObjectURL(a.href), 120000);
       }
       bao(1, 1, "xong", r.byte);
-      S.h.toast(`Đã xuất ${tenFile}: ${r.soO.toLocaleString("vi-VN")} ô, ${coMB(r.byte)}, zoom ${r.minZ}–${r.maxZ}, mất ${thoiGian((performance.now() - t0) / 1000)}. ` +
+      S.h.toast(`Đã xuất ${tenFile}${r.soAnh > 1 ? ` (gộp ${r.soAnh} ảnh)` : ""}: ${r.soO.toLocaleString("vi-VN")} ô, ${coMB(r.byte)}, zoom ${r.minZ}–${r.maxZ}, mất ${thoiGian((performance.now() - t0) / 1000)}. ` +
         "Chép file này sang điện thoại rồi mở trong Lớp từ file.", 9000);
     } catch (err) {
       if (err && err.name === "AbortError") S.h.toast("Đã huỷ xuất gói ảnh");
-      else { S.h.toast("Xuất gói ảnh lỗi: " + (err && err.message ? err.message : err), 6000); hienLoi(f.name, err); }
+      else { S.h.toast("Xuất gói ảnh lỗi: " + (err && err.message ? err.message : err), 6000); hienLoi(nhan, err); }
     } finally {
       TD.xuat = false; nutTien(null);
       clearTimeout(TD.hen); TD.hen = setTimeout(anTienDo, 2500);
@@ -1056,7 +1086,7 @@
         <label class="lf-ten"><input type="checkbox" ${f.visible ? "checked" : ""} data-act="an">
           <span class="lf-sw lf-sw-anh" aria-hidden="true">🖼</span><span><b>${e(f.name)}</b>
           <small class="muted">${e(f.loai)}</small></span></label>
-        ${f.anh.xuat ? `<button type="button" class="btn small ghost" data-act="goi" title="Xuất gói ảnh .pmtiles (vẽ sẵn, nhẹ) để mở nhanh trên điện thoại">📦</button>` : ""}
+        ${f.anh.xuat ? `<button type="button" class="btn small ghost" data-act="goi" title="Xuất gói ảnh .pmtiles (vẽ sẵn, nhẹ) để mở nhanh trên điện thoại — trong hộp thoại chọn thêm ảnh khác để gộp chung 1 file">📦</button>` : ""}
         <button type="button" class="btn small ghost" data-act="zoom" title="Phóng tới ảnh">⤢</button>
         <button type="button" class="btn small ghost" data-act="xoa" title="Gỡ ảnh khỏi bản đồ">×</button></div>
         <div class="lf-to"><label class="lf-op" title="Độ rõ của ảnh (giảm để thấy nền bên dưới)">Độ rõ
@@ -1075,6 +1105,8 @@
             <input type="range" min="5" max="100" step="5" value="${f.op}" data-act="op"> <b>${f.op}%</b></label>
         </div>` : ""}</li>`).join("");
     ul.hidden = !S.files.length;
+    const nutTat = document.getElementById("lf-xuat-tat"), soAnh = S.files.filter((x) => x.kind === "anh" && x.anh.xuat).length;
+    if (nutTat) { nutTat.hidden = soAnh < 2; nutTat.textContent = `📦 Xuất ${soAnh} ảnh thành 1 gói .pmtiles…`; }
     ul.onclick = (ev) => {
       const b = ev.target.closest("[data-act]"); if (!b) return;
       const li = b.closest("li"), f = S.files.find((x) => x.id === li.dataset.id); if (!f) return;

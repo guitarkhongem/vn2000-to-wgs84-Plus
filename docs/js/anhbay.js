@@ -513,6 +513,21 @@
     return (await cv.convertToBlob({ type: fmt || "image/png", quality: 0.85 })).arrayBuffer();
   }
 
+  // Chồng các ô cùng vị trí (ảnh sau nằm trên) — ô ở chỗ giáp nhau của nhiều ảnh khi gộp gói ảnh
+  async function chongO(con, fmt) {
+    const cv = new OffscreenCanvas(256, 256), cx = cv.getContext("2d");
+    let co = false;
+    for (const b of con) {
+      if (!b) continue;
+      const bmp = await createImageBitmap(b instanceof Blob ? b : new Blob([b]));
+      cx.drawImage(bmp, 0, 0);
+      if (bmp.close) bmp.close();
+      co = true;
+    }
+    if (!co) return null;
+    return (await cv.convertToBlob({ type: fmt || "image/png", quality: 0.85 })).arrayBuffer();
+  }
+
   // hàm đổi: kinh/vĩ độ → điểm ảnh gốc (cột, hàng) và ngược lại, theo hệ số affine + hệ toạ độ người dùng chọn
   function taoToPx(aff, opt) {
     const det = aff[1] * aff[5] - aff[2] * aff[4];
@@ -598,13 +613,15 @@
     }
     return veO(lop, z, x, y, signal, fmt);
   }
-  async function ghepLop(con, fmt, signal) {
+  // kieu "ghep": 4 ô con → ô cha; "chong": các ô cùng vị trí chồng lên nhau
+  async function ghepLop(con, fmt, signal, kieu) {
+    const t = kieu === "chong" ? "chong" : "ghep";
     if (poolTao() && !POOL.hong) {
-      const r = await poolGui(poolChon(), { t: "ghep", con, fmt }, signal);
+      const r = await poolGui(poolChon(), { t, con, fmt }, signal);
       if (!r.hong) return r.buf;
     }
     if (signal && signal.aborted) throw loiHuy();
-    return ghep4(con, fmt);
+    return t === "chong" ? chongO(con, fmt) : ghep4(con, fmt);
   }
 
   let daDangKy = false;
@@ -717,7 +734,7 @@
     // dùng cho xuất gói ảnh (goianh.js)
     abLop: (id) => { const l = DS.get(id); return l && { id: l.id, ten: l.ten, bb: l.bb, vien: l.vien, zMin: l.zMin, zMax: l.zMax, gsd: l.gsd, tenHe: l.tenHe, kieu: l.kieu }; },
     abVe: (id, z, x, y, o = {}) => { const l = DS.get(id); if (!l) throw new Error("Ảnh đã bị gỡ khỏi bản đồ"); return veLop(l, z, x, y, o.signal, o.fmt); },
-    abGhep: (con, fmt, signal) => ghepLop(con, fmt, signal),
+    abGhep: (con, fmt, signal, kieu) => ghepLop(con, fmt, signal, kieu),
     abOTrong: oTrong,
     abSoLuong: () => (POOL.ws && !POOL.hong ? POOL.ws.length : 0),
     abThuWorker: () => { poolTao(); return !!(POOL.ws && !POOL.hong); } });
@@ -735,13 +752,13 @@
       if (m.t === "mo") { DS.set(m.id, { id: m.id, src: m.src, toPx: taoToPx(m.aff, m.opt).toPx }); return; }
       if (m.t === "dong") { DS.delete(m.id); xoaDem(m.id); return; }
       if (m.t === "huy") { const a = HUY.get(m.q); if (a) a.abort(); return; }
-      if (m.t !== "ve" && m.t !== "ghep") return;
+      if (m.t !== "ve" && m.t !== "ghep" && m.t !== "chong") return;
       if (!ok) { root.postMessage({ q: m.q, hong: true }); return; }
       const ac = new AbortController(); HUY.set(m.q, ac);
       try {
         let buf;
         if (m.t === "ve") { const lop = DS.get(m.id); if (!lop) throw new Error("Ảnh đã bị gỡ khỏi bản đồ"); buf = await veO(lop, m.z, m.x, m.y, ac.signal, m.fmt); }
-        else buf = await ghep4(m.con, m.fmt);
+        else buf = m.t === "chong" ? await chongO(m.con, m.fmt) : await ghep4(m.con, m.fmt);
         root.postMessage({ q: m.q, buf }, buf ? [buf] : []);
       } catch (e) {
         root.postMessage({ q: m.q, loi: e && e.name === "AbortError" ? "AbortError" : String((e && e.message) || e) });
