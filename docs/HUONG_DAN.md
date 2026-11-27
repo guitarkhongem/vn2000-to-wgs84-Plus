@@ -188,9 +188,9 @@ bản đồ) chỉ tra cứu được trong bảng.
 > **Lưu ý:** đoạn đường gần nhất chưa chắc là đường mà thửa đất tiếp giáp; vị trí (VT1–VT4) của thửa do cơ
 > quan có thẩm quyền xác định theo quy định kèm Nghị quyết. Thông tin chỉ để tham khảo.
 
-## 10. Lớp từ file (KML, KMZ, DXF, DGN)
+## 10. Lớp từ file (KML, KMZ, DWG, DXF, DGN)
 
-Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, KMZ, DXF, DGN…** (chọn được nhiều file) hoặc
+Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, KMZ, DWG, DXF, DGN…** (chọn được nhiều file) hoặc
 **kéo thả file vào bản đồ**. File chỉ được đọc trên máy bạn, không tải lên mạng.
 
 | File | Đọc được | Toạ độ |
@@ -199,7 +199,7 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
 | **.dxf** (AutoCAD, mọi phiên bản) | LINE, LWPOLYLINE / POLYLINE (cả cung *bulge*), CIRCLE, ARC, ELLIPSE, POINT, TEXT, MTEXT, ATTRIB, khối INSERT (bung ra đúng vị trí, tỉ lệ, góc xoay) | Hỏi hệ toạ độ |
 | **.dgn MicroStation V7** | Line, LineString, Shape, Curve, chuỗi / hình phức, Ellipse, Arc, Text, Cell; lớp = *Level* | Hỏi hệ toạ độ |
 | **.dgn MicroStation V8** (V8i, CONNECT) | Line, LineString, Shape, chuỗi / hình phức, Ellipse, Arc, Text, Cell, Text node — model mặc định; lớp = *Level*. Chưa vẽ: kích thước (dimension), shared cell, tag | Hỏi hệ toạ độ |
-| .dwg (AutoCAD) | **Chưa đọc được** — định dạng đóng của Autodesk | Lưu sang DXF (xem dưới) |
+| **.dwg** (AutoCAD R13 – 2018+) | Như DXF — file DWG được thư viện mở **LibreDWG** đổi sang DXF ngay trong trình duyệt, rồi đọc như DXF | Hỏi hệ toạ độ |
 
 - **Mỗi lần mở file CAD** (DXF, DGN) ứng dụng hỏi: toạ độ trong file là **VN-2000** (x = Đông/Y, y = Bắc/X như
   AutoCAD, MicroStation), **VN-2000 đảo trục** hay **WGS84** (độ), và **kinh tuyến trục** (chọn tỉnh hoặc gõ số).
@@ -216,7 +216,10 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
   **chiều dài** (tính trên elipxoit WGS84 — để tham khảo).
 - **Danh sách lớp**: ô đánh dấu để ẩn / hiện, **⤢** phóng tới lớp, **×** gỡ lớp. Lớp từ file không được lưu
   lại — tải lại trang thì mở lại file.
-- **File DWG**: trong AutoCAD chọn *Save As* kiểu **AutoCAD DXF**, rồi mở file .dxf tại đây.
+- **File DWG**: lần đầu mở, ứng dụng tải bộ đọc **LibreDWG** (thư viện GNU, giấy phép GPL; bản WebAssembly
+  *@mlightcad/libredwg-web 0.9.4*) từ CDN jsDelivr — khoảng 8 MB, cần mạng; trình duyệt lưu lại cho các lần sau.
+  File DWG vẫn chỉ xử lý trên máy bạn. Nếu LibreDWG không đọc được một file, mở file trong AutoCAD, *Save As* kiểu
+  **AutoCAD DXF**, rồi mở file .dxf tại đây.
 
 ## 11. Nguồn dữ liệu
 
@@ -228,6 +231,7 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
 | Lớp quy hoạch Hướng Hóa | **Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa** | Chỉ để tham khảo (mục 8) |
 | Giá đất 2026 | **Nghị quyết 12/2025/NQ-HĐND** ngày 11/12/2025 của HĐND tỉnh Quảng Trị — Bảng giá đất áp dụng từ 01/01/2026 (Phụ lục I: đất nông nghiệp; II: đất ở; III: đất TMDV, đất cơ sở SXKD phi nông nghiệp), qua bản tổng hợp Excel *"BANG GIA DAT 2026"* | Liên kết Google Maps điểm đầu – cuối từng đoạn lấy từ bản tổng hợp; hình đoạn đường dò theo mạng đường © **OpenStreetMap contributors** (ODbL) dữ liệu tải qua **Overpass API** (maps.mail.ru), dò tuyến trên máy; một phần bằng **OSRM** (máy chủ routing.openstreetmap.de của FOSSGIS). Mục 9 |
 | Tham số chuyển đổi VN-2000 ⇄ WGS84 (7 tham số) | **Quyết định số 05/2007/QĐ-BTNMT** ngày 27/02/2007 của Bộ Tài nguyên và Môi trường *về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000* | Dịch gốc −191,90441429 m; −39,30318279 m; −111,45032835 m · góc xoay −0,00928836″; 0,01975479″; −0,00427372″ · tỉ lệ k = 1,000000252906278 (cũng là bộ EPSG:6960, Coordinate Frame) |
+| Bộ đọc DWG | **LibreDWG** (GNU, GPL-3.0) bản WebAssembly *@mlightcad/libredwg-web 0.9.4* (GPL-2.0), tải từ jsDelivr khi mở file .dwg | Không nằm trong mã nguồn ứng dụng. Mục 10 |
 | Công thức chuyển đổi | Trần Trung Anh, Quách Mạnh Tuấn — *Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác*, Hội nghị KH Quốc gia về Công nghệ Địa không gian | |
 
 Tên nguồn cũng hiện ở **góc dưới phải bản đồ** (nút ⓘ) và cuối bảng điều khiển (*Nguồn dữ liệu bản đồ*).

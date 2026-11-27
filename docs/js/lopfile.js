@@ -4,7 +4,7 @@
  * người dùng chọn mỗi lần mở file.
  *
  * File chỉ đọc trong trình duyệt, không gửi đi đâu. DGN V8 không có tài liệu công khai: bộ đọc ở đây tự giải mã
- * từ file mẫu (xem parseDgnV8). DWG chưa đọc được → báo cách lưu sang DXF.
+ * từ file mẫu (xem parseDgnV8). DWG đọc bằng LibreDWG (WebAssembly, tải từ CDN khi cần — xem dwgToDxf).
  *
  * Phần phân tích file (parseKml, parseDxf, parseDgn, …) là hàm thuần, chạy được trong Node để kiểm thử.
  */
@@ -171,12 +171,14 @@
   }
 
   function dxfText(s) {
-    return tcvn3(String(s || ""))
+    // bỏ mã định dạng MTEXT trước, rồi mới đổi TCVN3 (tên font trong mã định dạng làm sai phép đoán chữ hoa)
+    const t = String(s || "")
       .replace(/\\U\+([0-9A-Fa-f]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
-      .replace(/\\P/g, "\n").replace(/\\[ACFHQTWfLlOoKk][^;\\]*;?/g, "").replace(/[{}]/g, "")
-      .replace(/\\S([^;]*);/g, (_, t) => t.replace(/[\^#/]/g, "").trim() === "2" ? "²" : t.replace(/[\^#/]/g, " ").trim())
-      .replace(/%%[cC]/g, "Ø").replace(/%%[dD]/g, "°").replace(/%%[pP]/g, "±").replace(/%%[uUoO]/g, "")
-      .replace(/\\~/g, " ").trim();
+      .replace(/\\P/g, "\n")
+      .replace(/\\S([^;]*);/g, (_, x) => x.replace(/[\^#/]/g, "").trim() === "2" ? "²" : x.replace(/[\^#/]/g, " ").trim())
+      .replace(/\\[ACFHQTWfLlOoKk][^;\\]*;?/g, "").replace(/[{}]/g, "").replace(/\\~/g, " ");
+    return tcvn3(t)
+      .replace(/%%[cC]/g, "Ø").replace(/%%[dD]/g, "°").replace(/%%[pP]/g, "±").replace(/%%[uUoO]/g, "").trim();
   }
 
   const JUST_DXF = (h, v) => {   // TEXT: 72 (0 trái, 1 giữa, 2 phải, 4 giữa), 73 (0/1 đáy, 2 giữa, 3 đỉnh)
@@ -565,6 +567,35 @@
     return out;
   }
 
+  // ===================================================================== DWG (AutoCAD) — qua LibreDWG
+  // DWG là định dạng đóng của Autodesk; dùng LibreDWG (GNU, GPL) bản WebAssembly của @mlightcad/libredwg-web,
+  // tải từ CDN jsDelivr CHỈ khi người dùng mở file .dwg (~8 MB, trình duyệt lưu đệm cho lần sau).
+  // LibreDWG đổi DWG → DXF trong bộ nhớ, rồi dùng chính bộ đọc DXF ở trên.
+  const DWG_LIB = "https://cdn.jsdelivr.net/npm/@mlightcad/libredwg-web@0.9.4/";
+  let dwgLib = null;
+  function napLibreDwg() {
+    if (!dwgLib) {
+      dwgLib = import(DWG_LIB + "dist/libredwg-web.js")
+        .then((m) => m.LibreDwg.create(DWG_LIB + "wasm"))
+        .catch((e) => { dwgLib = null; throw new Error("Không tải được bộ đọc DWG (LibreDWG) — kiểm tra kết nối mạng. " + (e && e.message || "")); });
+    }
+    return dwgLib;
+  }
+  async function dwgToDxf(buf) {
+    const L = await napLibreDwg(), W = L.wasmInstance;
+    const vao = "vn_in.dwg", ra = "vn_out.dxf";
+    try {
+      W.FS.writeFile(vao, new Uint8Array(buf));
+      const loi = W.dwg_write_dxf(vao, ra);                    // mã lỗi < 128: cảnh báo, vẫn có kết quả
+      const co = W.FS.analyzePath(ra, false).exists;
+      const out = co ? W.FS.readFile(ra) : null;
+      if (!out || !out.length || (loi & 128 && out.length < 100)) throw new Error("LibreDWG không đọc được file DWG này (mã lỗi " + loi + ")");
+      return dxfDecode(out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength));
+    } finally {
+      for (const f of [vao, ra]) try { if (W.FS.analyzePath(f, false).exists) W.FS.unlink(f); } catch (_) { /* bỏ qua */ }
+    }
+  }
+
   // ===================================================================== CAD → GeoJSON
   function extent(ents) {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, n = 0;
@@ -604,7 +635,7 @@
     return features;
   }
 
-  Object.assign(root.VN, { tcvn3, cfbRead, parseDgnV8, dgnV8Text, parseKml, unzipKml, parseDxf, dxfDecode, dxfText, parseDgn, dgnKind, vaxDouble, dgnInt32,
+  Object.assign(root.VN, { tcvn3, cfbRead, parseDgnV8, dgnV8Text, dwgToDxf, parseKml, unzipKml, parseDxf, dxfDecode, dxfText, parseDgn, dgnKind, vaxDouble, dgnInt32,
     bulgePts, arcPts, cadExtent: extent, guessCrs, cadToGeojson });
 
   if (typeof document === "undefined") return;   // chạy trong Node (kiểm thử) → chỉ xuất hàm
@@ -647,8 +678,7 @@
     let msg = e(err && err.message ? err.message : String(err));
     if (err && err.code === "dgn-v8") msg = `là <b>DGN MicroStation V8</b> — định dạng đóng của Bentley, trình duyệt chưa đọc được. ` +
       `Trong MicroStation: <i>File › Export › DWG/DXF</i> (chọn <b>DXF</b>) hoặc <i>File › Save As</i> chọn kiểu <b>MicroStation V7 DGN</b>, rồi mở file mới tại đây.`;
-    if (err && err.code === "dwg") msg = `là <b>DWG</b> (AutoCAD) — định dạng đóng, trình duyệt chưa đọc được. ` +
-      `Trong AutoCAD: <i>Save As</i> chọn kiểu <b>AutoCAD DXF (*.dxf)</b>, rồi mở file .dxf tại đây.`;
+    if (/\.dwg$/i.test(name) && !(err && err.code)) msg += ` — có thể mở file trong AutoCAD, <i>Save As</i> kiểu <b>AutoCAD DXF</b> rồi mở file .dxf tại đây.`;
     box.hidden = false;
     box.innerHTML = `<b>${e(name)}</b> ${msg}`;
   }
@@ -664,16 +694,19 @@
       features = parseKml(text).features; loai = ext === "kmz" ? "KMZ" : "KML";
     } else {
       const k = dgnKind(u8);
-      if (k === "dwg" || ext === "dwg") throw Object.assign(new Error("DWG"), { code: "dwg" });
       let ents;
-      if (k === "v8") {
+      if (k === "dwg" || ext === "dwg") {
+        if (!dwgLib) S.h.toast("Đang tải bộ đọc DWG (LibreDWG ~8 MB, chỉ lần đầu)…");
+        const ver = new TextDecoder("latin1").decode(u8.subarray(0, 6));
+        ents = parseDxf(await dwgToDxf(buf)); loai = "DWG " + ver;
+      } else if (k === "v8") {
         ents = await parseDgnV8(buf); loai = "DGN V8";
         const bq = Object.values(ents.v8.boQua).reduce((x, y) => x + y, 0);
         if (bq) loai += ` · bỏ qua ${bq} phần tử chưa hỗ trợ`;
         if (ents.v8.models > 1) S.h.toast(`File có ${ents.v8.models} model — đang mở model đầu tiên (Default)`);
       } else if (ext === "dgn" || k === "v7") { ents = parseDgn(buf); loai = "DGN V7"; }
       else if (ext === "dxf") { ents = parseDxf(dxfDecode(buf)); loai = "DXF"; }
-      else throw new Error("Chỉ mở được file .kml, .kmz, .dxf, .dgn");
+      else throw new Error("Chỉ mở được file .kml, .kmz, .dxf, .dgn, .dwg");
       if (!ents.length) throw new Error("Không có đối tượng vẽ được (đường, vùng, điểm, chữ)");
       const opt = await hoiHeToaDo(file.name, ents);
       if (!opt) return;                                  // người dùng huỷ
