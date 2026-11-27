@@ -247,6 +247,11 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
   - Hộp thoại hệ toạ độ chọn sẵn **kinh tuyến trục ghi trong file** (vd EPSG:9212 = VN-2000 TM-3 KTT 106°15′), nếu file
     không ghi thì theo tỉnh đang chọn — kiểm tra rồi bấm *Mở lên bản đồ*. Ảnh ở **UTM** (WGS84 hoặc VN-2000 múi 6°)
     chưa hỗ trợ: xuất lại theo VN-2000 TM-3 của tỉnh hoặc WGS84 độ.
+  - **Chọn nhiều tấm một lần** (vd bộ `TC-0-0.tif … TC-2-1.tif`, `LIG1-0-0 … 3-2` do Metashape chia tấm): các tấm ghi
+    cùng hệ toạ độ chỉ hỏi kinh tuyến trục **một lần**; tấm không ghi hệ toạ độ vẫn hỏi riêng.
+  - Đã thử với ảnh thật xuất từ **Agisoft Metashape** (GeoTIFF nén LZW, 8 hoặc 16 bit, có overview — mở ngay, xem mọi
+    mức zoom) và **DJI Terra** (`result.tif`, BigTIFF nén Deflate, **không có overview** — chỉ thấy ảnh từ khoảng zoom 19:
+    nên tạo overview trong QGIS như dưới đây).
   - Mỗi ô bản đồ đổi toạ độ bằng **đúng hàm chuyển đổi của ứng dụng** (lưới 9×9 điểm / ô 256 điểm ảnh, nội suy giữa
     các điểm lưới) — kiểm tra trên ảnh thử 5 cm/điểm ảnh: mép vật lệch khoảng 1 cm.
   - **Overview (pyramid)**: ảnh có overview thì xem được ở mọi mức zoom; **không có overview** thì chỉ hiện ảnh khi phóng

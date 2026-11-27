@@ -668,13 +668,15 @@
     const phu = files.filter((f) => PHU.test(f.name));
     if (phu.length && !files.some((f) => ANH.test(f.name)))
       S.h.toast("Chọn cùng lúc cả file ảnh (.tif, .jpg…) và file world (.tfw, .jgw…) cùng tên", 5000);
+    // nhiều ảnh cùng hệ toạ độ ghi trong file (vd bộ TC-0-0 … TC-2-1) → hỏi kinh tuyến trục một lần cho cả lần chọn
+    const nhoHe = new Map(), nhieuAnh = files.filter((f) => ANH.test(f.name)).length > 1;
     for (const f of files) {
       if (PHU.test(f.name)) continue;
       try {
         if (ANH.test(f.name)) {
           const kem = phu.filter((p) => tenGoc(p.name) === tenGoc(f.name) || tenGoc(p.name) === f.name.toLowerCase());
           await moAnh(f, { world: kem.find((p) => !/\.(prj|ovr)$/i.test(p.name)), prj: kem.find((p) => /\.prj$/i.test(p.name)),
-            ovr: kem.find((p) => /\.ovr$/i.test(p.name)) });
+            ovr: kem.find((p) => /\.ovr$/i.test(p.name)) }, { nhoHe, nhieuAnh });
         } else await moFile(f);
       }
       catch (err) {
@@ -730,10 +732,18 @@
     themLop(file.name, loai, features);
   }
 
-  async function moAnh(file, kem) {
+  async function moAnh(file, kem, lo) {
     if (!root.VN.anhBayMo) throw new Error("Thiếu bộ đọc ảnh (anhbay.js)");
     document.getElementById("lf-loi").hidden = true;
-    const r = await root.VN.anhBayMo(file, kem, { map: S.map, h: S.h, hoiHeToaDo });
+    const hoi = async (name, ents, goiY) => {
+      const khoa = lo && goiY && goiY.tuFile ? goiY.crs + "|" + (goiY.lon0 || "") : null;
+      if (khoa && lo.nhoHe.has(khoa)) return lo.nhoHe.get(khoa);
+      const g = khoa && lo.nhieuAnh ? { ...goiY, moTa: goiY.moTa + " — Áp dụng luôn cho các ảnh khác cùng hệ toạ độ trong lần chọn này." } : goiY;
+      const kq = await hoiHeToaDo(name, ents, g);
+      if (kq && khoa) lo.nhoHe.set(khoa, kq);
+      return kq;
+    };
+    const r = await root.VN.anhBayMo(file, kem, { map: S.map, h: S.h, hoiHeToaDo: hoi });
     if (!r) return;                                      // người dùng huỷ
     const lop = { id: r.id, name: r.ten, loai: r.loai, kind: "anh", anh: r, bb: r.bb, visible: true, op: 100,
       n: 0, nVung: 0, chu: [], mau: "#ff7a00" };

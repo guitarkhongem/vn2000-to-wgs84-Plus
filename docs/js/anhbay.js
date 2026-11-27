@@ -522,7 +522,7 @@
     const crsDoan = goiY.crs || doanTuPhamVi(ext);
     const kichThuoc = `${src.W.toLocaleString("vi-VN")} × ${src.H.toLocaleString("vi-VN")} điểm ảnh` +
       (src.kieu === "tiff" ? ` · ${src.muc.length > 1 ? (src.muc.length - 1) + " mức overview" + (src.ovr ? " (file .ovr)" : "") : "không có overview"}` : "");
-    const opt = await ctx.hoiHeToaDo(ten, null, { ext, crs: crsDoan, lon0: goiY.lon0,
+    const opt = await ctx.hoiHeToaDo(ten, null, { ext, crs: crsDoan, lon0: goiY.lon0, tuFile: !!goiY.crs,
       moTa: `Ảnh ${kichThuoc}. Toạ độ lấy từ ${nguonToaDo}. ${goiY.moTa || ""}` });
     if (!opt) { if (src.bmp) src.bmp.close(); return null; }
 
