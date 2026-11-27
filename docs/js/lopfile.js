@@ -161,6 +161,7 @@
     const head = new TextDecoder("latin1").decode(u8.subarray(0, Math.min(u8.length, 20000)));
     const ver = (/\$ACADVER\s*\r?\n\s*1\s*\r?\n\s*AC(\d+)/.exec(head) || [])[1];
     if (ver && Number(ver) >= 1021) return new TextDecoder("utf-8").decode(u8);      // AutoCAD 2007+: UTF-8
+    try { return new TextDecoder("utf-8", { fatal: true }).decode(u8); } catch (_) { /* không phải UTF-8 → mã trang */ }
     const cp = (/\$DWGCODEPAGE\s*\r?\n\s*3\s*\r?\n\s*ANSI_(\d+)/i.exec(head) || [])[1];
     try { return new TextDecoder(cp ? "windows-" + cp : "windows-1252").decode(u8); }
     catch (_) { return new TextDecoder("latin1").decode(u8); }
