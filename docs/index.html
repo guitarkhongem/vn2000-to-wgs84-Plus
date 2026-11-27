@@ -7,21 +7,22 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.27o">
+<link rel="stylesheet" href="css/style.css?v=2026.11.27p">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27o"></script>
-<script src="js/parse.js?v=2026.11.27o"></script>
-<script src="js/geo.js?v=2026.11.27o"></script>
-<script src="js/export.js?v=2026.11.27o"></script>
-<script src="js/giadat.js?v=2026.11.27o"></script>
-<script src="js/lopfile.js?v=2026.11.27o"></script>
-<script src="js/chupanh.js?v=2026.11.27o"></script>
-<script src="js/ocrtoado.js?v=2026.11.27o"></script>
-<script src="js/thongke-config.js?v=2026.11.27o"></script>
-<script src="js/thongke.js?v=2026.11.27o"></script>
-<script src="js/google.js?v=2026.11.27o"></script>
+<script src="js/converter.js?v=2026.11.27p"></script>
+<script src="js/parse.js?v=2026.11.27p"></script>
+<script src="js/geo.js?v=2026.11.27p"></script>
+<script src="js/export.js?v=2026.11.27p"></script>
+<script src="js/giadat.js?v=2026.11.27p"></script>
+<script src="js/lopfile.js?v=2026.11.27p"></script>
+<script src="js/anhbay.js?v=2026.11.27p"></script>
+<script src="js/chupanh.js?v=2026.11.27p"></script>
+<script src="js/ocrtoado.js?v=2026.11.27p"></script>
+<script src="js/thongke-config.js?v=2026.11.27p"></script>
+<script src="js/thongke.js?v=2026.11.27p"></script>
+<script src="js/google.js?v=2026.11.27p"></script>
 </head>
 <body>
 <div class="layout">
@@ -121,9 +122,9 @@
 
     <section class="card" id="lf-card">
       <h2>Lớp từ file</h2>
-      <p class="muted small">Mở file <b>KML, KMZ</b> (Google Earth), <b>DWG, DXF</b> (AutoCAD) hoặc <b>DGN</b> (MicroStation V7, V8) để chồng lên bản đồ — bấm nút hoặc kéo thả file vào bản đồ. File CAD toạ độ VN-2000: chọn kinh tuyến trục khi mở. File chỉ đọc trên máy bạn, không tải lên đâu cả.</p>
-      <button type="button" id="lf-add" class="btn">Thêm file KML, KMZ, DWG, DXF, DGN…</button>
-      <input type="file" id="lf-input" accept=".kml,.kmz,.dxf,.dgn,.dwg" multiple hidden>
+      <p class="muted small">Mở file <b>KML, KMZ</b> (Google Earth), <b>DWG, DXF</b> (AutoCAD), <b>DGN</b> (MicroStation V7, V8) hoặc <b>ảnh bay / ảnh trực giao</b> (<b>GeoTIFF</b> .tif; ảnh .tif/.jpg/.png kèm file world .tfw/.jgw/.pgw, overview .ovr — chọn cùng lúc) để chồng lên bản đồ — bấm nút hoặc kéo thả file vào bản đồ. Toạ độ VN-2000: chọn kinh tuyến trục khi mở. File chỉ đọc trên máy bạn, không tải lên đâu cả.</p>
+      <button type="button" id="lf-add" class="btn">Thêm file KML, DWG, DXF, DGN, ảnh trực giao…</button>
+      <input type="file" id="lf-input" accept=".kml,.kmz,.dxf,.dgn,.dwg,.tif,.tiff,.jpg,.jpeg,.png,.tfw,.tifw,.jgw,.jpgw,.pgw,.pngw,.wld,.prj,.ovr" multiple hidden>
       <div id="lf-loi" class="lf-loi" hidden></div>
       <ul id="lf-ds" class="lf-ds" hidden></ul>
     </section>
@@ -202,6 +203,7 @@
           <li><b>Nền hành chính</b> (zoom nhỏ, 34 tỉnh, biên giới, QĐ Hoàng Sa, QĐ Trường Sa): Bản đồ hành chính Việt Nam tỷ lệ 1:1.000.000, Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam (02/2025); ranh tỉnh theo Nghị quyết 202/2025/QH15; biên tập: đề tài NV25-44, Trường ĐH Mỏ - Địa chất (chủ nhiệm TS Trần Trung Anh, 10/2025).</li>
           <li><b>Bản đồ đường phố</b>: © OpenStreetMap contributors (giấy phép ODbL).</li>
           <li><b>Ảnh vệ tinh</b>: Esri World Imagery (Esri, Maxar, Earthstar Geographics).</li>
+          <li><b>Ảnh bay / ảnh trực giao</b> (mục <i>Lớp từ file</i>): file của chính người dùng, chỉ đọc trên máy; tên file ghi ở góc bản đồ khi bật.</li>
           <li><b>Ảnh vệ tinh Google</b> (nút <i>Google</i>): Google Maps Platform — Map Tiles API; nguồn ảnh theo từng vùng hiện ở góc dưới trái bản đồ.</li>
           <li><b>Lớp quy hoạch</b>: Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa.</li>
           <li><b>Giá đất 2026</b>: Nghị quyết 12/2025/NQ-HĐND ngày 11/12/2025 của HĐND tỉnh Quảng Trị (bản tổng hợp Excel "BANG GIA DAT 2026"); vị trí đoạn đường dò theo mạng đường © OpenStreetMap contributors bằng OSRM.</li>
@@ -288,6 +290,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.27o"></script>
+<script src="js/app.js?v=2026.11.27p"></script>
 </body>
 </html>

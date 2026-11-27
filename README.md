@@ -25,6 +25,8 @@ Repo này phát triển tiếp từ
   cho biết điểm thuộc tỉnh mới nào.
 - **Nhận dạng toạ độ từ ảnh (OCR)**: đọc Vĩ độ–Kinh độ / X–Y in trên ảnh (màn hình RTK, drone, sổ đo) vào khung chuyển đổi (Tesseract.js);
 - **Chụp ảnh có toạ độ**: in toạ độ WGS84, VN-2000, tỉnh, thời gian, ghi chú lên ảnh; lưu kèm EXIF GPS;
+- **Ảnh bay / ảnh trực giao** (mục Lớp từ file): GeoTIFF hoặc TIF/JPG + .tfw/.jgw (kèm .ovr, .prj), file 0,5–2 GB đọc dần
+  trên máy, không tải lên mạng; toạ độ VN-2000 đổi bằng thuật toán của ứng dụng;
 - **Lớp từ file**: mở KML / KMZ, DWG / DXF (AutoCAD; DWG qua LibreDWG — GPL, tải từ CDN khi cần), DGN MicroStation V7 và V8 chồng lên bản đồ; file CAD VN-2000 hỏi kinh tuyến trục mỗi lần mở, chữ TCVN3 tự đổi Unicode;
 - **Thống kê truy cập** (chỉ chủ ứng dụng, mở bằng `?thongke`): lượt xem theo ngày, quốc gia, thành phố —
   máy chủ Cloudflare Workers + D1 miễn phí, ẩn danh, không lưu IP (cách dựng: [cloudflare/HUONG_DAN.md](cloudflare/HUONG_DAN.md));

@@ -661,9 +661,22 @@
     map.on("click", onClick);
   }
 
+  // Ảnh bay / ảnh trực giao (docs/js/anhbay.js): ảnh + file world / .prj cùng tên chọn cùng lúc
+  const ANH = /\.(tif|tiff|jpe?g|png)$/i, PHU = /\.(tfw|tifw|tiffw|jgw|jpgw|jpegw|pgw|pngw|wld|prj|ovr)$/i;
+  const tenGoc = (n) => n.replace(/\.[^.]+$/, "").toLowerCase();
   async function moFiles(files) {
+    const phu = files.filter((f) => PHU.test(f.name));
+    if (phu.length && !files.some((f) => ANH.test(f.name)))
+      S.h.toast("Chọn cùng lúc cả file ảnh (.tif, .jpg…) và file world (.tfw, .jgw…) cùng tên", 5000);
     for (const f of files) {
-      try { await moFile(f); }
+      if (PHU.test(f.name)) continue;
+      try {
+        if (ANH.test(f.name)) {
+          const kem = phu.filter((p) => tenGoc(p.name) === tenGoc(f.name) || tenGoc(p.name) === f.name.toLowerCase());
+          await moAnh(f, { world: kem.find((p) => !/\.(prj|ovr)$/i.test(p.name)), prj: kem.find((p) => /\.prj$/i.test(p.name)),
+            ovr: kem.find((p) => /\.ovr$/i.test(p.name)) });
+        } else await moFile(f);
+      }
       catch (err) {
         if (err && err.code === "dgn-v8") S.h.toast(`${f.name}: DGN MicroStation V8 — chưa đọc được, xem hướng dẫn bên dưới`, 5000);
         else S.h.toast(`${f.name}: ${err && err.message ? err.message : err}`, 4000);
@@ -717,18 +730,32 @@
     themLop(file.name, loai, features);
   }
 
-  // Hộp thoại chọn hệ toạ độ + kinh tuyến trục cho file CAD (mỗi lần mở file)
-  function hoiHeToaDo(name, ents) {
+  async function moAnh(file, kem) {
+    if (!root.VN.anhBayMo) throw new Error("Thiếu bộ đọc ảnh (anhbay.js)");
+    document.getElementById("lf-loi").hidden = true;
+    const r = await root.VN.anhBayMo(file, kem, { map: S.map, h: S.h, hoiHeToaDo });
+    if (!r) return;                                      // người dùng huỷ
+    const lop = { id: r.id, name: r.ten, loai: r.loai, kind: "anh", anh: r, bb: r.bb, visible: true, op: 100,
+      n: 0, nVung: 0, chu: [], mau: "#ff7a00" };
+    S.files.push(lop);
+    S.map.fitBounds([[r.bb[0], r.bb[1]], [r.bb[2], r.bb[3]]], { padding: 30, maxZoom: 19, duration: 600 });
+    S.h.toast(`Đã thêm ảnh ${r.ten}` + (r.zMin > 12 ? " — ảnh không có overview: phóng to để thấy ảnh, xa hơn chỉ hiện khung" : ""), 5000);
+    danhSach();
+  }
+
+  // Hộp thoại chọn hệ toạ độ + kinh tuyến trục cho file CAD / ảnh (mỗi lần mở file).
+  // goiY (ảnh): { ext, crs, lon0, moTa } — phạm vi, hệ đoán được, KTT đọc trong file, mô tả
+  function hoiHeToaDo(name, ents, goiY) {
     return new Promise((resolve) => {
       const dlg = document.getElementById("lf-dlg");
-      const ext = extent(ents), doan = guessCrs(ext);
-      const e = S.h.escapeHtml, f = (v) => S.h.fmt(v, 0);
+      const ext = goiY ? goiY.ext : extent(ents), doan = goiY ? goiY.crs : guessCrs(ext);
+      const e = S.h.escapeHtml, f = (v) => S.h.fmt(v, Math.abs(v) < 1000 ? 5 : 0);
       document.getElementById("lf-dlg-ten").textContent = name;
-      document.getElementById("lf-dlg-pv").innerHTML = ext
-        ? `Phạm vi toạ độ trong file: x ${f(ext[0])} – ${f(ext[2])}; y ${f(ext[1])} – ${f(ext[3])} · ${ents.length} đối tượng` +
+      document.getElementById("lf-dlg-pv").innerHTML = (goiY && goiY.moTa ? e(goiY.moTa) + "<br>" : "") + (ext
+        ? `Phạm vi toạ độ trong file: x ${f(ext[0])} – ${f(ext[2])}; y ${f(ext[1])} – ${f(ext[3])}` + (ents ? ` · ${ents.length} đối tượng` : "") +
           (doan === "vn2000-dao" ? `<br><b>x giống toạ độ Bắc (X), y giống toạ độ Đông (Y)</b> — đã chọn sẵn "đảo X/Y".` : "") +
           (doan === "" ? `<br><b>Phạm vi không giống VN-2000 hay độ WGS84</b> — kiểm tra lại file.` : "")
-        : "";
+        : "");
       const sel = document.getElementById("lf-dlg-crs");
       sel.value = doan === "wgs84" ? "wgs84" : doan === "vn2000-dao" ? "vn2000-dao" : "vn2000";
       const tinh = document.getElementById("lf-dlg-tinh"), ktt = document.getElementById("lf-dlg-ktt");
@@ -741,6 +768,10 @@
       }
       let lon0 = 105.5; try { lon0 = S.h.getLon0(); } catch (_) { /* giữ mặc định */ }
       ktt.value = lon0; tinh.value = S.h.provinceValue() || "";
+      if (goiY && goiY.lon0) {                           // KTT ghi trong file ảnh → chọn sẵn, vẫn cho sửa
+        ktt.value = goiY.lon0;
+        if (!tinh.value || S.h.provinces[tinh.value] !== goiY.lon0) tinh.value = "";
+      }
       const capNhat = () => { document.getElementById("lf-dlg-kttrow").hidden = sel.value === "wgs84"; };
       sel.onchange = capNhat; capNhat();
       const done = (ok) => {
@@ -800,7 +831,15 @@
 
   function danhSach() {
     const ul = document.getElementById("lf-ds"), e = S.h.escapeHtml;
-    ul.innerHTML = S.files.map((f) => `<li data-id="${f.id}">
+    ul.innerHTML = S.files.map((f) => f.kind === "anh" ? `<li data-id="${f.id}">
+        <div class="lf-hang">
+        <label class="lf-ten"><input type="checkbox" ${f.visible ? "checked" : ""} data-act="an">
+          <span class="lf-sw lf-sw-anh" aria-hidden="true">🖼</span><span><b>${e(f.name)}</b>
+          <small class="muted">${e(f.loai)}</small></span></label>
+        <button type="button" class="btn small ghost" data-act="zoom" title="Phóng tới ảnh">⤢</button>
+        <button type="button" class="btn small ghost" data-act="xoa" title="Gỡ ảnh khỏi bản đồ">×</button></div>
+        <div class="lf-to"><label class="lf-op" title="Độ rõ của ảnh (giảm để thấy nền bên dưới)">Độ rõ
+          <input type="range" min="10" max="100" step="5" value="${f.op}" data-act="op"> <b>${f.op}%</b></label></div></li>` : `<li data-id="${f.id}">
         <div class="lf-hang">
         <label class="lf-ten"><input type="checkbox" ${f.visible ? "checked" : ""} data-act="an">
           <span class="lf-sw" style="background:${f.mau}"></span><span><b>${e(f.name)}</b>
@@ -820,8 +859,11 @@
       const li = b.closest("li"), f = S.files.find((x) => x.id === li.dataset.id); if (!f) return;
       if (b.dataset.act === "zoom") S.map.fitBounds([[f.bb[0], f.bb[1]], [f.bb[2], f.bb[3]]], { padding: 40, maxZoom: 18 });
       else if (b.dataset.act === "xoa") {
-        for (const s of ["-fill", "-line", "-pt"]) if (S.map.getLayer(f.id + s)) S.map.removeLayer(f.id + s);
-        S.map.removeSource(f.id);
+        if (f.kind === "anh") f.anh.go();
+        else {
+          for (const s of ["-fill", "-line", "-pt"]) if (S.map.getLayer(f.id + s)) S.map.removeLayer(f.id + s);
+          S.map.removeSource(f.id);
+        }
         S.files = S.files.filter((x) => x !== f); danhSach(); veChu();
       }
     };
@@ -831,7 +873,8 @@
       const f = lopCua(b); if (!f) return;
       if (b.dataset.act === "an") {
         f.visible = b.checked;
-        for (const s of ["-fill", "-line", "-pt"]) S.map.setLayoutProperty(f.id + s, "visibility", f.visible ? "visible" : "none");
+        if (f.kind === "anh") f.anh.hien(f.visible);
+        else for (const s of ["-fill", "-line", "-pt"]) S.map.setLayoutProperty(f.id + s, "visibility", f.visible ? "visible" : "none");
         veChu();
       } else if (b.dataset.act === "mode") {
         f.mode = b.value;
@@ -844,7 +887,7 @@
       const f = lopCua(b); if (!f) return;
       f.op = Number(b.value);
       b.parentElement.querySelector("b").textContent = f.op + "%";
-      apDungTo(f);
+      if (f.kind === "anh") f.anh.datDoRo(f.op / 100); else apDungTo(f);
     };
   }
 
@@ -889,7 +932,7 @@
 
   function onClick(ev) {
     const ids = [];
-    for (const f of S.files) if (f.visible) ids.push(f.id + "-pt", f.id + "-line", f.id + "-fill");
+    for (const f of S.files) if (f.visible && f.kind !== "anh") ids.push(f.id + "-pt", f.id + "-line", f.id + "-fill");
     if (!ids.length) return;
     const fs = S.map.queryRenderedFeatures([[ev.point.x - 4, ev.point.y - 4], [ev.point.x + 4, ev.point.y + 4]], { layers: ids.filter((i) => S.map.getLayer(i)) });
     if (!fs.length) return;

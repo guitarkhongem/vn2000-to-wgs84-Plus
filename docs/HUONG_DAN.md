@@ -208,9 +208,9 @@ bản đồ) chỉ tra cứu được trong bảng.
 > **Lưu ý:** đoạn đường gần nhất chưa chắc là đường mà thửa đất tiếp giáp; vị trí (VT1–VT4) của thửa do cơ
 > quan có thẩm quyền xác định theo quy định kèm Nghị quyết. Thông tin chỉ để tham khảo.
 
-## 10. Lớp từ file (KML, KMZ, DWG, DXF, DGN)
+## 10. Lớp từ file (KML, KMZ, DWG, DXF, DGN, ảnh trực giao)
 
-Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, KMZ, DWG, DXF, DGN…** (chọn được nhiều file) hoặc
+Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, DWG, DXF, DGN, ảnh trực giao…** (chọn được nhiều file) hoặc
 **kéo thả file vào bản đồ**. File chỉ được đọc trên máy bạn, không tải lên mạng.
 
 | File | Đọc được | Toạ độ |
@@ -220,6 +220,7 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
 | **.dgn MicroStation V7** | Line, LineString, Shape, Curve, chuỗi / hình phức, Ellipse, Arc, Text, Cell; lớp = *Level* | Hỏi hệ toạ độ |
 | **.dgn MicroStation V8** (V8i, CONNECT) | Line, LineString, Shape, chuỗi / hình phức, Ellipse, Arc, Text, Cell, Text node — model mặc định; lớp = *Level*. Chưa vẽ: kích thước (dimension), shared cell, tag | Hỏi hệ toạ độ |
 | **.dwg** (AutoCAD R13 – 2018+) | Như DXF — file DWG được thư viện mở **LibreDWG** đổi sang DXF ngay trong trình duyệt, rồi đọc như DXF | Hỏi hệ toạ độ |
+| **Ảnh bay / ảnh trực giao**: **.tif GeoTIFF** (kể cả BigTIFF), hoặc **.tif / .jpg / .png kèm file world** (.tfw / .jgw / .pgw / .wld), **.ovr**, **.prj** cùng tên | Ảnh RGB / RGBA / xám / bảng màu, 8–16 bit; nén LZW, Deflate, JPEG, PackBits hoặc không nén; dạng ô hoặc dải; overview trong file hoặc file .ovr; vùng trong suốt (kênh alpha, mặt nạ, NoData) | Đọc trong file (EPSG VN-2000 TM-3 9205–9218, TM tự khai báo, .prj), rồi hỏi xác nhận |
 
 - **Mỗi lần mở file CAD** (DXF, DGN) ứng dụng hỏi: toạ độ trong file là **VN-2000** (x = Đông/Y, y = Bắc/X như
   AutoCAD, MicroStation), **VN-2000 đảo trục** hay **WGS84** (độ), và **kinh tuyến trục** (chọn tỉnh hoặc gõ số).
@@ -239,6 +240,22 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
   (DXF, DGN, DWG) không tô; KML / KMZ phủ màu 40 %.
 - **Danh sách lớp**: ô đánh dấu để ẩn / hiện, **⤢** phóng tới lớp, **×** gỡ lớp. Lớp từ file không được lưu
   lại — tải lại trang thì mở lại file.
+- **Ảnh bay / ảnh trực giao** (ảnh drone xuất từ Pix4D, Agisoft Metashape, DJI Terra, Global Mapper…):
+  - Chọn **cùng lúc** file ảnh và các file đi kèm cùng tên: `anh.tif` + `anh.tfw` (+ `anh.tif.ovr`, `anh.prj` nếu có);
+    GeoTIFF đã có toạ độ thì chỉ cần file .tif. Ảnh **chỉ đọc trên máy**, không tải lên mạng; file 0,5–2 GB vẫn mở
+    ngay vì ứng dụng chỉ đọc phần ảnh đang xem.
+  - Hộp thoại hệ toạ độ chọn sẵn **kinh tuyến trục ghi trong file** (vd EPSG:9212 = VN-2000 TM-3 KTT 106°15′), nếu file
+    không ghi thì theo tỉnh đang chọn — kiểm tra rồi bấm *Mở lên bản đồ*. Ảnh ở **UTM** (WGS84 hoặc VN-2000 múi 6°)
+    chưa hỗ trợ: xuất lại theo VN-2000 TM-3 của tỉnh hoặc WGS84 độ.
+  - Mỗi ô bản đồ đổi toạ độ bằng **đúng hàm chuyển đổi của ứng dụng** (lưới 9×9 điểm / ô 256 điểm ảnh, nội suy giữa
+    các điểm lưới) — kiểm tra trên ảnh thử 5 cm/điểm ảnh: mép vật lệch khoảng 1 cm.
+  - **Overview (pyramid)**: ảnh có overview thì xem được ở mọi mức zoom; **không có overview** thì chỉ hiện ảnh khi phóng
+    đủ gần (xa hơn chỉ thấy **khung cam** bao ảnh). Tạo overview trong **QGIS**: chuột phải lớp ảnh → *Properties →
+    Pyramids* → chọn các mức → *Build pyramids* (QGIS ghi file `anh.tif.ovr` — chọn kèm file này khi mở), hoặc menu
+    *Raster → Miscellaneous → Build Overviews*.
+  - Trong danh sách lớp: thanh **Độ rõ** 10–100 % để thấy nền / bản vẽ bên dưới; ⤢ phóng tới ảnh; × gỡ ảnh.
+  - Ảnh **ECW, MrSID, JPEG 2000** trình duyệt không đọc được — đổi sang GeoTIFF trước (QGIS: *Raster → Conversion →
+    Translate*, nén JPEG hoặc LZW, tick *Create overviews* nếu có).
 - **File DWG**: lần đầu mở, ứng dụng tải bộ đọc **LibreDWG** (thư viện GNU, giấy phép GPL; bản WebAssembly
   *@mlightcad/libredwg-web 0.9.4*) từ CDN jsDelivr — khoảng 8 MB, cần mạng; trình duyệt lưu lại cho các lần sau.
   File DWG vẫn chỉ xử lý trên máy bạn. Nếu LibreDWG không đọc được một file, mở file trong AutoCAD, *Save As* kiểu
@@ -256,6 +273,7 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
 | Giá đất 2026 | **Nghị quyết 12/2025/NQ-HĐND** ngày 11/12/2025 của HĐND tỉnh Quảng Trị — Bảng giá đất áp dụng từ 01/01/2026 (Phụ lục I: đất nông nghiệp; II: đất ở; III: đất TMDV, đất cơ sở SXKD phi nông nghiệp), qua bản tổng hợp Excel *"BANG GIA DAT 2026"* | Liên kết Google Maps điểm đầu – cuối từng đoạn lấy từ bản tổng hợp; hình đoạn đường dò theo mạng đường © **OpenStreetMap contributors** (ODbL) dữ liệu tải qua **Overpass API** (maps.mail.ru), dò tuyến trên máy; một phần bằng **OSRM** (máy chủ routing.openstreetmap.de của FOSSGIS). Mục 9 |
 | Tham số chuyển đổi VN-2000 ⇄ WGS84 (7 tham số) | **Quyết định số 05/2007/QĐ-BTNMT** ngày 27/02/2007 của Bộ Tài nguyên và Môi trường *về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000* | Dịch gốc −191,90441429 m; −39,30318279 m; −111,45032835 m · góc xoay −0,00928836″; 0,01975479″; −0,00427372″ · tỉ lệ k = 1,000000252906278 (cũng là bộ EPSG:6960, Coordinate Frame) |
 | Nhận dạng chữ (OCR) | **Tesseract.js 7.0.0** (Apache-2.0) và dữ liệu tiếng Anh *eng* của Tesseract, tải từ jsDelivr khi dùng | Mục 4 |
+| Ảnh bay / ảnh trực giao | **File của chính người dùng** (mục *Lớp từ file*) — chỉ đọc trên máy, không tải lên mạng; bộ đọc TIFF / GeoTIFF do ứng dụng tự viết (không thư viện ngoài) | Tên file ghi ở góc bản đồ khi bật. Mục 10 |
 | Bộ đọc DWG | **LibreDWG** (GNU, GPL-3.0) bản WebAssembly *@mlightcad/libredwg-web 0.9.4* (GPL-2.0), tải từ jsDelivr khi mở file .dwg | Không nằm trong mã nguồn ứng dụng. Mục 10 |
 | Vị trí lượt truy cập (tab Thống kê, chỉ chủ ứng dụng thấy) | **Cloudflare** — quốc gia, thành phố ước tính theo địa chỉ mạng (`request.cf` của Cloudflare Workers) | Mức thành phố, có thể lệch; không lưu IP. Mục 14 |
 | Công thức chuyển đổi | Trần Trung Anh, Quách Mạnh Tuấn — *Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác*, Hội nghị KH Quốc gia về Công nghệ Địa không gian | |

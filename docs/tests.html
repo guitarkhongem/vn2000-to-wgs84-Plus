@@ -10,16 +10,17 @@
   #summary { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27o"></script>
-<script src="js/parse.js?v=2026.11.27o"></script>
-<script src="js/geo.js?v=2026.11.27o"></script>
-<script src="js/export.js?v=2026.11.27o"></script>
-<script src="js/giadat.js?v=2026.11.27o"></script>
-<script src="js/lopfile.js?v=2026.11.27o"></script>
-<script src="js/chupanh.js?v=2026.11.27o"></script>
-<script src="js/ocrtoado.js?v=2026.11.27o"></script>
-<script src="js/thongke.js?v=2026.11.27o"></script>
-<script src="js/google.js?v=2026.11.27o"></script>
+<script src="js/converter.js?v=2026.11.27p"></script>
+<script src="js/parse.js?v=2026.11.27p"></script>
+<script src="js/geo.js?v=2026.11.27p"></script>
+<script src="js/export.js?v=2026.11.27p"></script>
+<script src="js/giadat.js?v=2026.11.27p"></script>
+<script src="js/lopfile.js?v=2026.11.27p"></script>
+<script src="js/chupanh.js?v=2026.11.27p"></script>
+<script src="js/ocrtoado.js?v=2026.11.27p"></script>
+<script src="js/thongke.js?v=2026.11.27p"></script>
+<script src="js/google.js?v=2026.11.27p"></script>
+<script src="js/anhbay.js?v=2026.11.27p"></script>
 </head>
 <body>
 <div id="summary">Đang chạy…</div>
@@ -275,6 +276,27 @@ test("Ảnh Google: mức zoom tối đa theo maxZoomRects, địa chỉ ô ản
   eq(VN.gsatMaxZoomTai(R, 179.5, 0), 15, "qua kinh tuyến 180");
   eq(VN.gsatMaxZoomTai(R, 100, 50), 0, "ngoài mọi ô");
   eq(VN.gsatUrlO("a b", "K"), "https://tile.googleapis.com/v1/2dtiles/{z}/{x}/{y}?session=a%20b&key=K", "địa chỉ ô ảnh");
+});
+
+test("Ảnh trực giao: file world, GeoKey → hệ toạ độ, LZW, PackBits", () => {
+  const a = VN.abDocWorld("0.05\n0\n0\n-0.05\n551000.025\n1839999.975\n");
+  near(a[0], 551000, 1e-9, "world: X góc trái"); near(a[3], 1840000, 1e-9, "world: Y góc trên"); eq(a[1], 0.05, "cỡ điểm ảnh"); eq(a[5], -0.05, "cỡ điểm ảnh Y");
+  let loi = ""; try { VN.abDocWorld("1 2 3"); } catch (e) { loi = e.message; } eq(/6 dòng/.test(loi), true, "world thiếu dòng");
+  eq(VN.abDoanCrs({ 3072: 9212 }).lon0, 106.25, "EPSG:9212 → KTT 106°15'");
+  eq(VN.abDoanCrs({ 3072: 9218 }).lon0, 108.5, "EPSG:9218 → KTT 108°30'");
+  eq(VN.abDoanCrs({ 3072: 32767, 3075: 1, 3080: 107.75, 3092: 0.9999 }).lon0, 107.75, "TM tự khai báo");
+  eq(!!VN.abDoanCrs({ 3072: 32648 }).loi, true, "WGS84 UTM → báo chưa hỗ trợ");
+  eq(!!VN.abDoanCrs({ 3072: 3405 }).loi, true, "VN-2000 UTM → báo");
+  eq(VN.abDoanCrs({ 2048: 4326, 1024: 2 }).crs, "wgs84", "WGS84 độ");
+  eq(VN.abDoanCrs({}, 'PROJCS["VN_2000_TM3",GEOGCS["GCS_VN_2000"],PROJECTION["Transverse_Mercator"],PARAMETER["central_meridian",106.25],PARAMETER["scale_factor",0.9999]]').lon0, 106.25, ".prj ESRI");
+  eq(VN.abDoanTuPhamVi([551000, 1839900, 551150, 1840000]), "vn2000", "đoán VN-2000 theo phạm vi");
+  eq(VN.abDoanTuPhamVi([106.7, 16.6, 106.8, 16.7]), "wgs84", "đoán WGS84 theo phạm vi");
+  // LZW kiểu TIFF: mã 256 (xoá), 65 'A', 66 'B', 258 ('AB'), 257 (hết) — 9 bit/mã, bit cao trước
+  const codes = [256, 65, 66, 258, 257]; let bits = ""; codes.forEach((c) => { bits += c.toString(2).padStart(9, "0"); });
+  while (bits.length % 8) bits += "0";
+  const src = new Uint8Array(bits.length / 8).map((_, i) => parseInt(bits.substr(i * 8, 8), 2));
+  eq(new TextDecoder().decode(VN.abLzw(src, 4)), "ABAB", "giải nén LZW");
+  eq(Array.from(VN.abPackbits(new Uint8Array([2, 1, 2, 3, 0xfe, 9]), 6)).join(","), "1,2,3,9,9,9", "giải nén PackBits");
 });
 
 for (const [name, ok, msg] of results) {
