@@ -302,7 +302,14 @@ tbody tr:hover { background: var(--accent-soft); }
 
 /* Lớp từ file (KML, KMZ, DXF, DGN) */
 .lf-ds { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 6px; }
-.lf-ds li { display: flex; align-items: center; gap: 4px; }
+.lf-ds li { display: flex; flex-direction: column; gap: 3px; }
+.lf-hang { display: flex; align-items: center; gap: 4px; }
+.lf-to { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding-left: 22px; font-size: 12px; }
+.lf-to label { display: inline-flex; align-items: center; gap: 6px; }
+.lf-to select { font: inherit; padding: 1px 4px; width: auto; }
+.lf-op { display: inline-flex; align-items: center; gap: 4px; }
+.lf-op[hidden] { display: none; }
+.lf-op input { width: 110px; accent-color: var(--accent); }
 .lf-ten { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; cursor: pointer; }
 .lf-ten > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 .lf-ten small { display: block; }

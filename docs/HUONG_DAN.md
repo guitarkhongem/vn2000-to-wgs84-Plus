@@ -214,6 +214,9 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
   thửa, diện tích; tối đa 400 chữ trong khung nhìn.
 - **Bấm vào đối tượng**: xem tên lớp / Level, thuộc tính KML; vùng khép kín có **diện tích**, đường có
   **chiều dài** (tính trên elipxoit WGS84 — để tham khảo).
+- **Màu vùng** (lớp có vùng khép kín): **Không tô (none)** — chỉ vẽ viền; **Phủ màu (overlay)** — tô màu lớp (hoặc
+  màu vùng ghi trong KML), kéo thanh **độ đậm** 5–100 % để thấy nền / ảnh vệ tinh bên dưới. Mặc định: bản vẽ CAD
+  (DXF, DGN, DWG) không tô; KML / KMZ phủ màu 40 %.
 - **Danh sách lớp**: ô đánh dấu để ẩn / hiện, **⤢** phóng tới lớp, **×** gỡ lớp. Lớp từ file không được lưu
   lại — tải lại trang thì mở lại file.
 - **File DWG**: lần đầu mở, ứng dụng tải bộ đọc **LibreDWG** (thư viện GNU, giấy phép GPL; bản WebAssembly

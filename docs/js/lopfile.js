@@ -770,7 +770,7 @@
     const map = S.map, src = { type: "FeatureCollection", features };
     map.addSource(id, { type: "geojson", data: src });
     map.addLayer({ id: id + "-fill", type: "fill", source: id, filter: ["==", ["geometry-type"], "Polygon"],
-      paint: { "fill-color": ["coalesce", ["get", "fill"], mau], "fill-opacity": ["coalesce", ["get", "fillOpacity"], 0.12] } });
+      paint: { "fill-color": ["coalesce", ["get", "fill"], mau], "fill-opacity": 0 } });
     map.addLayer({ id: id + "-line", type: "line", source: id, filter: ["!=", ["geometry-type"], "Point"],
       paint: { "line-color": ["coalesce", ["get", "stroke"], mau], "line-width": ["interpolate", ["linear"], ["zoom"], 10, 1, 18, 2.2] } });
     map.addLayer({ id: id + "-pt", type: "circle", source: id, filter: ["all", ["==", ["geometry-type"], "Point"], ["!=", ["get", "kind"], "text"]],
@@ -778,22 +778,42 @@
     const bb = bbox(features);
     const ngoai = bb[1] < 7 || bb[3] > 24 || bb[0] < 101 || bb[2] > 118;
     const chu = features.filter((f) => f.properties.kind === "text" || f.properties.kind === "label");
-    const lop = { id, name, loai, mau, n: features.length - chu.length, chu, bb, visible: true };
+    const nVung = features.filter((f) => f.geometry.type === "Polygon").length;
+    // Chế độ màu vùng: "none" = chỉ vẽ viền; "overlay" = phủ màu với độ mờ chọn được.
+    // KML thường đã có màu vùng → mặc định phủ màu; bản vẽ CAD (DXF, DGN, DWG) → mặc định không tô.
+    const kml = /^KM[LZ]/.test(loai);
+    const lop = { id, name, loai, mau, n: features.length - chu.length, chu, bb, visible: true, nVung,
+      mode: kml ? "overlay" : "none", op: kml ? 40 : 30 };
     S.files.push(lop);
+    apDungTo(lop);
     map.fitBounds([[bb[0], bb[1]], [bb[2], bb[3]]], { padding: 40, maxZoom: 18, duration: 600 });
     if (ngoai) S.h.toast("Toạ độ nằm ngoài Việt Nam — kiểm tra lại hệ toạ độ / kinh tuyến trục", 5000);
     else S.h.toast(`Đã thêm ${name}`);
     danhSach(); veChu();
   }
 
+  function apDungTo(f) {
+    // vùng KML ghi rõ "không tô" (fillOpacity 0) giữ nguyên không tô
+    const op = f.mode === "overlay" ? f.op / 100 : 0;
+    S.map.setPaintProperty(f.id + "-fill", "fill-opacity", ["case", ["==", ["get", "fillOpacity"], 0], 0, op]);
+  }
+
   function danhSach() {
     const ul = document.getElementById("lf-ds"), e = S.h.escapeHtml;
     ul.innerHTML = S.files.map((f) => `<li data-id="${f.id}">
+        <div class="lf-hang">
         <label class="lf-ten"><input type="checkbox" ${f.visible ? "checked" : ""} data-act="an">
           <span class="lf-sw" style="background:${f.mau}"></span><span><b>${e(f.name)}</b>
-          <small class="muted">${e(f.loai)} · ${f.n} đối tượng${f.chu.length ? ` · ${f.chu.length} chữ` : ""}</small></span></label>
+          <small class="muted">${e(f.loai)} · ${f.n} đối tượng${f.nVung ? ` (${f.nVung} vùng)` : ""}${f.chu.length ? ` · ${f.chu.length} chữ` : ""}</small></span></label>
         <button type="button" class="btn small ghost" data-act="zoom" title="Phóng tới lớp">⤢</button>
-        <button type="button" class="btn small ghost" data-act="xoa" title="Gỡ lớp khỏi bản đồ">×</button></li>`).join("");
+        <button type="button" class="btn small ghost" data-act="xoa" title="Gỡ lớp khỏi bản đồ">×</button></div>
+        ${f.nVung ? `<div class="lf-to">
+          <label>Màu vùng <select data-act="mode" title="Chế độ màu của các vùng khép kín">
+            <option value="none" ${f.mode === "none" ? "selected" : ""}>Không tô (none)</option>
+            <option value="overlay" ${f.mode === "overlay" ? "selected" : ""}>Phủ màu (overlay)</option></select></label>
+          <label class="lf-op" ${f.mode === "overlay" ? "" : "hidden"} title="Độ đậm của màu phủ">
+            <input type="range" min="5" max="100" step="5" value="${f.op}" data-act="op"> <b>${f.op}%</b></label>
+        </div>` : ""}</li>`).join("");
     ul.hidden = !S.files.length;
     ul.onclick = (ev) => {
       const b = ev.target.closest("[data-act]"); if (!b) return;
@@ -805,12 +825,26 @@
         S.files = S.files.filter((x) => x !== f); danhSach(); veChu();
       }
     };
+    const lopCua = (el) => S.files.find((x) => x.id === el.closest("li").dataset.id);
     ul.onchange = (ev) => {
-      const b = ev.target.closest("[data-act=an]"); if (!b) return;
-      const f = S.files.find((x) => x.id === b.closest("li").dataset.id); if (!f) return;
-      f.visible = b.checked;
-      for (const s of ["-fill", "-line", "-pt"]) S.map.setLayoutProperty(f.id + s, "visibility", f.visible ? "visible" : "none");
-      veChu();
+      const b = ev.target.closest("[data-act]"); if (!b) return;
+      const f = lopCua(b); if (!f) return;
+      if (b.dataset.act === "an") {
+        f.visible = b.checked;
+        for (const s of ["-fill", "-line", "-pt"]) S.map.setLayoutProperty(f.id + s, "visibility", f.visible ? "visible" : "none");
+        veChu();
+      } else if (b.dataset.act === "mode") {
+        f.mode = b.value;
+        b.closest("li").querySelector(".lf-op").hidden = f.mode !== "overlay";
+        apDungTo(f);
+      }
+    };
+    ul.oninput = (ev) => {
+      const b = ev.target.closest("[data-act=op]"); if (!b) return;
+      const f = lopCua(b); if (!f) return;
+      f.op = Number(b.value);
+      b.parentElement.querySelector("b").textContent = f.op + "%";
+      apDungTo(f);
     };
   }
 
