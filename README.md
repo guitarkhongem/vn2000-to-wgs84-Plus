@@ -26,6 +26,8 @@ Repo này phát triển tiếp từ
 - **Nhận dạng toạ độ từ ảnh (OCR)**: đọc Vĩ độ–Kinh độ / X–Y in trên ảnh (màn hình RTK, drone, sổ đo) vào khung chuyển đổi (Tesseract.js);
 - **Chụp ảnh có toạ độ**: in toạ độ WGS84, VN-2000, tỉnh, thời gian, ghi chú lên ảnh; lưu kèm EXIF GPS;
 - **Lớp từ file**: mở KML / KMZ, DWG / DXF (AutoCAD; DWG qua LibreDWG — GPL, tải từ CDN khi cần), DGN MicroStation V7 và V8 chồng lên bản đồ; file CAD VN-2000 hỏi kinh tuyến trục mỗi lần mở, chữ TCVN3 tự đổi Unicode;
+- **Thống kê truy cập** (chỉ chủ ứng dụng, mở bằng `?thongke`): lượt xem theo ngày, quốc gia, thành phố —
+  máy chủ Cloudflare Workers + D1 miễn phí, ẩn danh, không lưu IP (cách dựng: [cloudflare/HUONG_DAN.md](cloudflare/HUONG_DAN.md));
 - **Giá đất 2026** (NQ 12/2025/NQ-HĐND, 78 xã phường): đoạn đường dò theo mạng đường OSM, tô màu theo giá;
   giá các đoạn gần thửa sau khi chuyển đổi; tra cứu theo xã / tên đường.
 
@@ -38,6 +40,7 @@ Repo này phát triển tiếp từ
 | Ảnh vệ tinh | Esri World Imagery (Esri, Maxar, Earthstar Geographics) |
 | Quy hoạch Hướng Hóa | Bản đồ điều chỉnh quy hoạch sử dụng đất đến năm 2030 huyện Hướng Hóa |
 | Giá đất 2026 | Nghị quyết 12/2025/NQ-HĐND tỉnh Quảng Trị (bản tổng hợp Excel "BANG GIA DAT 2026"); hình đoạn đường dò theo mạng đường © OpenStreetMap contributors (Overpass API + dò tuyến ưu tiên đúng tên; một phần OSRM) |
+| Vị trí lượt truy cập (tab Thống kê) | Cloudflare — quốc gia, thành phố ước tính theo địa chỉ mạng (`request.cf`) |
 | Tham số VN-2000 ⇄ WGS84 (7 tham số) | Quyết định số 05/2007/QĐ-BTNMT ngày 27/02/2007 của Bộ Tài nguyên và Môi trường: Về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000 (cũng là bộ EPSG:6960) |
 
 Chi tiết: mục *Nguồn dữ liệu* trong [docs/HUONG_DAN.md](docs/HUONG_DAN.md).

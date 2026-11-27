@@ -825,6 +825,8 @@
     // Lớp từ file KML / KMZ / DXF / DGN (docs/js/lopfile.js)
     if (VN.lopFileInit) VN.lopFileInit(map, { escapeHtml, fmt, toast, getLon0,
       provinces: VN.LON0_BY_PROVINCE, provinceValue: () => provinceSel.value });
+    // Thống kê truy cập — tab chỉ hiện cho chủ ứng dụng khi mở bằng ?thongke (docs/js/thongke.js)
+    if (VN.thongKeInit) VN.thongKeInit(map, { escapeHtml, fmt, toast });
   });
 
   // Lần đầu mở: hiện ví dụ cho người dùng thấy ngay; các lần sau: chạy lại dữ liệu đã lưu

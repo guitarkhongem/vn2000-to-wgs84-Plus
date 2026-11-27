@@ -7,18 +7,20 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.27k">
+<link rel="stylesheet" href="css/style.css?v=2026.11.27l">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27k"></script>
-<script src="js/parse.js?v=2026.11.27k"></script>
-<script src="js/geo.js?v=2026.11.27k"></script>
-<script src="js/export.js?v=2026.11.27k"></script>
-<script src="js/giadat.js?v=2026.11.27k"></script>
-<script src="js/lopfile.js?v=2026.11.27k"></script>
-<script src="js/chupanh.js?v=2026.11.27k"></script>
-<script src="js/ocrtoado.js?v=2026.11.27k"></script>
+<script src="js/converter.js?v=2026.11.27l"></script>
+<script src="js/parse.js?v=2026.11.27l"></script>
+<script src="js/geo.js?v=2026.11.27l"></script>
+<script src="js/export.js?v=2026.11.27l"></script>
+<script src="js/giadat.js?v=2026.11.27l"></script>
+<script src="js/lopfile.js?v=2026.11.27l"></script>
+<script src="js/chupanh.js?v=2026.11.27l"></script>
+<script src="js/ocrtoado.js?v=2026.11.27l"></script>
+<script src="js/thongke-config.js?v=2026.11.27l"></script>
+<script src="js/thongke.js?v=2026.11.27l"></script>
 </head>
 <body>
 <div class="layout">
@@ -125,6 +127,43 @@
       <ul id="lf-ds" class="lf-ds" hidden></ul>
     </section>
 
+    <section class="card" id="tk-card" hidden>
+      <div class="row between"><h2>📊 Thống kê truy cập</h2><button type="button" id="tk-an" class="btn ghost small" title="Ẩn tab này trên máy này">Ẩn tab</button></div>
+      <div id="tk-noi-dung" class="tk-nd">
+        <div class="row">
+          <label class="field grow"><span>Khoá quản trị (ADMIN_KEY)</span><input id="tk-khoa" type="password" autocomplete="off" spellcheck="false"></label>
+          <button type="button" id="tk-xem" class="btn primary">Xem</button>
+        </div>
+        <label class="field"><span>Khoảng thời gian</span>
+          <select id="tk-khoang">
+            <option value="1">Hôm nay</option>
+            <option value="7">7 ngày qua</option>
+            <option value="30">30 ngày qua</option>
+            <option value="90">90 ngày qua</option>
+            <option value="365">12 tháng qua</option>
+            <option value="all">Từ đầu</option>
+            <option value="tuy">Tuỳ chọn…</option>
+          </select></label>
+        <div class="row" id="tk-tuy-chon" hidden>
+          <label class="field grow"><span>Từ ngày</span><input id="tk-tu" type="date"></label>
+          <label class="field grow"><span>Đến ngày</span><input id="tk-den" type="date"></label>
+        </div>
+        <p id="tk-tt" class="small">Nhập khoá quản trị rồi bấm Xem.</p>
+        <div id="tk-cot" class="tk-cot" aria-label="Lượt xem theo ngày"></div>
+        <div class="segmented" id="tk-tabs">
+          <button type="button" data-xem="quoc_gia" aria-selected="true">Quốc gia</button>
+          <button type="button" data-xem="thanh_pho" aria-selected="false">Thành phố</button>
+        </div>
+        <div id="tk-bang" class="table-wrap tk-bang"></div>
+        <div class="row wrap">
+          <label class="toggle"><input type="checkbox" id="tk-ban-do"> Hiện trên bản đồ</label>
+          <label class="toggle" title="Đánh dấu trên trình duyệt này để không cộng lượt khi chính bạn mở ứng dụng"><input type="checkbox" id="tk-bo-qua"> Không đếm máy này</label>
+          <button type="button" id="tk-csv" class="btn small">Tải CSV</button>
+        </div>
+        <p class="muted small">"Khách" = số máy (trình duyệt) khác nhau mỗi ngày, cộng dồn các ngày. Vị trí do mạng Cloudflare xác định theo địa chỉ mạng — mức thành phố, có thể lệch (nhà mạng, VPN).</p>
+      </div>
+    </section>
+
     <dialog id="lf-dlg" class="lf-dlg">
       <h3>Hệ toạ độ của file</h3>
       <p><b id="lf-dlg-ten"></b></p>
@@ -149,6 +188,7 @@
       <p>Tác giả: <strong>Trần Trường Sinh</strong> · 0917.750.555</p>
       <p>Nguồn công thức: <em>Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác</em> — Trần Trung Anh, Quách Mạnh Tuấn (Hội nghị KH Quốc gia về Công nghệ Địa không gian).</p>
       <p>7 tham số tính chuyển: <em>Quyết định số 05/2007/QĐ-BTNMT của Bộ Tài nguyên và Môi trường: Về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000</em>.</p>
+      <p id="tk-note" hidden>Ứng dụng đếm lượt truy cập ẩn danh (quốc gia, thành phố do Cloudflare xác định); không lưu địa chỉ IP, không gửi toạ độ hay dữ liệu bạn nhập. Trình duyệt bật "Do Not Track" sẽ không được đếm.</p>
       <details class="sources">
         <summary>Nguồn dữ liệu bản đồ</summary>
         <ul>
@@ -239,6 +279,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.27k"></script>
+<script src="js/app.js?v=2026.11.27l"></script>
 </body>
 </html>

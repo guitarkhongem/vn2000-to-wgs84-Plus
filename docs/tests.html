@@ -10,14 +10,15 @@
   #summary { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27k"></script>
-<script src="js/parse.js?v=2026.11.27k"></script>
-<script src="js/geo.js?v=2026.11.27k"></script>
-<script src="js/export.js?v=2026.11.27k"></script>
-<script src="js/giadat.js?v=2026.11.27k"></script>
-<script src="js/lopfile.js?v=2026.11.27k"></script>
-<script src="js/chupanh.js?v=2026.11.27k"></script>
-<script src="js/ocrtoado.js?v=2026.11.27k"></script>
+<script src="js/converter.js?v=2026.11.27l"></script>
+<script src="js/parse.js?v=2026.11.27l"></script>
+<script src="js/geo.js?v=2026.11.27l"></script>
+<script src="js/export.js?v=2026.11.27l"></script>
+<script src="js/giadat.js?v=2026.11.27l"></script>
+<script src="js/lopfile.js?v=2026.11.27l"></script>
+<script src="js/chupanh.js?v=2026.11.27l"></script>
+<script src="js/ocrtoado.js?v=2026.11.27l"></script>
+<script src="js/thongke.js?v=2026.11.27l"></script>
 </head>
 <body>
 <div id="summary">Đang chạy…</div>
@@ -252,6 +253,16 @@ test("Nhận dạng toạ độ từ ảnh: tách, phân loại, ghép cặp the
   // độ-phút-giây
   const d = VN.ocrTimToaDo([W("16°45'11.67\"N", 60, 10), W("106°35'35.01\"E", 60, 50)]);
   near(d.wgs[0].lat, 16 + 45 / 60 + 11.67 / 3600, 1e-9, "DMS lat"); near(d.wgs[0].lon, 106 + 35 / 60 + 35.01 / 3600, 1e-9, "DMS lon");
+});
+
+test("Thống kê truy cập: cờ, tên nước, dãy ngày (không gửi gì khi chưa cấu hình)", () => {
+  eq(VN.tkCo("VN"), "🇻🇳", "cờ VN"); eq(VN.tkCo("T1"), "🏳", "mã lạ"); eq(VN.tkCo(""), "🏳", "rỗng");
+  eq(VN.tkTenNuoc(""), "Không rõ", "không rõ nước");
+  eq(/^\d{4}-\d{2}-\d{2}$/.test(VN.tkHomNay()), true, "ngày giờ VN");
+  const r = VN.tkDayNgay({ tu: "2026-10-29", den: "2026-11-05",
+    theo_ngay: [{ ngay: "2026-11-01", luot: 2, moi: 1 }, { ngay: "2026-11-04", luot: 4, moi: 2 }] });
+  eq(r.map((x) => x.luot).join(","), "2,0,0,4,0", "điền ngày trống, bắt đầu từ ngày có lượt");
+  eq(VN.tkDayNgay({ tu: "0000-01-01", den: "9999-12-31", theo_ngay: [] }).length, 0, "không có dữ liệu");
 });
 
 for (const [name, ok, msg] of results) {

@@ -251,6 +251,7 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
 | Tham số chuyển đổi VN-2000 ⇄ WGS84 (7 tham số) | **Quyết định số 05/2007/QĐ-BTNMT** ngày 27/02/2007 của Bộ Tài nguyên và Môi trường *về sử dụng hệ thống tham số tính chuyển giữa Hệ tọa độ quốc tế WGS-84 và Hệ tọa độ quốc gia VN-2000* | Dịch gốc −191,90441429 m; −39,30318279 m; −111,45032835 m · góc xoay −0,00928836″; 0,01975479″; −0,00427372″ · tỉ lệ k = 1,000000252906278 (cũng là bộ EPSG:6960, Coordinate Frame) |
 | Nhận dạng chữ (OCR) | **Tesseract.js 7.0.0** (Apache-2.0) và dữ liệu tiếng Anh *eng* của Tesseract, tải từ jsDelivr khi dùng | Mục 4 |
 | Bộ đọc DWG | **LibreDWG** (GNU, GPL-3.0) bản WebAssembly *@mlightcad/libredwg-web 0.9.4* (GPL-2.0), tải từ jsDelivr khi mở file .dwg | Không nằm trong mã nguồn ứng dụng. Mục 10 |
+| Vị trí lượt truy cập (tab Thống kê, chỉ chủ ứng dụng thấy) | **Cloudflare** — quốc gia, thành phố ước tính theo địa chỉ mạng (`request.cf` của Cloudflare Workers) | Mức thành phố, có thể lệch; không lưu IP. Mục 14 |
 | Công thức chuyển đổi | Trần Trung Anh, Quách Mạnh Tuấn — *Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác*, Hội nghị KH Quốc gia về Công nghệ Địa không gian | |
 
 Tên nguồn cũng hiện ở **góc dưới phải bản đồ** (nút ⓘ) và cuối bảng điều khiển (*Nguồn dữ liệu bản đồ*).
@@ -258,7 +259,8 @@ Tên nguồn cũng hiện ở **góc dưới phải bản đồ** (nút ⓘ) và
 ## 12. Ứng dụng tự nhớ
 
 Kinh tuyến trục, chiều chuyển đổi, dữ liệu nhập lần trước, nền bản đồ, các ô *Nối điểm*,
-*Chiều dài cạnh*, nút *Quy hoạch* và *Giá đất* được nhớ cho lần mở sau. Dữ liệu chỉ lưu trên máy bạn, không gửi đi đâu.
+*Chiều dài cạnh*, nút *Quy hoạch* và *Giá đất* được nhớ cho lần mở sau. Dữ liệu chỉ lưu trên máy bạn, không gửi đi đâu
+(riêng việc đếm lượt mở ứng dụng ẩn danh — xem mục 14).
 
 ## 13. Xử lý sự cố
 
@@ -270,6 +272,19 @@ Kinh tuyến trục, chiều chuyển đổi, dữ liệu nhập lần trước,
 | Khung vàng "Không đúng định dạng" | Dùng dấu phẩy làm dấu thập phân, hoặc có chữ lẫn vào số |
 | Không thấy nút Quy hoạch | Lớp quy hoạch chưa được tạo, hoặc đang mở file trực tiếp trên máy thay vì qua trang web |
 | Lớp quy hoạch không hiện | Zoom quá xa — phóng to tới mức 10 trở lên (ranh thửa từ mức 12) |
+
+## 14. Thống kê truy cập
+
+Khi chủ ứng dụng đã bật (dòng ghi chú ở cuối bảng điều khiển cho biết), mỗi lần mở ứng dụng được đếm **1 lượt
+ẩn danh** qua máy chủ Cloudflare của chủ ứng dụng: chỉ ghi ngày, quốc gia, thành phố (do Cloudflare ước tính theo
+địa chỉ mạng). **Không** lưu địa chỉ IP, **không** gửi toạ độ, file hay dữ liệu bạn nhập. Trình duyệt bật
+*Do Not Track* (*Không theo dõi*) thì không được đếm.
+
+**Dành cho chủ ứng dụng**: mở ứng dụng bằng đường dẫn có `?thongke`
+(<https://guitarkhongem.github.io/vn2000-to-wgs84-Plus/?thongke>) để hiện tab *📊 Thống kê truy cập*, nhập khoá
+quản trị → **Xem**: tổng lượt xem, lượt khách, biểu đồ theo ngày, bảng theo quốc gia / thành phố, chọn khoảng thời
+gian, hiện các thành phố trên bản đồ, tải CSV, *Không đếm máy này*. Cách dựng máy chủ (miễn phí):
+`cloudflare/HUONG_DAN.md` trong mã nguồn.
 
 ## Bản Streamlit
 
