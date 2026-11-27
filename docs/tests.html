@@ -10,13 +10,13 @@
   #summary { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27i"></script>
-<script src="js/parse.js?v=2026.11.27i"></script>
-<script src="js/geo.js?v=2026.11.27i"></script>
-<script src="js/export.js?v=2026.11.27i"></script>
-<script src="js/giadat.js?v=2026.11.27i"></script>
-<script src="js/lopfile.js?v=2026.11.27i"></script>
-<script src="js/chupanh.js?v=2026.11.27i"></script>
+<script src="js/converter.js?v=2026.11.27j"></script>
+<script src="js/parse.js?v=2026.11.27j"></script>
+<script src="js/geo.js?v=2026.11.27j"></script>
+<script src="js/export.js?v=2026.11.27j"></script>
+<script src="js/giadat.js?v=2026.11.27j"></script>
+<script src="js/lopfile.js?v=2026.11.27j"></script>
+<script src="js/chupanh.js?v=2026.11.27j"></script>
 </head>
 <body>
 <div id="summary">Đang chạy…</div>
@@ -219,6 +219,11 @@ test("Chụp ảnh: ghi rồi đọc lại EXIF GPS, dòng chữ in lên ảnh",
   const r = VN.docExif(j.buffer);
   near(r.lat, 16.6353123, 1e-7, "vĩ độ"); near(r.lon, 106.733012, 1e-7, "kinh độ"); near(r.alt, 452.37, 0.01, "độ cao");
   eq(r.time.getTime(), t.getTime(), "thời gian");
+  // EXIF nằm giữa file (kiểu HEIC của iPhone): dò "Exif\0\0" + đầu TIFF
+  const tiff = j.subarray(12, j.length - 2), heic = new Uint8Array(3000 + 10 + tiff.length);
+  for (let i = 0; i < 3000; i++) heic[i] = (i * 31) & 255;
+  heic.set([0, 0, 0, 6, 0x45, 0x78, 0x69, 0x66, 0, 0], 3000); heic.set(tiff, 3010);
+  const rh = VN.docExif(heic); near(rh.lat, 16.6353123, 1e-7, "HEIC: vĩ độ"); near(rh.lon, 106.733012, 1e-7, "HEIC: kinh độ");
   const s = VN.ghiExif(new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), { lat: -33.5, lon: -70.25, time: t });
   const r2 = VN.docExif(s.buffer); near(r2.lat, -33.5, 1e-9, "Nam"); near(r2.lon, -70.25, 1e-9, "Tây");
   const L = VN.dongChu({ lat: 16.6353, lon: 106.733, acc: 8.4 }, { lon0: 106.25, tinh: "Tỉnh/thành phố: Quảng Trị", time: t, ghichu: "Thửa 12" });

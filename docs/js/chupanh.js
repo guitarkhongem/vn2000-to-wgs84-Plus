@@ -12,48 +12,62 @@
   root.VN = root.VN || {};
 
   // ===================================================================== EXIF: đọc GPS + thời gian từ JPEG
-  function docExif(buf) {
-    const u8 = new Uint8Array(buf), dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-    if (u8.length < 4 || u8[0] !== 0xff || u8[1] !== 0xd8) return null;
-    let o = 2;
-    while (o + 4 <= u8.length && u8[o] === 0xff) {
-      const mk = u8[o + 1], len = dv.getUint16(o + 2);
-      if (mk === 0xda || mk === 0xd9) break;
-      if (mk === 0xe1 && u8[o + 4] === 0x45 && u8[o + 5] === 0x78 && u8[o + 6] === 0x69 && u8[o + 7] === 0x66) {
-        const t = o + 10, le = u8[t] === 0x49;
-        const u16 = (p) => dv.getUint16(t + p, le), u32 = (p) => dv.getUint32(t + p, le);
-        const doc = (ifd) => {
-          const out = {}, n = u16(ifd);
-          for (let i = 0; i < n; i++) {
-            const e = ifd + 2 + i * 12, tag = u16(e), typ = u16(e + 2), cnt = u32(e + 4);
-            const sz = [0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8][typ] * cnt, p = sz > 4 ? u32(e + 8) : e + 8;
-            if (typ === 2) out[tag] = new TextDecoder("latin1").decode(u8.subarray(t + p, t + p + cnt)).replace(/\0.*$/s, "");
-            else if (typ === 5) { const v = []; for (let k = 0; k < cnt; k++) { const d = u32(p + 8 * k + 4); v.push(d ? u32(p + 8 * k) / d : 0); } out[tag] = v; }
-            else if (typ === 3) out[tag] = u16(p);
-            else if (typ === 4) out[tag] = u32(p);
-            else if (typ === 1) out[tag] = u8[t + p];
-          }
-          return out;
-        };
-        try {
-          const i0 = doc(u32(4)), r = {};
-          const ex = i0[0x8769] ? doc(i0[0x8769]) : {};
-          const tg = ex[0x9003] || i0[0x0132];
-          if (tg) { const m = /(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/.exec(tg); if (m) r.time = new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]); }
-          if (i0[0x8825]) {
-            const g = doc(i0[0x8825]), dms = (a) => a && a.length === 3 ? a[0] + a[1] / 60 + a[2] / 3600 : NaN;
-            const lat = dms(g[2]) * (g[1] === "S" ? -1 : 1), lon = dms(g[4]) * (g[3] === "W" ? -1 : 1);
-            if (isFinite(lat) && isFinite(lon) && (lat || lon)) {
-              r.lat = lat; r.lon = lon;
-              if (g[6]) r.alt = g[6][0] * (g[5] === 1 ? -1 : 1);
-            }
-          }
-          return r;
-        } catch (_) { return null; }
+  // Tìm khối TIFF của EXIF: JPEG (đoạn APP1), hoặc dò chuỗi "Exif\0\0" + đầu TIFF (HEIC/HEIF của iPhone, PNG, WebP…)
+  function timTiff(u8) {
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    if (u8[0] === 0xff && u8[1] === 0xd8) {
+      let o = 2;
+      while (o + 4 <= u8.length && u8[o] === 0xff) {
+        const mk = u8[o + 1], len = dv.getUint16(o + 2);
+        if (mk === 0xda || mk === 0xd9) break;
+        if (mk === 0xe1 && u8[o + 4] === 0x45 && u8[o + 5] === 0x78 && u8[o + 6] === 0x69 && u8[o + 7] === 0x66) return o + 10;
+        o += 2 + len;
       }
-      o += 2 + len;
     }
-    return null;
+    for (let i = 0; i + 10 < u8.length; i++) {
+      if (u8[i] === 0x45 && u8[i + 1] === 0x78 && u8[i + 2] === 0x69 && u8[i + 3] === 0x66 && u8[i + 4] === 0 && u8[i + 5] === 0 &&
+        ((u8[i + 6] === 0x49 && u8[i + 7] === 0x49 && u8[i + 8] === 0x2a && u8[i + 9] === 0) ||
+         (u8[i + 6] === 0x4d && u8[i + 7] === 0x4d && u8[i + 8] === 0 && u8[i + 9] === 0x2a))) return i + 6;
+    }
+    return -1;
+  }
+
+  // EXIF → { lat, lon, alt?, time? } (null nếu không có EXIF)
+  function docExif(buf) {
+    const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    const t = timTiff(u8);
+    if (t < 0) return null;
+    const le = u8[t] === 0x49;
+    const u16 = (p) => dv.getUint16(t + p, le), u32 = (p) => dv.getUint32(t + p, le);
+    const doc = (ifd) => {
+      const out = {}, n = u16(ifd);
+      for (let i = 0; i < n; i++) {
+        const e = ifd + 2 + i * 12, tag = u16(e), typ = u16(e + 2), cnt = u32(e + 4);
+        const sz = [0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8][typ] * cnt, p = sz > 4 ? u32(e + 8) : e + 8;
+        if (typ === 2) out[tag] = new TextDecoder("latin1").decode(u8.subarray(t + p, t + p + cnt)).replace(/\0.*$/s, "");
+        else if (typ === 5) { const v = []; for (let k = 0; k < cnt; k++) { const d = u32(p + 8 * k + 4); v.push(d ? u32(p + 8 * k) / d : 0); } out[tag] = v; }
+        else if (typ === 3) out[tag] = u16(p);
+        else if (typ === 4) out[tag] = u32(p);
+        else if (typ === 1) out[tag] = u8[t + p];
+      }
+      return out;
+    };
+    try {
+      const i0 = doc(u32(4)), r = {};
+      const ex = i0[0x8769] ? doc(i0[0x8769]) : {};
+      const tg = ex[0x9003] || i0[0x0132];
+      if (tg) { const m = /(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/.exec(tg); if (m) r.time = new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]); }
+      if (i0[0x8825]) {
+        const g = doc(i0[0x8825]), dms = (a) => a && a.length === 3 ? a[0] + a[1] / 60 + a[2] / 3600 : NaN;
+        const lat = dms(g[2]) * (g[1] === "S" ? -1 : 1), lon = dms(g[4]) * (g[3] === "W" ? -1 : 1);
+        if (isFinite(lat) && isFinite(lon) && (lat || lon)) {
+          r.lat = lat; r.lon = lon;
+          if (g[6]) r.alt = g[6][0] * (g[5] === 1 ? -1 : 1);
+        }
+      }
+      return r;
+    } catch (_) { return null; }
   }
 
   // ===================================================================== EXIF: ghi GPS + thời gian vào JPEG

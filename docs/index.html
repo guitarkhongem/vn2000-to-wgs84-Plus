@@ -7,17 +7,17 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.27i">
+<link rel="stylesheet" href="css/style.css?v=2026.11.27j">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27i"></script>
-<script src="js/parse.js?v=2026.11.27i"></script>
-<script src="js/geo.js?v=2026.11.27i"></script>
-<script src="js/export.js?v=2026.11.27i"></script>
-<script src="js/giadat.js?v=2026.11.27i"></script>
-<script src="js/lopfile.js?v=2026.11.27i"></script>
-<script src="js/chupanh.js?v=2026.11.27i"></script>
+<script src="js/converter.js?v=2026.11.27j"></script>
+<script src="js/parse.js?v=2026.11.27j"></script>
+<script src="js/geo.js?v=2026.11.27j"></script>
+<script src="js/export.js?v=2026.11.27j"></script>
+<script src="js/giadat.js?v=2026.11.27j"></script>
+<script src="js/lopfile.js?v=2026.11.27j"></script>
+<script src="js/chupanh.js?v=2026.11.27j"></script>
 </head>
 <body>
 <div class="layout">
@@ -64,6 +64,9 @@
       <div class="row wrap">
         <label class="btn ghost file">
           Mở file TXT/CSV<input id="file" type="file" accept=".txt,.csv,text/plain,text/csv" hidden>
+        </label>
+        <label class="btn ghost file" title="Đọc toạ độ GPS ghi trong ảnh (EXIF) — chọn được nhiều ảnh">
+          Nhập ảnh có toạ độ<input id="anh-file" type="file" accept="image/*,.jpg,.jpeg,.heic,.heif,.png,.webp" multiple hidden>
         </label>
         <button class="btn ghost" id="sample" type="button">Ví dụ</button>
         <button class="btn ghost" id="clear" type="button">Xoá</button>
@@ -216,6 +219,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.27i"></script>
+<script src="js/app.js?v=2026.11.27j"></script>
 </body>
 </html>

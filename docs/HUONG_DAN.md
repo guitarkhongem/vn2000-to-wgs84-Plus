@@ -66,6 +66,10 @@ cách, dấu phẩy hoặc dấu chấm phẩy — dán thẳng toạ độ copy
 ### Các nút
 
 - **Ví dụ:** điền dữ liệu mẫu. **Xoá:** xoá ô nhập và kết quả. **Chuyển đổi:** thực hiện.
+- **Nhập ảnh có toạ độ:** chọn một hoặc nhiều ảnh (JPEG, HEIC của iPhone, PNG, WebP) có lưu vị trí GPS. Ứng dụng
+  đọc toạ độ ghi trong ảnh (EXIF), mỗi ảnh thành một dòng `Tên-ảnh Vĩ-độ Kinh-độ H` (xếp theo giờ chụp), tự chuyển
+  sang chiều **WGS84 → VN2000** và chuyển đổi bằng thuật toán của ứng dụng với kinh tuyến trục đang chọn. H là độ cao
+  GPS ghi trong ảnh (kém tin cậy; không có thì 0). Ảnh không có GPS được liệt kê trong khung vàng. Ảnh chỉ đọc trên máy.
 - Dòng sai hiện trong **khung vàng** kèm lý do; các dòng đúng vẫn được chuyển đổi.
 
 ## 5. Đọc và xuất kết quả

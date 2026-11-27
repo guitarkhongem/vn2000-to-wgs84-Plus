@@ -92,6 +92,37 @@
     toast(`Đã mở ${f.name}`);
   });
 
+  // Nhập ảnh có toạ độ: đọc GPS trong EXIF (VN.docExif) → mỗi ảnh một dòng "Tên Vĩ-độ Kinh-độ H" vào khung,
+  // chuyển sang chiều WGS84 → VN2000 rồi chạy chuyển đổi (thuật toán của ứng dụng). Ảnh chỉ đọc trên máy.
+  $("anh-file").addEventListener("change", async (e) => {
+    const files = [...e.target.files];
+    e.target.value = "";
+    if (!files.length || !VN.docExif) return;
+    const co = [], khong = [];
+    for (const f of files) {
+      let ex = null;
+      try { ex = VN.docExif(new Uint8Array(await f.arrayBuffer())); } catch (_) { ex = null; }
+      if (ex && isFinite(ex.lat) && isFinite(ex.lon)) co.push({ f, ex });
+      else khong.push(f.name);
+    }
+    if (!co.length) {
+      showErrors(khong.map((n) => [n, "Ảnh không có toạ độ GPS (EXIF) — bật lưu vị trí trong camera khi chụp"]));
+      toast("Không ảnh nào có toạ độ GPS");
+      return;
+    }
+    co.sort((a, b) => (a.ex.time ? a.ex.time.getTime() : 0) - (b.ex.time ? b.ex.time.getTime() : 0));
+    const lines = co.map(({ f, ex }) => {
+      const ten = f.name.replace(/\.[^.]+$/, "").replace(/[\s,;]+/g, "_") || "anh";
+      return `${ten} ${ex.lat.toFixed(8)} ${ex.lon.toFixed(8)} ${isFinite(ex.alt) ? ex.alt.toFixed(2) : "0"}`;
+    });
+    setDir("wgs2vn");
+    coords.value = lines.join("\n");
+    store.set("input", coords.value);
+    $("convert").click();
+    if (khong.length) showErrors(khong.map((n) => [n, "Ảnh không có toạ độ GPS (EXIF) — bỏ qua"]));
+    toast(`Đã nhập ${co.length} ảnh có toạ độ` + (khong.length ? ` · ${khong.length} ảnh không có GPS` : ""));
+  });
+
   // ---------------- Chuyển đổi ----------------
   function showErrors(errors) {
     const box = $("errors");
