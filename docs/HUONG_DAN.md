@@ -188,7 +188,33 @@ bản đồ) chỉ tra cứu được trong bảng.
 > **Lưu ý:** đoạn đường gần nhất chưa chắc là đường mà thửa đất tiếp giáp; vị trí (VT1–VT4) của thửa do cơ
 > quan có thẩm quyền xác định theo quy định kèm Nghị quyết. Thông tin chỉ để tham khảo.
 
-## 10. Nguồn dữ liệu
+## 10. Lớp từ file (KML, KMZ, DXF, DGN)
+
+Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, KMZ, DXF, DGN…** (chọn được nhiều file) hoặc
+**kéo thả file vào bản đồ**. File chỉ được đọc trên máy bạn, không tải lên mạng.
+
+| File | Đọc được | Toạ độ |
+|---|---|---|
+| **.kml, .kmz** (Google Earth) | Điểm, đường, vùng (cả MultiGeometry), tên, mô tả, ExtendedData, màu theo Style | WGS84 — mở thẳng |
+| **.dxf** (AutoCAD, mọi phiên bản) | LINE, LWPOLYLINE / POLYLINE (cả cung *bulge*), CIRCLE, ARC, ELLIPSE, POINT, TEXT, MTEXT, ATTRIB, khối INSERT (bung ra đúng vị trí, tỉ lệ, góc xoay) | Hỏi hệ toạ độ |
+| **.dgn MicroStation V7** | Line, LineString, Shape, Curve, chuỗi / hình phức, Ellipse, Arc, Text, Cell; lớp = *Level* | Hỏi hệ toạ độ |
+| .dgn **MicroStation V8**, .dwg | **Chưa đọc được** — định dạng đóng của Bentley / Autodesk, trình duyệt không có thư viện mở | Xuất sang DXF (xem dưới) |
+
+- **Mỗi lần mở file CAD** (DXF, DGN) ứng dụng hỏi: toạ độ trong file là **VN-2000** (x = Đông/Y, y = Bắc/X như
+  AutoCAD, MicroStation), **VN-2000 đảo trục** hay **WGS84** (độ), và **kinh tuyến trục** (chọn tỉnh hoặc gõ số).
+  Ứng dụng đoán sẵn theo phạm vi toạ độ trong file. Toạ độ VN-2000 đổi sang WGS84 bằng **đúng hàm chuyển đổi của
+  ứng dụng** (7 tham số QĐ 05/2007/QĐ-BTNMT), độ cao lấy bằng 0.
+- **Chữ tiếng Việt mã TCVN3** (font .VnTime… của bản đồ địa chính cũ) tự đổi sang Unicode.
+- **Chữ trong file CAD** hiện đúng chiều cao thật (m) theo mức phóng — như trong CAD: phóng to mới thấy số
+  thửa, diện tích; tối đa 400 chữ trong khung nhìn.
+- **Bấm vào đối tượng**: xem tên lớp / Level, thuộc tính KML; vùng khép kín có **diện tích**, đường có
+  **chiều dài** (tính trên elipxoit WGS84 — để tham khảo).
+- **Danh sách lớp**: ô đánh dấu để ẩn / hiện, **⤢** phóng tới lớp, **×** gỡ lớp. Lớp từ file không được lưu
+  lại — tải lại trang thì mở lại file.
+- **File DGN V8 / DWG**: trong MicroStation chọn *File › Export › DWG/DXF* (kiểu **DXF**) hoặc *File › Save As*
+  kiểu **MicroStation V7 DGN**; trong AutoCAD chọn *Save As* kiểu **AutoCAD DXF**. Rồi mở file mới tại đây.
+
+## 11. Nguồn dữ liệu
 
 | Dữ liệu | Nguồn | Ghi chú |
 |---|---|---|
@@ -202,12 +228,12 @@ bản đồ) chỉ tra cứu được trong bảng.
 
 Tên nguồn cũng hiện ở **góc dưới phải bản đồ** (nút ⓘ) và cuối bảng điều khiển (*Nguồn dữ liệu bản đồ*).
 
-## 11. Ứng dụng tự nhớ
+## 12. Ứng dụng tự nhớ
 
 Kinh tuyến trục, chiều chuyển đổi, dữ liệu nhập lần trước, nền bản đồ, các ô *Nối điểm*,
 *Chiều dài cạnh*, nút *Quy hoạch* và *Giá đất* được nhớ cho lần mở sau. Dữ liệu chỉ lưu trên máy bạn, không gửi đi đâu.
 
-## 12. Xử lý sự cố
+## 13. Xử lý sự cố
 
 | Hiện tượng | Nguyên nhân thường gặp |
 |---|---|

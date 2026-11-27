@@ -7,15 +7,16 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.27c">
+<link rel="stylesheet" href="css/style.css?v=2026.11.27d">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27c"></script>
-<script src="js/parse.js?v=2026.11.27c"></script>
-<script src="js/geo.js?v=2026.11.27c"></script>
-<script src="js/export.js?v=2026.11.27c"></script>
-<script src="js/giadat.js?v=2026.11.27c"></script>
+<script src="js/converter.js?v=2026.11.27d"></script>
+<script src="js/parse.js?v=2026.11.27d"></script>
+<script src="js/geo.js?v=2026.11.27d"></script>
+<script src="js/export.js?v=2026.11.27d"></script>
+<script src="js/giadat.js?v=2026.11.27d"></script>
+<script src="js/lopfile.js?v=2026.11.27d"></script>
 </head>
 <body>
 <div class="layout">
@@ -110,6 +111,35 @@
       <details class="gd-nguon"><summary>Nguồn dữ liệu giá đất</summary><ul id="gd-nguon"></ul></details>
     </section>
 
+    <section class="card" id="lf-card">
+      <h2>Lớp từ file</h2>
+      <p class="muted small">Mở file <b>KML, KMZ</b> (Google Earth), <b>DXF</b> (AutoCAD) hoặc <b>DGN</b> (MicroStation V7) để chồng lên bản đồ — bấm nút hoặc kéo thả file vào bản đồ. File CAD toạ độ VN-2000: chọn kinh tuyến trục khi mở. File chỉ đọc trên máy bạn, không tải lên đâu cả.</p>
+      <button type="button" id="lf-add" class="btn">Thêm file KML, KMZ, DXF, DGN…</button>
+      <input type="file" id="lf-input" accept=".kml,.kmz,.dxf,.dgn,.dwg" multiple hidden>
+      <div id="lf-loi" class="lf-loi" hidden></div>
+      <ul id="lf-ds" class="lf-ds" hidden></ul>
+    </section>
+
+    <dialog id="lf-dlg" class="lf-dlg">
+      <h3>Hệ toạ độ của file</h3>
+      <p><b id="lf-dlg-ten"></b></p>
+      <p class="muted small" id="lf-dlg-pv"></p>
+      <label class="field"><span>Toạ độ trong file</span>
+        <select id="lf-dlg-crs">
+          <option value="vn2000">VN-2000 (x = Đông/Y, y = Bắc/X — như AutoCAD, MicroStation)</option>
+          <option value="vn2000-dao">VN-2000 đảo trục (x = Bắc/X, y = Đông/Y)</option>
+          <option value="wgs84">WGS84 (độ kinh, vĩ)</option>
+        </select></label>
+      <div class="row" id="lf-dlg-kttrow">
+        <label class="field grow"><span>Tỉnh / thành phố</span><select id="lf-dlg-tinh"></select></label>
+        <label class="field narrow"><span>Kinh tuyến trục (°)</span><input id="lf-dlg-ktt" type="number" step="0.25" min="100" max="120"></label>
+      </div>
+      <div class="row lf-dlg-nut">
+        <button type="button" id="lf-dlg-huy" class="btn ghost">Huỷ</button>
+        <button type="button" id="lf-dlg-ok" class="btn primary">Mở lên bản đồ</button>
+      </div>
+    </dialog>
+
     <footer class="credits">
       <p>Tác giả: <strong>Trần Trường Sinh</strong> · 0917.750.555</p>
       <p>Nguồn công thức: <em>Công tác tính chuyển toạ độ trong công nghệ máy bay không người lái có định vị tâm chụp chính xác</em> — Trần Trung Anh, Quách Mạnh Tuấn (Hội nghị KH Quốc gia về Công nghệ Địa không gian).</p>
@@ -171,6 +201,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.27c"></script>
+<script src="js/app.js?v=2026.11.27d"></script>
 </body>
 </html>

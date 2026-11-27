@@ -808,6 +808,9 @@
     // Lớp giá đất 2026 (docs/js/giadat.js)
     if (VN.giadatInit) VN.giadatInit(map, { store, escapeHtml, fmt, toast, opacity: overlayFactor,
       attribution: '<a href="huong-dan.html#nguon-du-lieu" target="_blank">Giá đất: NQ 12/2025/NQ-HĐND tỉnh Quảng Trị; vị trí đoạn đường dò theo OSM/OSRM</a>' });
+    // Lớp từ file KML / KMZ / DXF / DGN (docs/js/lopfile.js)
+    if (VN.lopFileInit) VN.lopFileInit(map, { escapeHtml, fmt, toast, getLon0,
+      provinces: VN.LON0_BY_PROVINCE, provinceValue: () => provinceSel.value });
   });
 
   // Lần đầu mở: hiện ví dụ cho người dùng thấy ngay; các lần sau: chạy lại dữ liệu đã lưu

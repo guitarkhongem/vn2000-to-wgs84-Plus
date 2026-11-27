@@ -59,6 +59,7 @@ Không cần build: HTML + JS thuần, thư viện lấy từ CDN (MapLibre GL 4
 | `docs/js/export.js` | Xuất CSV (có BOM), KML, DXF R12 (tên tiếng Việt ghi dạng `\U+XXXX`) |
 | `docs/js/app.js` | Ghép giao diện + bản đồ. Lưu tạm lựa chọn người dùng trong localStorage |
 | `docs/tests.html` | Test JS, mở trực tiếp bằng trình duyệt — phải hiện "Tất cả … test đều đạt" |
+| `docs/js/lopfile.js` | *Lớp từ file*: KML/KMZ (DOMParser, giải nén ZIP bằng `DecompressionStream`), DXF (`VN.parseDxf`, bung khối INSERT, cung bulge), DGN V7 (`VN.parseDgn`, theo mô tả định dạng của GDAL dgnlib: int32 thứ tự VAX, VAX D-float, TCB → UOR/gốc), TCVN3 → Unicode (`VN.tcvn3`). DGN V8 (OLE) / DWG: báo xuất DXF. Đổi toạ độ bằng `VN.vn2000ToWgs84` (không tự viết lại công thức). Hàm thuần có test trong `tests.html`. `app.js` gọi `VN.lopFileInit(map, helpers)` |
 | `docs/js/giadat.js`, `docs/data/giadat_2026.json` | Lớp *Giá đất 2026*: nguồn `gd`, lớp `gd-*` (từ zoom 11, màu theo đất ở VT1), đoạn gần tâm thửa (400 m), tra cứu theo xã / tên đường. Hàm thuần `VN.mauGia`, `VN.khoangCachToiDuong`, `VN.doanGanNhat`, `VN.boDau` có test trong `tests.html`. `app.js` gọi `VN.giadatInit(map, helpers)` và `VN.giadatRows(rows)` |
 | `docs/data/nen_hanhchinh.geojson` | Nền hành chính VN (34 tỉnh, biên giới, Hoàng Sa, Trường Sa, nước láng giềng, nhãn), WGS84, thuộc tính `lop`; mục `nguon` ghi nguồn. Hiện ở zoom ≤ 9 (lớp `nen-*`), OSM / vệ tinh mờ dần vào từ zoom 8,5 → 10. Không có file → app giữ OSM ở mọi zoom |
 

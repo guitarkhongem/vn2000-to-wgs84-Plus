@@ -299,3 +299,24 @@ tbody tr:hover { background: var(--accent-soft); }
 .geo-head button { font: inherit; font-size: 12px; border: 1px solid var(--border, #ccc); background: transparent; color: var(--text); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
 .geo-head .geo-x { border: 0; font-size: 18px; line-height: 1; padding: 0 4px; }
 .geo-info .muted { font-size: 11.5px; }
+
+/* Lớp từ file (KML, KMZ, DXF, DGN) */
+.lf-ds { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.lf-ds li { display: flex; align-items: center; gap: 4px; }
+.lf-ten { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; cursor: pointer; }
+.lf-ten > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.lf-ten small { display: block; }
+.lf-sw { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.lf-loi { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: #fff4e5; color: #7a4100; font-size: 12.5px; line-height: 1.45; }
+.lf-dlg { border: 0; border-radius: 12px; padding: 16px 18px; max-width: min(520px, calc(100vw - 24px)); box-shadow: 0 8px 30px rgba(0,0,0,.35);
+  background: var(--card); color: var(--text); }
+.lf-dlg::backdrop { background: rgba(0,0,0,.35); }
+.lf-dlg h3 { margin: 0 0 6px; }
+.lf-dlg .field { margin-top: 8px; }
+.lf-dlg-nut { justify-content: flex-end; margin-top: 14px; gap: 8px; }
+.lf-chu { pointer-events: none; white-space: pre; line-height: 1; }
+.lf-chu span { display: inline-block; font-family: Arial, sans-serif; text-shadow: 0 0 2px #fff, 0 0 2px #fff; }
+.lf-pop table { border-collapse: collapse; margin: 4px 0; font-size: 12px; }
+.lf-pop th { text-align: left; padding: 1px 8px 1px 0; color: var(--muted); font-weight: 600; vertical-align: top; }
+.lf-pop td { padding: 1px 0; overflow-wrap: anywhere; }
+.map-wrap #map.lf-drop { outline: 3px dashed var(--accent); outline-offset: -6px; }

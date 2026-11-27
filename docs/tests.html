@@ -10,11 +10,12 @@
   #summary { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27c"></script>
-<script src="js/parse.js?v=2026.11.27c"></script>
-<script src="js/geo.js?v=2026.11.27c"></script>
-<script src="js/export.js?v=2026.11.27c"></script>
-<script src="js/giadat.js?v=2026.11.27c"></script>
+<script src="js/converter.js?v=2026.11.27d"></script>
+<script src="js/parse.js?v=2026.11.27d"></script>
+<script src="js/geo.js?v=2026.11.27d"></script>
+<script src="js/export.js?v=2026.11.27d"></script>
+<script src="js/giadat.js?v=2026.11.27d"></script>
+<script src="js/lopfile.js?v=2026.11.27d"></script>
 </head>
 <body>
 <div id="summary">Đang chạy…</div>
@@ -172,6 +173,37 @@ test("KML đúng thứ tự lon,lat", () => {
 });
 
 const out = document.getElementById("out");
+test("Lớp từ file: TCVN3 → Unicode, DXF (đường, cung bulge, chữ, khối), số VAX của DGN, đổi toạ độ", () => {
+  eq(VN.tcvn3("x\xb7 A D\xaci"), "xã A Dơi", "TCVN3");
+  eq(VN.tcvn3("S\xeb T\xb5i nguy\xaan & M\xabi tr\xad\xeang"), "Sở Tài nguyên & Môi trường", "TCVN3 2");
+  eq(VN.tcvn3("Thửa 12 · 25°"), "Thửa 12 · 25°", "Unicode giữ nguyên");
+  eq(VN.dxfText("(982,6 m\\S2^ ;)"), "(982,6 m²)", "MTEXT mũ");
+  const dxf = ["0","SECTION","2","BLOCKS","0","BLOCK","2","B1","10","0","20","0","0","LINE","8","0","10","0","20","0","11","1","21","0","0","ENDBLK",
+    "0","ENDSEC","0","SECTION","2","ENTITIES",
+    "0","LWPOLYLINE","8","RANH","90","2","70","0","10","0","20","0","42","1","10","2","20","0",
+    "0","TEXT","8","CHU","10","5","20","6","40","2.5","50","90","1","Th\xf6a 7",
+    "0","INSERT","8","KHOI","2","B1","10","10","20","10","41","2","42","2","50","90",
+    "0","ENDSEC","0","EOF"].join("\n");
+  const e = VN.parseDxf(dxf);
+  eq(e.length, 3, "số đối tượng");
+  const arc = e[0].pts;   // nửa đường tròn (bulge 1) từ (0,0) tới (2,0), tâm (1,0)
+  near(arc[arc.length - 1][0], 2, 1e-9, "cung: điểm cuối");
+  near(Math.min(...arc.map((p) => p[1])), -1, 1e-6, "cung bulge 1 đi qua (1,-1)");
+  eq(e[1].text, "Thửa 7", "chữ TCVN3"); near(e[1].h, 2.5, 0, "cao chữ"); near(e[1].rot, 90, 0, "góc chữ");
+  near(e[2].pts[1][0], 10, 1e-9, "khối xoay 90°: x"); near(e[2].pts[1][1], 12, 1e-9, "khối tỉ lệ 2: y");
+  // VAX D-float: 1.0 = 0x4080 0000 0000 0000 (từ 16 bit little-endian)
+  near(VN.vaxDouble(new Uint8Array([0x80, 0x40, 0, 0, 0, 0, 0, 0]), 0), 1, 0, "VAX 1.0");
+  near(VN.vaxDouble(new Uint8Array([0x20, 0xc2, 0, 0, 0, 0, 0, 0]), 0), -10, 0, "VAX -10");
+  eq(VN.dgnInt32(new Uint8Array([0x01, 0x00, 0x02, 0x00]), 0), 65538, "int32 thứ tự VAX");
+  eq(VN.guessCrs([548889, 1840169, 549754, 1841146]), "vn2000", "đoán VN-2000");
+  eq(VN.guessCrs([1840169, 548889, 1841146, 549754]), "vn2000-dao", "đoán đảo trục");
+  eq(VN.guessCrs([106.5, 16.6, 106.7, 16.8]), "wgs84", "đoán WGS84");
+  // đổi toạ độ dùng đúng hàm của ứng dụng: x CAD = Đông (Y), y CAD = Bắc (X)
+  const g = VN.cadToGeojson([{ t: "point", layer: "0", pts: [[546243.50, 1842173.70]] }], { crs: "vn2000", lon0: 106.25 });
+  const [lat, lon] = VN.vn2000ToWgs84(1842173.70, 546243.50, 0, 106.25);
+  near(g[0].geometry.coordinates[0], lon, 0, "kinh độ"); near(g[0].geometry.coordinates[1], lat, 0, "vĩ độ");
+});
+
 for (const [name, ok, msg] of results) {
   const li = document.createElement("li");
   li.className = ok ? "pass" : "fail";
