@@ -198,12 +198,17 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
 | **.kml, .kmz** (Google Earth) | Điểm, đường, vùng (cả MultiGeometry), tên, mô tả, ExtendedData, màu theo Style | WGS84 — mở thẳng |
 | **.dxf** (AutoCAD, mọi phiên bản) | LINE, LWPOLYLINE / POLYLINE (cả cung *bulge*), CIRCLE, ARC, ELLIPSE, POINT, TEXT, MTEXT, ATTRIB, khối INSERT (bung ra đúng vị trí, tỉ lệ, góc xoay) | Hỏi hệ toạ độ |
 | **.dgn MicroStation V7** | Line, LineString, Shape, Curve, chuỗi / hình phức, Ellipse, Arc, Text, Cell; lớp = *Level* | Hỏi hệ toạ độ |
-| .dgn **MicroStation V8**, .dwg | **Chưa đọc được** — định dạng đóng của Bentley / Autodesk, trình duyệt không có thư viện mở | Xuất sang DXF (xem dưới) |
+| **.dgn MicroStation V8** (V8i, CONNECT) | Line, LineString, Shape, chuỗi / hình phức, Ellipse, Arc, Text, Cell, Text node — model mặc định; lớp = *Level*. Chưa vẽ: kích thước (dimension), shared cell, tag | Hỏi hệ toạ độ |
+| .dwg (AutoCAD) | **Chưa đọc được** — định dạng đóng của Autodesk | Lưu sang DXF (xem dưới) |
 
 - **Mỗi lần mở file CAD** (DXF, DGN) ứng dụng hỏi: toạ độ trong file là **VN-2000** (x = Đông/Y, y = Bắc/X như
   AutoCAD, MicroStation), **VN-2000 đảo trục** hay **WGS84** (độ), và **kinh tuyến trục** (chọn tỉnh hoặc gõ số).
   Ứng dụng đoán sẵn theo phạm vi toạ độ trong file. Toạ độ VN-2000 đổi sang WGS84 bằng **đúng hàm chuyển đổi của
   ứng dụng** (7 tham số QĐ 05/2007/QĐ-BTNMT), độ cao lấy bằng 0.
+- **DGN V8**: Bentley không công bố định dạng V8; bộ đọc của ứng dụng được **tự giải mã từ các file mẫu** và
+  kiểm tra bằng cách so với file DXF xuất từ chính file DGN đó (tờ DC56 Khe Sanh: 3 386 / 3 386 đoạn thẳng và
+  342 / 342 chữ trùng khớp đến 1 cm). Đơn vị (UOR) và gốc toạ độ toàn cục đọc trong file. Phần tử chưa hỗ trợ được
+  bỏ qua và ghi số lượng trong danh sách lớp. File lạ hiển thị sai → báo tác giả, tạm thời xuất sang DXF.
 - **Chữ tiếng Việt mã TCVN3** (font .VnTime… của bản đồ địa chính cũ) tự đổi sang Unicode.
 - **Chữ trong file CAD** hiện đúng chiều cao thật (m) theo mức phóng — như trong CAD: phóng to mới thấy số
   thửa, diện tích; tối đa 400 chữ trong khung nhìn.
@@ -211,8 +216,7 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
   **chiều dài** (tính trên elipxoit WGS84 — để tham khảo).
 - **Danh sách lớp**: ô đánh dấu để ẩn / hiện, **⤢** phóng tới lớp, **×** gỡ lớp. Lớp từ file không được lưu
   lại — tải lại trang thì mở lại file.
-- **File DGN V8 / DWG**: trong MicroStation chọn *File › Export › DWG/DXF* (kiểu **DXF**) hoặc *File › Save As*
-  kiểu **MicroStation V7 DGN**; trong AutoCAD chọn *Save As* kiểu **AutoCAD DXF**. Rồi mở file mới tại đây.
+- **File DWG**: trong AutoCAD chọn *Save As* kiểu **AutoCAD DXF**, rồi mở file .dxf tại đây.
 
 ## 11. Nguồn dữ liệu
 

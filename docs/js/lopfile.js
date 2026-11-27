@@ -1,10 +1,10 @@
 /*
- * Lớp từ file của người dùng: KML / KMZ (WGS84), DXF (AutoCAD) và DGN V7 (MicroStation) — toạ độ
+ * Lớp từ file của người dùng: KML / KMZ (WGS84), DXF (AutoCAD), DGN V7 và V8 (MicroStation) — toạ độ
  * VN-2000 đổi sang WGS84 bằng đúng hàm chuyển đổi của ứng dụng (VN.vn2000ToWgs84), kinh tuyến trục do
  * người dùng chọn mỗi lần mở file.
  *
- * File chỉ đọc trong trình duyệt, không gửi đi đâu. DGN V8 và DWG là định dạng đóng (Bentley / Autodesk),
- * không có thư viện mở đọc được trong trình duyệt → báo cách xuất sang DXF.
+ * File chỉ đọc trong trình duyệt, không gửi đi đâu. DGN V8 không có tài liệu công khai: bộ đọc ở đây tự giải mã
+ * từ file mẫu (xem parseDgnV8). DWG chưa đọc được → báo cách lưu sang DXF.
  *
  * Phần phân tích file (parseKml, parseDxf, parseDgn, …) là hàm thuần, chạy được trong Node để kiểm thử.
  */
@@ -43,7 +43,10 @@
   const TCVN3 = {161:"Ă",162:"Â",163:"Ê",164:"Ô",165:"Ơ",166:"Ư",167:"Đ",168:"ă",169:"â",170:"ê",171:"ô",172:"ơ",173:"ư",174:"đ",181:"à",182:"ả",183:"ã",184:"á",185:"ạ",187:"ằ",188:"ẳ",189:"ẵ",190:"ắ",198:"ặ",199:"ầ",200:"ẩ",201:"ẫ",202:"ấ",203:"ậ",204:"è",206:"ẻ",207:"ẽ",208:"é",209:"ẹ",210:"ề",211:"ể",212:"ễ",213:"ế",214:"ệ",215:"ì",216:"ỉ",220:"ĩ",221:"í",222:"ị",223:"ò",225:"ỏ",226:"õ",227:"ó",228:"ọ",229:"ồ",230:"ổ",231:"ỗ",232:"ố",233:"ộ",234:"ờ",235:"ở",236:"ỡ",237:"ớ",238:"ợ",239:"ù",241:"ủ",242:"ũ",243:"ú",244:"ụ",245:"ừ",246:"ử",247:"ữ",248:"ứ",249:"ự",250:"ỳ",251:"ỷ",252:"ỹ",253:"ý",254:"ỵ"};
   function tcvn3(s) {
     if (!/[\xa1-\xfe]/.test(s) || /[\u0100-\u01b0\u1ea0-\u1ef9]/.test(s) || /[^\x00-\xff]/.test(s)) return s;
-    return s.replace(/[\xa1-\xfe]/g, (c) => TCVN3[c.charCodeAt(0)] || c);
+    const r = s.replace(/[\xa1-\xfe]/g, (c) => TCVN3[c.charCodeAt(0)] || c);
+    // font chữ hoa (.VnTimeH…) dùng mã chữ thường: chuỗi có chữ cái ASCII toàn chữ hoa → viết hoa cả chuỗi
+    const ascii = s.replace(/[^A-Za-z]/g, "");
+    return ascii.length >= 2 && ascii === ascii.toUpperCase() ? r.toUpperCase() : r;
   }
 
   // ===================================================================== KML / KMZ
@@ -413,6 +416,155 @@
     return ents.filter((e) => e.pts.length && e.pts.every((p) => isFinite(p[0]) && isFinite(p[1])));
   }
 
+  // ===================================================================== DGN V8 (MicroStation V8 / V8i / CONNECT)
+  // Định dạng V8 không công bố. Cấu trúc dưới đây do ứng dụng này tự giải mã từ các file mẫu (đối chiếu với DXF
+  // xuất từ chính file đó: 3 386/3 386 đoạn thẳng và 342/342 chữ khớp đến 1 cm):
+  //  - vỏ: OLE Compound File (như .doc cũ); mô hình mặc định ở "Dgn-Md/#000000";
+  //  - "Dgn~Mh" (nén zlib): đơn vị UOR / m tại byte 4196, gốc toạ độ toàn cục (UOR) tại 4212, 4220;
+  //  - "Dgn^G/$1…$n": 16 byte đầu (số phần tử …) + khối zlib chứa các phần tử nối tiếp;
+  //  - phần tử: kiểu ở byte 4, cờ 16 bit ở byte 6 (0x4000 = thành phần của phần tử phức), độ dài phần tử =
+  //    4 + 2 × (UInt32 ở byte 8), hết dữ liệu hình học = 4 + 2 × (UInt32 ở byte 12), level ở byte 16;
+  //    toạ độ là số thực IEEE (UOR) từ byte 108 (đường, chuỗi đường, elip, cung, chữ — 2D).
+  function cfbRead(u8) {
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    const u32 = (o) => dv.getUint32(o, true);
+    const ss = 1 << dv.getUint16(0x1e, true), mss = 1 << dv.getUint16(0x20, true);
+    const off = (sec) => (sec + 1) * ss;
+    const END = 0xfffffffa;
+    const difat = [];
+    for (let i = 0; i < 109; i++) difat.push(u32(0x4c + 4 * i));
+    let sec = u32(0x44);
+    for (let k = u32(0x48); k > 0 && sec < END; k--) {
+      for (let i = 0; i < ss / 4 - 1; i++) difat.push(u32(off(sec) + 4 * i));
+      sec = u32(off(sec) + ss - 4);
+    }
+    const fat = [];
+    for (const f of difat.slice(0, u32(0x2c))) if (f < END) for (let i = 0; i < ss / 4; i++) fat.push(u32(off(f) + 4 * i));
+    const chain = (start, max) => {
+      const parts = []; let n = 0;
+      for (let s = start; s < END && n < 1e6 && (max == null || n * ss < max); s = fat[s], n++) parts.push(u8.subarray(off(s), off(s) + ss));
+      const out = new Uint8Array(parts.length * ss); parts.forEach((p, i) => out.set(p, i * ss));
+      return out;
+    };
+    const dirs = chain(u32(0x30)), ent = [];
+    for (let i = 0; i + 128 <= dirs.length; i += 128) {
+      const d = new DataView(dirs.buffer, dirs.byteOffset + i, 128), nl = d.getUint16(0x40, true);
+      ent.push({ name: new TextDecoder("utf-16le").decode(dirs.subarray(i, i + Math.max(0, nl - 2))), type: dirs[i + 0x42],
+        left: d.getInt32(0x44, true), right: d.getInt32(0x48, true), child: d.getInt32(0x4c, true),
+        start: d.getUint32(0x74, true), size: d.getUint32(0x78, true) });
+    }
+    const cutoff = u32(0x38), root = ent[0];
+    const mini = root ? chain(root.start).subarray(0, root.size) : new Uint8Array(0);
+    const mfStart = u32(0x3c), mfat = [];
+    if (mfStart < END) { const m = chain(mfStart); for (let i = 0; i + 4 <= m.length; i += 4) mfat.push(new DataView(m.buffer, m.byteOffset).getUint32(i, true)); }
+    const read = (e) => {
+      if (e.size < cutoff) {
+        const out = new Uint8Array(e.size); let p = 0;
+        for (let s = e.start; s < END && p < e.size; s = mfat[s]) { const n = Math.min(mss, e.size - p); out.set(mini.subarray(s * mss, s * mss + n), p); p += n; }
+        return out;
+      }
+      return chain(e.start, e.size).subarray(0, e.size);
+    };
+    const paths = new Map();                          // "/Dgn-Md/#000000/Dgn^G/$1" → mục
+    const walk = (i, base, seen) => {
+      if (i < 0 || i >= ent.length || seen.has(i)) return; seen.add(i);
+      const e = ent[i]; walk(e.left, base, seen);
+      const p = base + "/" + e.name; paths.set(p, e);
+      if (e.type === 1 || e.type === 5) walk(e.child, p, seen);
+      walk(e.right, base, seen);
+    };
+    if (root) walk(root.child, "", new Set());
+    return { paths, read };
+  }
+
+  async function inflateZlib(u8) {                   // dữ liệu zlib (78 xx …) → Uint8Array
+    if (root.DecompressionStream) {
+      const ds = new Blob([u8]).stream().pipeThrough(new DecompressionStream("deflate"));
+      return new Uint8Array(await new Response(ds).arrayBuffer());
+    }
+    return new Uint8Array(require("zlib").inflateSync(u8));    // Node (kiểm thử)
+  }
+
+  function dgnV8Text(b) {
+    if (b[0] === 0xff && b[1] === 0xfe) {
+      if (b[2] === 0x01 && b[3] === 0x00) return tcvn3(new TextDecoder("latin1").decode(b.subarray(4)));   // chữ 8 bit (TCVN3…)
+      return new TextDecoder("utf-16le").decode(b.subarray(2, 2 + ((b.length - 2) & ~1)));                    // Unicode
+    }
+    return tcvn3(new TextDecoder("latin1").decode(b));
+  }
+
+  async function parseDgnV8(buf, inflate) {
+    const inf = inflate || inflateZlib;
+    const u8 = new Uint8Array(buf), cf = cfbRead(u8);
+    const models = [...cf.paths.keys()].map((p) => (/^\/Dgn-Md\/(#[0-9a-fA-F]+)$/.exec(p) || [])[1]).filter(Boolean).sort();
+    if (!models.length) throw new Error("File DGN V8 không có mô hình (model) nào");
+    const md = models.includes("#000000") ? "#000000" : models[0];
+    const mhE = cf.paths.get(`/Dgn-Md/${md}/Dgn~Mh`);
+    let uor = 1, ox = 0, oy = 0;
+    if (mhE) {
+      const mh = await inf(cf.read(mhE)), v = new DataView(mh.buffer, mh.byteOffset, mh.byteLength);
+      if (mh.length >= 4236) {
+        const u = v.getFloat64(4196, true), x = v.getFloat64(4212, true), y = v.getFloat64(4220, true);
+        if (u > 0 && u < 1e9 && isFinite(x) && isFinite(y)) { uor = u; ox = x; oy = y; }
+      }
+    }
+    const streams = [...cf.paths.entries()].map(([p, e]) => [(new RegExp(`^/Dgn-Md/${md}/Dgn\\^G/\\$(\\d+)$`).exec(p) || [])[1], e])
+      .filter(([k]) => k).sort((a, b) => a[0] - b[0]);
+    const ents = [], boQua = {};
+    let cx = null, left = 0;
+    const flush = () => { if (cx && cx.pts.length > 1) ents.push(cx); cx = null; left = 0; };
+    for (const [, e] of streams) {
+      const st = cf.read(e);
+      if (st.length <= 18 || st[16] !== 0x78) continue;
+      const raw = await inf(st.subarray(16)), dv = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+      const d = (o) => dv.getFloat64(o, true);
+      for (let o = 0; o + 20 <= raw.length;) {
+        const sw = dv.getUint32(o + 8, true), n = 4 + 2 * sw;
+        if (!sw || o + n > raw.length) break;
+        const b = o; o += n;
+        const type = raw[b + 4], fl = dv.getUint16(b + 6, true), end = b + 4 + 2 * dv.getUint32(b + 12, true);
+        const comp = (fl & 0x4000) !== 0, cls = raw[b + 44] & 0x0f;
+        if (cx && (!comp || left <= 0)) flush();
+        const layer = "Level " + dv.getUint32(b + 16, true);
+        const P = (k) => [(d(k) - ox) / uor, (d(k + 8) - oy) / uor];
+        let el = null;
+        if (type === 3) {
+          if (end - b - 108 === 32) el = { t: "line", layer, pts: [P(b + 108), P(b + 124)] };
+          else if (end - b - 108 === 48) el = { t: "line", layer, pts: [P(b + 108), P(b + 132)] };            // 3D: bỏ z
+        } else if (type === 4 || type === 6 || type === 11) {
+          const nv = dv.getUint32(b + 108, true), stp = nv ? (end - b - 116) / nv : 0;
+          if (stp === 16 || stp === 24) { const pts = []; for (let k = 0; k < nv; k++) pts.push(P(b + 116 + k * stp)); el = { t: "line", layer, pts, closed: type === 6 }; }
+        } else if (type === 12 || type === 14) {
+          flush(); left = dv.getUint32(b + 108, true); cx = { t: "line", layer, pts: [], closed: type === 14 }; continue;
+        } else if ((type === 15 && end - b === 148) || (type === 16 && end - b === 164)) {
+          let a0 = 0, sw2 = 2 * Math.PI, ra, rb, rot, c;
+          if (type === 15) { ra = d(b + 108); rb = d(b + 116); rot = d(b + 124); c = P(b + 132); }
+          else { a0 = d(b + 108); sw2 = d(b + 116); ra = d(b + 124); rb = d(b + 132); rot = d(b + 140); c = P(b + 148); }
+          const full = Math.abs(sw2) >= 2 * Math.PI - 1e-9;
+          const pts = arcPts(c[0], c[1], ra / uor, (rb || ra) / uor, rot / RAD, a0 / RAD, sw2 / RAD);
+          el = { t: "line", layer, pts: full ? pts.slice(0, -1) : pts, closed: full };
+        } else if (type === 17 && end - b >= 174 && cls !== 1) {               // cls 1 = phần tử điều khiển mẫu tô
+          const nb = dv.getUint16(b + 114, true), txt = dgnV8Text(raw.subarray(b + 174, Math.min(end, b + 174 + nb))).replace(/\0.*$/s, "").trim();
+          const o0 = P(b + 156);
+          // "Pattern Control Element": phần tử ẩn điều khiển mẫu tô, nằm ở gốc toạ độ → bỏ
+          if (txt && txt !== "Pattern Control Element" && (o0[0] || o0[1])) el = { t: "text", layer, text: txt, h: d(b + 140) / uor, rot: d(b + 148) / RAD, anchor: "bottom-left", pts: [o0] };
+        } else if (![2, 7, 12, 14, 15, 16, 17].includes(type)) boQua[type] = (boQua[type] || 0) + 1;
+        if (!el) continue;
+        if (cx && comp && left > 0) {
+          left--;
+          if (el.t === "line") cx.pts.push(...(cx.pts.length ? el.pts.slice(1) : el.pts));
+          if (!left) flush();
+          continue;
+        }
+        ents.push(el);
+      }
+    }
+    flush();
+    const out = ents.filter((x) => x.pts.length && x.pts.every((p) => isFinite(p[0]) && isFinite(p[1])));
+    out.v8 = { model: md, models: models.length, uor, boQua };
+    return out;
+  }
+
   // ===================================================================== CAD → GeoJSON
   function extent(ents) {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, n = 0;
@@ -452,7 +604,7 @@
     return features;
   }
 
-  Object.assign(root.VN, { tcvn3, parseKml, unzipKml, parseDxf, dxfDecode, dxfText, parseDgn, dgnKind, vaxDouble, dgnInt32,
+  Object.assign(root.VN, { tcvn3, cfbRead, parseDgnV8, dgnV8Text, parseKml, unzipKml, parseDxf, dxfDecode, dxfText, parseDgn, dgnKind, vaxDouble, dgnInt32,
     bulgePts, arcPts, cadExtent: extent, guessCrs, cadToGeojson });
 
   if (typeof document === "undefined") return;   // chạy trong Node (kiểm thử) → chỉ xuất hàm
@@ -514,7 +666,12 @@
       const k = dgnKind(u8);
       if (k === "dwg" || ext === "dwg") throw Object.assign(new Error("DWG"), { code: "dwg" });
       let ents;
-      if (ext === "dgn" || k === "v7" || k === "v8") { ents = parseDgn(buf); loai = "DGN V7"; }
+      if (k === "v8") {
+        ents = await parseDgnV8(buf); loai = "DGN V8";
+        const bq = Object.values(ents.v8.boQua).reduce((x, y) => x + y, 0);
+        if (bq) loai += ` · bỏ qua ${bq} phần tử chưa hỗ trợ`;
+        if (ents.v8.models > 1) S.h.toast(`File có ${ents.v8.models} model — đang mở model đầu tiên (Default)`);
+      } else if (ext === "dgn" || k === "v7") { ents = parseDgn(buf); loai = "DGN V7"; }
       else if (ext === "dxf") { ents = parseDxf(dxfDecode(buf)); loai = "DXF"; }
       else throw new Error("Chỉ mở được file .kml, .kmz, .dxf, .dgn");
       if (!ents.length) throw new Error("Không có đối tượng vẽ được (đường, vùng, điểm, chữ)");

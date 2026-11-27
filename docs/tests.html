@@ -10,12 +10,12 @@
   #summary { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27e"></script>
-<script src="js/parse.js?v=2026.11.27e"></script>
-<script src="js/geo.js?v=2026.11.27e"></script>
-<script src="js/export.js?v=2026.11.27e"></script>
-<script src="js/giadat.js?v=2026.11.27e"></script>
-<script src="js/lopfile.js?v=2026.11.27e"></script>
+<script src="js/converter.js?v=2026.11.27f"></script>
+<script src="js/parse.js?v=2026.11.27f"></script>
+<script src="js/geo.js?v=2026.11.27f"></script>
+<script src="js/export.js?v=2026.11.27f"></script>
+<script src="js/giadat.js?v=2026.11.27f"></script>
+<script src="js/lopfile.js?v=2026.11.27f"></script>
 </head>
 <body>
 <div id="summary">Đang chạy…</div>
@@ -202,6 +202,14 @@ test("Lớp từ file: TCVN3 → Unicode, DXF (đường, cung bulge, chữ, kh�
   const g = VN.cadToGeojson([{ t: "point", layer: "0", pts: [[546243.50, 1842173.70]] }], { crs: "vn2000", lon0: 106.25 });
   const [lat, lon] = VN.vn2000ToWgs84(1842173.70, 546243.50, 0, 106.25);
   near(g[0].geometry.coordinates[0], lon, 0, "kinh độ"); near(g[0].geometry.coordinates[1], lat, 0, "vĩ độ");
+});
+
+test("DGN V8: chữ trong phần tử (8 bit TCVN3, Unicode), TCVN3 chữ hoa", () => {
+  const b = (arr) => new Uint8Array(arr);
+  eq(VN.dgnV8Text(b([0xff, 0xfe, 0x01, 0x00, 0x78, 0xb7, 0x20, 0x41])), "xã A", "8 bit sau FF FE 01 00");
+  eq(VN.dgnV8Text(b([0xff, 0xfe, 0x54, 0x00, 0xdd, 0x1e])), "Tờ", "UTF-16 sau FF FE");
+  eq(VN.dgnV8Text(b([0x34, 0x33, 0x2c, 0x30, 0x33])), "43,03", "ASCII");
+  eq(VN.tcvn3("T\xea S\xe8 56"), "TỜ SỐ 56", "font chữ hoa .VnTimeH");
 });
 
 for (const [name, ok, msg] of results) {
