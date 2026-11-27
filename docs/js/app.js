@@ -199,6 +199,12 @@
     zoom: 11,
     minZoom: 3,
     attributionControl: { compact: true },
+    locale: {
+      "GeolocateControl.FindMyLocation": "Định vị vị trí của tôi",
+      "GeolocateControl.LocationNotAvailable": "Không lấy được vị trí",
+      "NavigationControl.ZoomIn": "Phóng to", "NavigationControl.ZoomOut": "Thu nhỏ",
+      "NavigationControl.ResetBearing": "Xoay về hướng Bắc",
+    },
     style: {
       version: 8,
       sources: {
@@ -259,6 +265,52 @@
   VN.map = map;   // để gỡ lỗi từ console
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");
+
+  // ---------------- Định vị vị trí của tôi (như Google Maps) ----------------
+  // Chấm xanh + vòng độ chính xác + hướng nhìn; bấm lần nữa để bám theo khi di chuyển.
+  // Toạ độ do thiết bị (GPS / Wi-Fi) cung cấp ở WGS84; đổi sang VN-2000 bằng đúng hàm của ứng dụng.
+  const geo = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true, timeout: 15000 },
+    trackUserLocation: true, showUserHeading: true, showAccuracyCircle: true,
+    fitBoundsOptions: { maxZoom: 17 },
+  });
+  map.addControl(geo, "top-right");
+  let geoPos = null;
+  function geoText() {
+    if (!geoPos) return "";
+    let s = `${geoPos.lat.toFixed(7)}, ${geoPos.lon.toFixed(7)}`;
+    try {
+      const lon0 = getLon0();
+      const [x, y] = VN.wgs84ToVn2000(geoPos.lat, geoPos.lon, 0, lon0);
+      s += `\nVN-2000 (KTT ${lon0}°): X = ${x.toFixed(2)}  Y = ${y.toFixed(2)}`;
+    } catch (_) { /* chưa có kinh tuyến trục hợp lệ */ }
+    return s;
+  }
+  geo.on("geolocate", (e) => {
+    const c = e.coords;
+    geoPos = { lat: c.latitude, lon: c.longitude, acc: c.accuracy };
+    const box = $("geo-info");
+    box.hidden = false;
+    let vn = "";
+    try {
+      const lon0 = getLon0();
+      const [x, y] = VN.wgs84ToVn2000(geoPos.lat, geoPos.lon, 0, lon0);
+      vn = `<div>VN-2000 (KTT ${escapeHtml(String(lon0))}°): X = <b>${fmt(x, 2)}</b> · Y = <b>${fmt(y, 2)}</b></div>`;
+    } catch (_) { vn = `<div class="muted">Chọn kinh tuyến trục để xem toạ độ VN-2000</div>`; }
+    $("geo-body").innerHTML =
+      `<div>WGS84: <b>${geoPos.lat.toFixed(7)}</b>, <b>${geoPos.lon.toFixed(7)}</b></div>${vn}` +
+      `<div class="muted">Độ chính xác ±${fmt(geoPos.acc, 0)} m (GPS / Wi-Fi của thiết bị) — chỉ để tham khảo, không thay đo đạc.</div>`;
+  });
+  geo.on("error", (e) => {
+    toast(e && e.code === 1 ? "Chưa cho phép truy cập vị trí — bật quyền Vị trí cho trang này trong trình duyệt"
+      : "Không lấy được vị trí — kiểm tra GPS / kết nối rồi thử lại");
+  });
+  
+  $("geo-copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(geoText()); toast("Đã sao chép vị trí"); }
+    catch (_) { toast("Không sao chép được"); }
+  });
+  $("geo-close").addEventListener("click", () => { $("geo-info").hidden = true; });
 
   const base = store.get("base", "osm");
   function setBase(b) {

@@ -95,6 +95,13 @@ Bảng **Kết quả** có đủ hai hệ cho mỗi điểm: Tên, X, Y, Vĩ đ�
 ## 7. Bản đồ
 
 - **Bản đồ / Vệ tinh** (góc trên trái): đổi nền. Ở vùng nông thôn, ảnh vệ tinh zoom sâu có thể hơi mờ.
+- **◎ Định vị vị trí của tôi** (nút dưới nút la bàn, góc trên bên phải): như Google Maps — chấm xanh là vị trí
+  thiết bị, vòng mờ là phạm vi sai số, mũi nhọn là hướng đang nhìn (điện thoại). Bấm lần 1: bay tới vị trí và
+  bám theo khi di chuyển; kéo bản đồ thì thôi bám (bấm lại để bám tiếp); bấm khi đang bám để tắt. Ô **📍 Vị trí
+  của tôi** hiện toạ độ WGS84, toạ độ **VN-2000** theo kinh tuyến trục đang chọn và độ chính xác (±m); nút
+  *Sao chép* để dán vào Zalo, Excel… Lần đầu trình duyệt hỏi quyền **Vị trí** — chọn *Cho phép*. Toạ độ lấy từ
+  GPS / Wi-Fi của thiết bị (điện thoại ngoài trời thường ±3–10 m, máy tính có thể sai hàng trăm mét) — **chỉ để
+  tham khảo, không thay đo đạc địa chính**.
 - **☰ Lớp bản đồ / Thu gọn** (góc trên bên trái bản đồ): bấm để ẩn / hiện cả nhóm tuỳ chọn *Bản đồ – Vệ tinh*,
   *Quy hoạch*, *Giá đất*, *Độ đậm lớp phủ* cho đỡ che bản đồ. Ứng dụng nhớ lựa chọn; trên điện thoại mặc định thu gọn.
 - **Độ đậm lớp phủ** (thanh trượt dưới nút *Giá đất*): giảm độ đậm của lớp **quy hoạch** và **giá đất** để
