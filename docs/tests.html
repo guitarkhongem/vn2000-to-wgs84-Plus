@@ -10,12 +10,13 @@
   #summary { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27h"></script>
-<script src="js/parse.js?v=2026.11.27h"></script>
-<script src="js/geo.js?v=2026.11.27h"></script>
-<script src="js/export.js?v=2026.11.27h"></script>
-<script src="js/giadat.js?v=2026.11.27h"></script>
-<script src="js/lopfile.js?v=2026.11.27h"></script>
+<script src="js/converter.js?v=2026.11.27i"></script>
+<script src="js/parse.js?v=2026.11.27i"></script>
+<script src="js/geo.js?v=2026.11.27i"></script>
+<script src="js/export.js?v=2026.11.27i"></script>
+<script src="js/giadat.js?v=2026.11.27i"></script>
+<script src="js/lopfile.js?v=2026.11.27i"></script>
+<script src="js/chupanh.js?v=2026.11.27i"></script>
 </head>
 <body>
 <div id="summary">Đang chạy…</div>
@@ -210,6 +211,22 @@ test("DGN V8: chữ trong phần tử (8 bit TCVN3, Unicode), TCVN3 chữ hoa", 
   eq(VN.dgnV8Text(b([0xff, 0xfe, 0x54, 0x00, 0xdd, 0x1e])), "Tờ", "UTF-16 sau FF FE");
   eq(VN.dgnV8Text(b([0x34, 0x33, 0x2c, 0x30, 0x33])), "43,03", "ASCII");
   eq(VN.tcvn3("T\xea S\xe8 56"), "TỜ SỐ 56", "font chữ hoa .VnTimeH");
+});
+
+test("Chụp ảnh: ghi rồi đọc lại EXIF GPS, dòng chữ in lên ảnh", () => {
+  const t = new Date(2026, 10, 27, 17, 35, 12);
+  const j = VN.ghiExif(new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), { lat: 16.6353123, lon: 106.733012, alt: 452.37, time: t, mota: "Thua 12" });
+  const r = VN.docExif(j.buffer);
+  near(r.lat, 16.6353123, 1e-7, "vĩ độ"); near(r.lon, 106.733012, 1e-7, "kinh độ"); near(r.alt, 452.37, 0.01, "độ cao");
+  eq(r.time.getTime(), t.getTime(), "thời gian");
+  const s = VN.ghiExif(new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), { lat: -33.5, lon: -70.25, time: t });
+  const r2 = VN.docExif(s.buffer); near(r2.lat, -33.5, 1e-9, "Nam"); near(r2.lon, -70.25, 1e-9, "Tây");
+  const L = VN.dongChu({ lat: 16.6353, lon: 106.733, acc: 8.4 }, { lon0: 106.25, tinh: "Tỉnh/thành phố: Quảng Trị", time: t, ghichu: "Thửa 12" });
+  const [x, y] = VN.wgs84ToVn2000(16.6353, 106.733, 0, 106.25);
+  eq(L[0], "WGS84: 16.6353000, 106.7330000  (±8 m)", "dòng WGS84");
+  eq(L[1].startsWith("VN-2000 KTT 106°15': X = "), true, "dòng VN-2000");
+  eq(L[1].includes(x.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })), true, "X đúng hàm app");
+  eq(L[L.length - 1], "Thửa 12", "ghi chú");
 });
 
 for (const [name, ok, msg] of results) {

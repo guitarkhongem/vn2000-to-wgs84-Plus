@@ -23,6 +23,7 @@ Repo này phát triển tiếp từ
 - Xuất CSV (Excel), KML (Google Earth), DXF (AutoCAD).
 - **Nền hành chính Việt Nam** khi thu nhỏ bản đồ: 34 tỉnh, thành phố mới, biên giới, QĐ. Hoàng Sa, QĐ. Trường Sa;
   cho biết điểm thuộc tỉnh mới nào.
+- **Chụp ảnh có toạ độ**: in toạ độ WGS84, VN-2000, tỉnh, thời gian, ghi chú lên ảnh; lưu kèm EXIF GPS;
 - **Lớp từ file**: mở KML / KMZ, DWG / DXF (AutoCAD; DWG qua LibreDWG — GPL, tải từ CDN khi cần), DGN MicroStation V7 và V8 chồng lên bản đồ; file CAD VN-2000 hỏi kinh tuyến trục mỗi lần mở, chữ TCVN3 tự đổi Unicode;
 - **Giá đất 2026** (NQ 12/2025/NQ-HĐND, 78 xã phường): đoạn đường dò theo mạng đường OSM, tô màu theo giá;
   giá các đoạn gần thửa sau khi chuyển đổi; tra cứu theo xã / tên đường.

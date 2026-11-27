@@ -327,3 +327,17 @@ tbody tr:hover { background: var(--accent-soft); }
 .lf-pop th { text-align: left; padding: 1px 8px 1px 0; color: var(--muted); font-weight: 600; vertical-align: top; }
 .lf-pop td { padding: 1px 0; overflow-wrap: anywhere; }
 .map-wrap #map.lf-drop { outline: 3px dashed var(--accent); outline-offset: -6px; }
+
+/* Chụp ảnh có toạ độ */
+.ca-nut { display: flex; align-items: center; justify-content: center; color: #333; }
+.ca-dlg { border: 0; border-radius: 12px; padding: 12px; width: min(720px, calc(100vw - 16px)); max-height: calc(100vh - 16px);
+  box-shadow: 0 8px 30px rgba(0,0,0,.35); background: var(--card); color: var(--text); }
+.ca-dlg::backdrop { background: rgba(0,0,0,.5); }
+.ca-dlg canvas { display: block; width: 100%; height: auto; max-height: 60vh; object-fit: contain; border-radius: 8px; background: #111; }
+.ca-dlg .field { margin-top: 8px; }
+.ca-dlg textarea { width: 100%; font: inherit; }
+.ca-nut-hang { justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.ca-nut-hang [hidden] { display: none; }
+.ca-mk { font-size: 20px; line-height: 1; cursor: pointer; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+.ca-pop img { display: block; width: 100%; max-width: 240px; border-radius: 6px; margin-bottom: 4px; }
+.geo-head #geo-chup { font-weight: 600; }

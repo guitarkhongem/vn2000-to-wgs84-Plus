@@ -102,6 +102,13 @@ Bảng **Kết quả** có đủ hai hệ cho mỗi điểm: Tên, X, Y, Vĩ đ�
   *Sao chép* để dán vào Zalo, Excel… Lần đầu trình duyệt hỏi quyền **Vị trí** — chọn *Cho phép*. Toạ độ lấy từ
   GPS / Wi-Fi của thiết bị (điện thoại ngoài trời thường ±3–10 m, máy tính có thể sai hàng trăm mét) — **chỉ để
   tham khảo, không thay đo đạc địa chính**.
+- **📷 Chụp ảnh có toạ độ** (nút máy ảnh dưới nút định vị, hoặc nút *Chụp ảnh* trong ô *Vị trí của tôi*): trên
+  điện thoại mở camera; trên máy tính chọn ảnh có sẵn. Ảnh được in thêm **toạ độ WGS84 (±m), toạ độ VN-2000** theo
+  kinh tuyến trục đang chọn, **tỉnh / thành phố**, **ngày giờ** và **ghi chú** (gõ trong hộp thoại, vd "Thửa 125, tờ 45").
+  Vị trí lấy từ **GPS ghi trong ảnh** nếu có, nếu không thì **vị trí thiết bị lúc chụp**; ảnh cũ không có GPS thì không
+  gán vị trí hiện tại. **Lưu ảnh** (JPEG kèm toạ độ GPS trong EXIF — Google Photos, Google Earth, QGIS đọc được) hoặc
+  **Chia sẻ…** (điện thoại: gửi thẳng qua Zalo…). Ảnh đã lưu hiện biểu tượng 📷 trên bản đồ, bấm để xem. Ảnh chỉ xử lý
+  trên máy, không tải lên mạng; toạ độ GPS điện thoại chỉ để tham khảo.
 - **☰ Lớp bản đồ / Thu gọn** (góc trên bên trái bản đồ): bấm để ẩn / hiện cả nhóm tuỳ chọn *Bản đồ – Vệ tinh*,
   *Quy hoạch*, *Giá đất*, *Độ đậm lớp phủ* cho đỡ che bản đồ. Ứng dụng nhớ lựa chọn; trên điện thoại mặc định thu gọn.
 - **Độ đậm lớp phủ** (thanh trượt dưới nút *Giá đất*): giảm độ đậm của lớp **quy hoạch** và **giá đất** để

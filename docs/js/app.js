@@ -288,7 +288,7 @@
   }
   geo.on("geolocate", (e) => {
     const c = e.coords;
-    geoPos = { lat: c.latitude, lon: c.longitude, acc: c.accuracy };
+    geoPos = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, alt: c.altitude == null ? NaN : c.altitude };
     const box = $("geo-info");
     box.hidden = false;
     let vn = "";
@@ -311,6 +311,10 @@
     catch (_) { toast("Không sao chép được"); }
   });
   $("geo-close").addEventListener("click", () => { $("geo-info").hidden = true; });
+
+  // ---------------- Chụp ảnh có in toạ độ (docs/js/chupanh.js) — nút máy ảnh nằm dưới nút định vị ----------------
+  if (VN.chupAnhInit) VN.chupAnhInit(map, { escapeHtml, fmt, toast, getLon0, viTri: () => geoPos,
+    tinhTai: (lon, lat) => { const f = nen.tinh.length && VN.findFeature(lon, lat, nen.tinh); return f ? "Tỉnh/thành phố: " + f.properties.ten : ""; } });
 
   const base = store.get("base", "osm");
   function setBase(b) {

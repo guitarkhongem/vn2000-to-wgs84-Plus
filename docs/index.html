@@ -7,16 +7,17 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.27h">
+<link rel="stylesheet" href="css/style.css?v=2026.11.27i">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27h"></script>
-<script src="js/parse.js?v=2026.11.27h"></script>
-<script src="js/geo.js?v=2026.11.27h"></script>
-<script src="js/export.js?v=2026.11.27h"></script>
-<script src="js/giadat.js?v=2026.11.27h"></script>
-<script src="js/lopfile.js?v=2026.11.27h"></script>
+<script src="js/converter.js?v=2026.11.27i"></script>
+<script src="js/parse.js?v=2026.11.27i"></script>
+<script src="js/geo.js?v=2026.11.27i"></script>
+<script src="js/export.js?v=2026.11.27i"></script>
+<script src="js/giadat.js?v=2026.11.27i"></script>
+<script src="js/lopfile.js?v=2026.11.27i"></script>
+<script src="js/chupanh.js?v=2026.11.27i"></script>
 </head>
 <body>
 <div class="layout">
@@ -194,13 +195,27 @@
     </details>
     <div id="geo-info" class="geo-info" role="status" hidden>
       <div class="geo-head"><strong>📍 Vị trí của tôi</strong>
+        <button type="button" id="geo-chup" title="Chụp ảnh có in toạ độ">📷 Chụp ảnh</button>
         <button type="button" id="geo-copy" title="Sao chép toạ độ">Sao chép</button>
         <button type="button" id="geo-close" class="geo-x" title="Đóng" aria-label="Đóng">×</button></div>
       <div id="geo-body"></div>
     </div>
+    <input type="file" id="ca-input" accept="image/*" capture="environment" hidden>
+    <dialog id="ca-dlg" class="ca-dlg">
+      <canvas id="ca-canvas"></canvas>
+      <label class="field"><span>Ghi chú in lên ảnh (tuỳ chọn)</span>
+        <textarea id="ca-ghichu" rows="2" placeholder="vd: Thửa 125, tờ 45 — mốc ranh phía Bắc"></textarea></label>
+      <p class="muted small">Toạ độ lấy từ GPS trong ảnh, nếu không có thì vị trí thiết bị lúc chụp (±m như ghi trên ảnh) — chỉ để tham khảo, không thay đo đạc. Ảnh lưu kèm toạ độ GPS (EXIF); ảnh chỉ xử lý trên máy bạn.</p>
+      <div class="row ca-nut-hang">
+        <button type="button" id="ca-dong" class="btn ghost">Đóng</button>
+        <button type="button" id="ca-lai" class="btn">Chụp ảnh khác</button>
+        <button type="button" id="ca-chiase" class="btn">Chia sẻ…</button>
+        <button type="button" id="ca-luu" class="btn primary">Lưu ảnh</button>
+      </div>
+    </dialog>
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.27h"></script>
+<script src="js/app.js?v=2026.11.27i"></script>
 </body>
 </html>
