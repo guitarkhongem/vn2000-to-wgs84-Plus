@@ -349,13 +349,24 @@ tbody tr:hover { background: var(--accent-soft); }
 .ocr-dlg textarea { width: 100%; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
 .ocr-dlg select { width: auto; }
 
-/* Thống kê truy cập (docs/js/thongke.js) — tab chỉ hiện cho chủ ứng dụng */
+/* Thống kê truy cập (docs/js/thongke.js) — chỉ hiện cho chủ ứng dụng: dòng chữ mở hộp thống kê */
+.tk-mo { align-self: flex-start; background: none; border: 0; padding: 2px 0; font: inherit; font-weight: 650;
+  color: var(--accent); cursor: pointer; }
+.tk-mo:hover, .tk-mo:focus-visible { text-decoration: underline; }
+.tk-dlg { width: min(720px, calc(100vw - 24px)); max-width: none; max-height: calc(100dvh - 32px); overflow: auto; }
+.tk-dlg [hidden] { display: none !important; }
+.tk-dlg input[type="password"], .tk-dlg input[type="date"] {
+  width: 100%; font: inherit; color: var(--text); background: var(--input);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.tk-dau { margin-bottom: 8px; }
+.tk-dau h3 { margin: 0; }
+.tk-chan { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
 .tk-nd { display: flex; flex-direction: column; gap: 10px; }
 #tk-tt { margin: 0; line-height: 1.5; }
 .tk-cot { display: flex; align-items: flex-end; gap: 1px; height: 64px; padding-top: 4px; border-bottom: 1px solid var(--line); }
 .tk-c { flex: 1 1 0; min-width: 1px; max-width: 24px; background: #7c3aed; opacity: .7; border-radius: 2px 2px 0 0; }
 .tk-c:hover { opacity: 1; }
-.tk-bang { max-height: 320px; }
+.tk-bang { max-height: 40vh; }
 .tk-bang th:first-child, .tk-bang td:first-child { text-align: left; white-space: normal; }
 .tk-pt { width: 64px; }
 .tk-pt span { display: block; height: 6px; min-width: 2px; border-radius: 3px; background: #7c3aed; }

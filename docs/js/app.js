@@ -65,12 +65,12 @@
   function setDir(dir) {
     state.dir = dir;
     store.set("dir", dir);
-    document.querySelectorAll(".segmented button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.dir === dir)));
+    document.querySelectorAll(".segmented button[data-dir]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.dir === dir)));
     const vn = dir === "vn2wgs";
     $("input-label").textContent = vn ? "Toạ độ VN-2000 (Tên X Y H — X hướng Bắc)" : "Toạ độ WGS84 (Tên Vĩ-độ Kinh-độ H)";
     coords.placeholder = vn ? SAMPLES.vn2000 : SAMPLES.wgs84;
   }
-  document.querySelectorAll(".segmented button").forEach((b) => b.addEventListener("click", () => setDir(b.dataset.dir)));
+  document.querySelectorAll(".segmented button[data-dir]").forEach((b) => b.addEventListener("click", () => setDir(b.dataset.dir)));
   setDir(state.dir);
 
   $("sample").addEventListener("click", () => {

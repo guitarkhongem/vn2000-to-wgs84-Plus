@@ -3,9 +3,9 @@
  * xem thư mục cloudflare/). Máy chủ tự biết thành phố / quốc gia từ mạng Cloudflare — ứng dụng KHÔNG gửi IP, vị trí,
  * toạ độ hay dữ liệu người dùng nhập; trình duyệt bật "Do Not Track" thì không gửi.
  *
- * Tab "Thống kê truy cập" chỉ hiện cho chủ ứng dụng: mở trang với đường dẫn có ?thongke (hoặc #thongke),
- * nhập khoá quản trị (ADMIN_KEY đặt trên Cloudflare). Tuỳ biến: khoảng thời gian, xem theo quốc gia / thành phố,
- * hiện trên bản đồ, không đếm máy của mình, tải CSV.
+ * Dòng chữ "📊 Thống kê truy cập" chỉ hiện cho chủ ứng dụng: mở trang với đường dẫn có ?thongke (hoặc #thongke)
+ * một lần, máy đó nhớ. Bấm vào chữ → hộp thống kê; nhập khoá quản trị (ADMIN_KEY đặt trên Cloudflare). Tuỳ biến:
+ * khoảng thời gian, xem theo quốc gia / thành phố, hiện trên bản đồ, không đếm máy của mình, tải CSV.
  *
  * "Lượt khách" = số máy (trình duyệt) khác nhau trong ngày — lần mở đầu tiên mỗi ngày gửi kèm moi=1
  * (ghi nhớ ngày trong localStorage), cộng dồn các ngày; không phải số người duy nhất trong cả khoảng.
@@ -41,11 +41,17 @@
   })();
   const co = (c) => (/^[A-Z]{2}$/.test(c || "") ? String.fromCodePoint(...[...c].map((x) => 0x1f1a5 + x.charCodeAt(0))) : "🏳");
 
-  function moTab() {
-    const card = document.getElementById("tk-card");
-    card.hidden = false;
-    const $ = (id) => document.getElementById(id);
-    $("tk-an").addEventListener("click", () => { LS.set("admin", null); card.hidden = true; xoaBanDo(); S.h.toast("Đã ẩn tab thống kê — mở lại bằng đường dẫn có ?thongke"); });
+  // gắn sự kiện cho hộp thống kê (một lần)
+  function ganHop() {
+    const $ = (id) => document.getElementById(id), dlg = $("tk-dlg");
+    const dong = () => { if (dlg.open) dlg.close(); };
+    $("tk-dong").addEventListener("click", dong);
+    $("tk-dong2").addEventListener("click", dong);
+    dlg.addEventListener("click", (e) => { if (e.target === dlg) dong(); });   // bấm ra ngoài hộp
+    $("tk-an").addEventListener("click", () => {
+      LS.set("admin", null); dong(); $("tk-mo").hidden = true; xoaBanDo();
+      S.h.toast("Đã ẩn mục thống kê — mở lại bằng đường dẫn có ?thongke");
+    });
     if (!API) {
       $("tk-noi-dung").innerHTML = `<p class="lf-loi">Chưa kết nối máy chủ thống kê. Làm theo <b>cloudflare/HUONG_DAN.md</b> trong mã nguồn,
         rồi điền địa chỉ Worker vào <code>docs/js/thongke-config.js</code>.</p>`;
@@ -61,14 +67,25 @@
     $("tk-xem").addEventListener("click", () => { LS.set("khoa", $("tk-khoa").value.trim()); tai(); });
     $("tk-khoa").addEventListener("keydown", (e) => { if (e.key === "Enter") $("tk-xem").click(); });
     $("tk-bo-qua").addEventListener("change", (e) => { LS.set("bo_qua", e.target.checked ? "1" : null); S.h.toast(e.target.checked ? "Máy này không được đếm nữa" : "Máy này được đếm lại"); });
-    $("tk-ban-do").addEventListener("change", veBanDo);
+    $("tk-ban-do").addEventListener("change", (e) => {
+      veBanDo();
+      if (e.target.checked && S.data) { dong(); nhinBanDo(); }   // đóng hộp để thấy bản đồ
+    });
     $("tk-csv").addEventListener("click", taiCsv);
     document.querySelectorAll("#tk-tabs button").forEach((b) => b.addEventListener("click", () => {
       S.xem = b.dataset.xem;
       document.querySelectorAll("#tk-tabs button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
       veBang();
     }));
-    if ($("tk-khoa").value) tai();
+  }
+
+  // bấm chữ "Thống kê truy cập" → mở hộp, tải số liệu mới nhất nếu đã có khoá
+  function moHop() {
+    const dlg = document.getElementById("tk-dlg");
+    if (!S.daGanHop) { S.daGanHop = true; ganHop(); }
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+    const khoa = document.getElementById("tk-khoa");
+    if (API && khoa && khoa.value) tai(); else if (khoa) khoa.focus();
   }
 
   function capNhatKhoang() {
@@ -170,6 +187,16 @@
     m.on("mouseleave", "tk-diem", () => { m.getCanvas().style.cursor = ""; });
   }
 
+  function nhinBanDo() {
+    const m = S.map, d = S.data; if (!m || !d || !root.maplibregl) return;
+    const ds = d.thanh_pho.filter((x) => x.lat != null && x.lon != null && isFinite(x.lat) && isFinite(x.lon));
+    if (!ds.length) { S.h.toast("Chưa có thành phố nào có toạ độ"); return; }
+    const b = new root.maplibregl.LngLatBounds([ds[0].lon, ds[0].lat], [ds[0].lon, ds[0].lat]);
+    ds.forEach((x) => b.extend([x.lon, x.lat]));
+    try { m.fitBounds(b, { padding: 60, maxZoom: 8, duration: 600 }); } catch (_) { /* bỏ qua */ }
+    S.h.toast(`Đang hiện ${ds.length} thành phố trên bản đồ — bấm "📊 Thống kê truy cập" để mở lại bảng`);
+  }
+
   function taiCsv() {
     const d = S.data; if (!d) { S.h.toast("Chưa có số liệu"); return; }
     const q = (s) => `"${String(s == null ? "" : s).replace(/"/g, '""')}"`;
@@ -189,7 +216,11 @@
     if (note) note.hidden = !API;
     const q = new URLSearchParams(location.search);
     if (q.has("thongke") || /thongke/.test(location.hash)) LS.set("admin", "1");
-    if (LS.get("admin", "") === "1") moTab();
+    const nut = document.getElementById("tk-mo");
+    if (nut && LS.get("admin", "") === "1") {
+      nut.hidden = false;
+      nut.addEventListener("click", moHop);
+    }
   }
 
   guiLuot();

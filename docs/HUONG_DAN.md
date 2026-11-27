@@ -281,8 +281,8 @@ Khi chủ ứng dụng đã bật (dòng ghi chú ở cuối bảng điều khi�
 *Do Not Track* (*Không theo dõi*) thì không được đếm.
 
 **Dành cho chủ ứng dụng**: mở ứng dụng bằng đường dẫn có `?thongke`
-(<https://guitarkhongem.github.io/vn2000-to-wgs84-Plus/?thongke>) để hiện tab *📊 Thống kê truy cập*, nhập khoá
-quản trị → **Xem**: tổng lượt xem, lượt khách, biểu đồ theo ngày, bảng theo quốc gia / thành phố, chọn khoảng thời
+(<https://guitarkhongem.github.io/vn2000-to-wgs84-Plus/?thongke>) một lần — dòng chữ **📊 Thống kê truy cập** hiện ở
+cuối bảng điều khiển (máy đó nhớ). Bấm vào chữ để mở bảng thống kê, nhập khoá quản trị → **Xem**: tổng lượt xem, lượt khách, biểu đồ theo ngày, bảng theo quốc gia / thành phố, chọn khoảng thời
 gian, hiện các thành phố trên bản đồ, tải CSV, *Không đếm máy này*. Cách dựng máy chủ (miễn phí):
 `cloudflare/HUONG_DAN.md` trong mã nguồn.
 

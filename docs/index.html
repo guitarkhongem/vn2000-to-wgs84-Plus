@@ -7,20 +7,20 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.27m">
+<link rel="stylesheet" href="css/style.css?v=2026.11.27n">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27m"></script>
-<script src="js/parse.js?v=2026.11.27m"></script>
-<script src="js/geo.js?v=2026.11.27m"></script>
-<script src="js/export.js?v=2026.11.27m"></script>
-<script src="js/giadat.js?v=2026.11.27m"></script>
-<script src="js/lopfile.js?v=2026.11.27m"></script>
-<script src="js/chupanh.js?v=2026.11.27m"></script>
-<script src="js/ocrtoado.js?v=2026.11.27m"></script>
-<script src="js/thongke-config.js?v=2026.11.27m"></script>
-<script src="js/thongke.js?v=2026.11.27m"></script>
+<script src="js/converter.js?v=2026.11.27n"></script>
+<script src="js/parse.js?v=2026.11.27n"></script>
+<script src="js/geo.js?v=2026.11.27n"></script>
+<script src="js/export.js?v=2026.11.27n"></script>
+<script src="js/giadat.js?v=2026.11.27n"></script>
+<script src="js/lopfile.js?v=2026.11.27n"></script>
+<script src="js/chupanh.js?v=2026.11.27n"></script>
+<script src="js/ocrtoado.js?v=2026.11.27n"></script>
+<script src="js/thongke-config.js?v=2026.11.27n"></script>
+<script src="js/thongke.js?v=2026.11.27n"></script>
 </head>
 <body>
 <div class="layout">
@@ -127,8 +127,10 @@
       <ul id="lf-ds" class="lf-ds" hidden></ul>
     </section>
 
-    <section class="card" id="tk-card" hidden>
-      <div class="row between"><h2>📊 Thống kê truy cập</h2><button type="button" id="tk-an" class="btn ghost small" title="Ẩn tab này trên máy này">Ẩn tab</button></div>
+    <button type="button" id="tk-mo" class="tk-mo" hidden title="Xem thống kê lượt truy cập (chỉ chủ ứng dụng)">📊 Thống kê truy cập</button>
+
+    <dialog id="tk-dlg" class="lf-dlg tk-dlg" aria-labelledby="tk-tieude">
+      <div class="row between tk-dau"><h3 id="tk-tieude">📊 Thống kê truy cập</h3><button type="button" id="tk-dong" class="btn ghost small" title="Đóng">✕</button></div>
       <div id="tk-noi-dung" class="tk-nd">
         <div class="row">
           <label class="field grow"><span>Khoá quản trị (ADMIN_KEY)</span><input id="tk-khoa" type="password" autocomplete="off" spellcheck="false"></label>
@@ -162,7 +164,11 @@
         </div>
         <p class="muted small">"Khách" = số máy (trình duyệt) khác nhau mỗi ngày, cộng dồn các ngày. Vị trí do mạng Cloudflare xác định theo địa chỉ mạng — mức thành phố, có thể lệch (nhà mạng, VPN).</p>
       </div>
-    </section>
+      <div class="row between tk-chan">
+        <button type="button" id="tk-an" class="btn ghost small" title="Ẩn dòng chữ Thống kê truy cập trên máy này — mở lại bằng đường dẫn có ?thongke">Ẩn mục thống kê trên máy này</button>
+        <button type="button" id="tk-dong2" class="btn small">Đóng</button>
+      </div>
+    </dialog>
 
     <dialog id="lf-dlg" class="lf-dlg">
       <h3>Hệ toạ độ của file</h3>
@@ -279,6 +285,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.27m"></script>
+<script src="js/app.js?v=2026.11.27n"></script>
 </body>
 </html>

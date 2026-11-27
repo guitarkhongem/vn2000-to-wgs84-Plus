@@ -58,14 +58,15 @@ Giao diện Cloudflare đổi theo thời gian; tên mục dưới đây theo t�
    ```
    rồi commit, đẩy lên `main`. Để trống `""` là tắt hẳn (ứng dụng không gửi gì).
 2. Mở ứng dụng bằng đường dẫn có `?thongke`, ví dụ
-   <https://guitarkhongem.github.io/vn2000-to-wgs84-Plus/?thongke> — tab *📊 Thống kê truy cập* hiện ở bảng
-   điều khiển (máy đó nhớ cho các lần sau; bấm **Ẩn tab** để ẩn lại).
+   <https://guitarkhongem.github.io/vn2000-to-wgs84-Plus/?thongke> — dòng chữ **📊 Thống kê truy cập** hiện ở cuối
+   bảng điều khiển (máy đó nhớ cho các lần sau). Bấm vào chữ để mở bảng thống kê; trong bảng có nút
+   **Ẩn mục thống kê trên máy này**.
 3. Nhập `ADMIN_KEY` → **Xem**. Khoá được nhớ trên trình duyệt của máy đó — đừng làm việc này trên máy dùng chung.
 4. Tick **Không đếm máy này** trên các máy/điện thoại của chính bạn.
 
-Trong tab: tổng lượt xem và lượt khách, biểu đồ cột theo ngày (rê chuột xem số), bảng theo **quốc gia** hoặc
+Trong bảng thống kê: tổng lượt xem và lượt khách, biểu đồ cột theo ngày (rê chuột xem số), bảng theo **quốc gia** hoặc
 **thành phố**, khoảng thời gian (hôm nay, 7 / 30 / 90 ngày, 12 tháng, từ đầu, tuỳ chọn), **Hiện trên bản đồ**
-(vòng tròn tím tại thành phố, to theo số lượt), **Tải CSV** (mở được bằng Excel).
+(đóng bảng, phóng bản đồ tới các vòng tròn tím tại thành phố, to theo số lượt), **Tải CSV** (mở được bằng Excel).
 
 *Lượt khách* = số máy (trình duyệt) khác nhau trong ngày, cộng các ngày — không phải số người duy nhất của cả khoảng.
 
