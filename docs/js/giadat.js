@@ -190,8 +190,8 @@
   }
 
   function nguonHtml() {
-    const n = G.data.nguon || {};
-    return Object.values(n).map((t) => `<li>${G.h.escapeHtml(t)}</li>`).join("");
+    const n = G.data.nguon || {};   // chỉ hiện văn bản pháp lý; các ghi chú khác vẫn lưu trong file dữ liệu
+    return n.van_ban ? `<li>${G.h.escapeHtml(n.van_ban)}</li>` : "";
   }
 
   // Sau khi chuyển đổi: đoạn đường gần thửa nhất + giá đất nông nghiệp của xã
