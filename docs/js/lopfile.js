@@ -670,21 +670,85 @@
       S.h.toast("Chọn cùng lúc cả file ảnh (.tif, .jpg…) và file world (.tfw, .jgw…) cùng tên", 5000);
     // nhiều ảnh cùng hệ toạ độ ghi trong file (vd bộ TC-0-0 … TC-2-1) → hỏi kinh tuyến trục một lần cho cả lần chọn
     const nhoHe = new Map(), nhieuAnh = files.filter((f) => ANH.test(f.name)).length > 1;
-    for (const f of files) {
-      if (PHU.test(f.name)) continue;
+    const ds = files.filter((f) => !PHU.test(f.name));
+    if (!ds.length) return;
+    TD.n = ds.length; TD.dangMo = true; TD.loi = 0;
+    for (let i = 0; i < ds.length; i++) {
+      const f = ds[i];
+      TD.i = i; TD.ten = f.name;
+      const td = (pct, buoc) => tienDo(pct, buoc);
+      td(0, "bắt đầu…");
+      await nhuong();
       try {
         if (ANH.test(f.name)) {
           const kem = phu.filter((p) => tenGoc(p.name) === tenGoc(f.name) || tenGoc(p.name) === f.name.toLowerCase());
           await moAnh(f, { world: kem.find((p) => !/\.(prj|ovr)$/i.test(p.name)), prj: kem.find((p) => /\.prj$/i.test(p.name)),
-            ovr: kem.find((p) => /\.ovr$/i.test(p.name)) }, { nhoHe, nhieuAnh });
-        } else await moFile(f);
+            ovr: kem.find((p) => /\.ovr$/i.test(p.name)) }, { nhoHe, nhieuAnh }, td);
+        } else await moFile(f, td);
+        td(1, "xong");
       }
       catch (err) {
+        TD.loi++;
         if (err && err.code === "dgn-v8") S.h.toast(`${f.name}: DGN MicroStation V8 — chưa đọc được, xem hướng dẫn bên dưới`, 5000);
         else S.h.toast(`${f.name}: ${err && err.message ? err.message : err}`, 4000);
         hienLoi(f.name, err);
       }
     }
+    TD.dangMo = false;
+    TD.i = TD.n - 1;
+    tienDo(1, TD.loi ? `xong (${TD.loi} file lỗi — xem bên dưới)` : "xong", true);
+    clearTimeout(TD.hen);
+    TD.hen = setTimeout(anTienDo, TD.loi ? 4000 : 1500);
+  }
+
+  // ---------- thanh tiến trình thêm file (dưới nút "Thêm file…") ----------
+  const TD = { n: 0, i: 0, ten: "", dangMo: false, loi: 0, hen: 0, ve: null };
+  // nhường luồng để trình duyệt kịp vẽ thanh tiến trình trước bước nặng
+  const nhuong = () => new Promise((r) => { let x = false; const f = () => { if (!x) { x = true; setTimeout(r, 0); } };
+    requestAnimationFrame(f); setTimeout(f, 60); });
+  // pct: 0–1 của tệp đang mở (null = chưa biết, thanh chạy liên tục); buoc: đang làm gì
+  function tienDo(pct, buoc, cuoi) {
+    const el = document.getElementById("lf-tien"); if (!el) return;
+    clearTimeout(TD.hen);
+    el.hidden = false;
+    const tong = pct == null ? null : TD.n > 1 ? (TD.i + pct) / TD.n : pct;
+    el.querySelector(".lf-tien-chu").textContent = (TD.n > 1 && !cuoi ? `Tệp ${TD.i + 1}/${TD.n} · ` : TD.n > 1 ? `${TD.n} tệp · ` : "") +
+      (cuoi && TD.n > 1 ? "" : TD.ten + " — ") + buoc;
+    el.querySelector(".lf-tien-pt").textContent = tong == null ? "" : Math.round(tong * 100) + "%";
+    const thanh = el.querySelector(".lf-tien-thanh");
+    thanh.classList.toggle("vo-dinh", tong == null);
+    thanh.firstElementChild.style.width = tong == null ? "" : (tong * 100).toFixed(1) + "%";
+    el.setAttribute("aria-valuenow", tong == null ? "" : String(Math.round(tong * 100)));
+  }
+  function anTienDo() { const el = document.getElementById("lf-tien"); if (el && !TD.dangMo && !TD.ve) el.hidden = true; }
+  // vẽ ô ảnh trực giao (anhbay.js báo số ô đã vẽ / đang chờ) — bước tốn thời gian nhất với ảnh lớn
+  function tienDoVe(xong, tong) {
+    if (TD.dangMo) return;                                // đang mở file: thanh mở file ưu tiên
+    const el = document.getElementById("lf-tien"); if (!el) return;
+    if (xong >= tong) { TD.ve = null; clearTimeout(TD.hen); TD.hen = setTimeout(anTienDo, 500); return; }
+    TD.ve = { xong, tong }; clearTimeout(TD.hen);
+    el.hidden = false;
+    el.querySelector(".lf-tien-chu").textContent = `Đang vẽ ảnh trực giao lên bản đồ — ${xong}/${tong} ô`;
+    el.querySelector(".lf-tien-pt").textContent = Math.round((100 * xong) / tong) + "%";
+    const thanh = el.querySelector(".lf-tien-thanh");
+    thanh.classList.remove("vo-dinh");
+    thanh.firstElementChild.style.width = ((100 * xong) / tong).toFixed(1) + "%";
+  }
+  root.VN.anhBayTienDo = tienDoVe;
+
+  // đọc file có báo % (luồng đọc từng đoạn)
+  async function docFile(file, cb) {
+    if (!file.stream || !file.size) return file.arrayBuffer();
+    const out = new Uint8Array(file.size), rd = file.stream().getReader();
+    let o = 0, t = 0;
+    for (;;) {
+      const { done, value } = await rd.read();
+      if (done) break;
+      out.set(value, o); o += value.length;
+      const now = performance.now();
+      if (now - t > 80) { t = now; cb(o / file.size); }
+    }
+    return out.buffer;
   }
 
   function hienLoi(name, err) {
@@ -698,11 +762,14 @@
     box.innerHTML = `<b>${e(name)}</b> ${msg}`;
   }
 
-  async function moFile(file) {
+  async function moFile(file, td = () => {}) {
     const ext = (file.name.split(".").pop() || "").toLowerCase();
-    const buf = await file.arrayBuffer();
+    td(0, "đang đọc file…");
+    const buf = await docFile(file, (p) => td(p * 0.5, "đang đọc file…"));
     const u8 = new Uint8Array(buf);
     document.getElementById("lf-loi").hidden = true;
+    td(0.5, "đang phân tích nội dung…");
+    await nhuong();
     let features, loai;
     if (ext === "kml" || ext === "kmz" || (u8[0] === 0x50 && u8[1] === 0x4b && ext !== "dxf")) {
       const text = u8[0] === 0x50 && u8[1] === 0x4b ? await unzipKml(buf) : new TextDecoder().decode(u8);
@@ -711,9 +778,11 @@
       const k = dgnKind(u8);
       let ents;
       if (k === "dwg" || ext === "dwg") {
-        if (!dwgLib) S.h.toast("Đang tải bộ đọc DWG (LibreDWG ~8 MB, chỉ lần đầu)…");
+        if (!dwgLib) td(null, "đang tải bộ đọc DWG (LibreDWG ~8 MB, chỉ lần đầu)…");
         const ver = new TextDecoder("latin1").decode(u8.subarray(0, 6));
-        ents = parseDxf(await dwgToDxf(buf)); loai = "DWG " + ver;
+        const dxf = await dwgToDxf(buf);
+        td(0.6, "đang đọc bản vẽ DWG…"); await nhuong();
+        ents = parseDxf(dxf); loai = "DWG " + ver;
       } else if (k === "v8") {
         ents = await parseDgnV8(buf); loai = "DGN V8";
         const bq = Object.values(ents.v8.boQua).reduce((x, y) => x + y, 0);
@@ -723,24 +792,32 @@
       else if (ext === "dxf") { ents = parseDxf(dxfDecode(buf)); loai = "DXF"; }
       else throw new Error("Chỉ mở được file .kml, .kmz, .dxf, .dgn, .dwg");
       if (!ents.length) throw new Error("Không có đối tượng vẽ được (đường, vùng, điểm, chữ)");
+      td(0.7, `chờ chọn hệ toạ độ (${ents.length.toLocaleString("vi-VN")} đối tượng)…`);
       const opt = await hoiHeToaDo(file.name, ents);
-      if (!opt) return;                                  // người dùng huỷ
+      if (!opt) { td(1, "đã huỷ"); return; }             // người dùng huỷ
+      td(0.75, "đang chuyển toạ độ…"); await nhuong();
       features = cadToGeojson(ents, opt);
       loai += opt.crs === "wgs84" ? " · WGS84" : ` · VN-2000 KTT ${opt.lon0}°`;
     }
     if (!features.length) throw new Error("Không có đối tượng vẽ được");
+    td(0.9, "đang vẽ lên bản đồ…"); await nhuong();
     themLop(file.name, loai, features);
   }
 
-  async function moAnh(file, kem, lo) {
+  async function moAnh(file, kem, lo, td = () => {}) {
     if (!root.VN.anhBayMo) throw new Error("Thiếu bộ đọc ảnh (anhbay.js)");
     document.getElementById("lf-loi").hidden = true;
+    const co = file.size >= 1048576 ? (file.size / 1048576).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " MB"
+      : Math.max(1, Math.round(file.size / 1024)) + " KB";
+    td(0.1, `đang đọc cấu trúc ảnh (${co})…`);
     const hoi = async (name, ents, goiY) => {
       const khoa = lo && goiY && goiY.tuFile ? goiY.crs + "|" + (goiY.lon0 || "") : null;
-      if (khoa && lo.nhoHe.has(khoa)) return lo.nhoHe.get(khoa);
+      if (khoa && lo.nhoHe.has(khoa)) { td(0.6, "đang thêm ảnh…"); return lo.nhoHe.get(khoa); }
+      td(0.4, "chờ chọn hệ toạ độ…");
       const g = khoa && lo.nhieuAnh ? { ...goiY, moTa: goiY.moTa + " — Áp dụng luôn cho các ảnh khác cùng hệ toạ độ trong lần chọn này." } : goiY;
       const kq = await hoiHeToaDo(name, ents, g);
       if (kq && khoa) lo.nhoHe.set(khoa, kq);
+      td(0.6, kq ? "đang thêm ảnh…" : "đã huỷ");
       return kq;
     };
     const r = await root.VN.anhBayMo(file, kem, { map: S.map, h: S.h, hoiHeToaDo: hoi });

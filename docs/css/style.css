@@ -378,3 +378,15 @@ tbody tr:hover { background: var(--accent-soft); }
 .gsat-logo { font-weight: 700; font-size: 12.5px; letter-spacing: .01em; }
 .gsat-nhan[hidden], .basemap button[hidden] { display: none; }
 .lf-sw-anh { background: none; width: auto; height: auto; font-size: 13px; line-height: 1; }
+
+/* Thanh tiến trình thêm file (Lớp từ file) */
+.lf-tien { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+.lf-tien-dong { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12.5px; line-height: 1.35; }
+.lf-tien-chu { min-width: 0; overflow-wrap: anywhere; color: var(--text); }
+.lf-tien-pt { flex: none; font-variant-numeric: tabular-nums; color: var(--accent); }
+.lf-tien-thanh { position: relative; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.lf-tien-thanh > span { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: var(--accent); transition: width .2s ease; }
+.lf-tien-thanh.vo-dinh > span { width: 35% !important; animation: lf-chay 1.1s ease-in-out infinite; }
+@keyframes lf-chay { from { left: -35%; } to { left: 100%; } }
+@media (prefers-reduced-motion: reduce) { .lf-tien-thanh.vo-dinh > span { animation: none; width: 100% !important; opacity: .5; } }
+.lf-tien[hidden] { display: none; }

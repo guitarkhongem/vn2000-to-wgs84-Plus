@@ -7,22 +7,22 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.27r">
+<link rel="stylesheet" href="css/style.css?v=2026.11.27s">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27r"></script>
-<script src="js/parse.js?v=2026.11.27r"></script>
-<script src="js/geo.js?v=2026.11.27r"></script>
-<script src="js/export.js?v=2026.11.27r"></script>
-<script src="js/giadat.js?v=2026.11.27r"></script>
-<script src="js/lopfile.js?v=2026.11.27r"></script>
-<script src="js/anhbay.js?v=2026.11.27r"></script>
-<script src="js/chupanh.js?v=2026.11.27r"></script>
-<script src="js/ocrtoado.js?v=2026.11.27r"></script>
-<script src="js/thongke-config.js?v=2026.11.27r"></script>
-<script src="js/thongke.js?v=2026.11.27r"></script>
-<script src="js/google.js?v=2026.11.27r"></script>
+<script src="js/converter.js?v=2026.11.27s"></script>
+<script src="js/parse.js?v=2026.11.27s"></script>
+<script src="js/geo.js?v=2026.11.27s"></script>
+<script src="js/export.js?v=2026.11.27s"></script>
+<script src="js/giadat.js?v=2026.11.27s"></script>
+<script src="js/lopfile.js?v=2026.11.27s"></script>
+<script src="js/anhbay.js?v=2026.11.27s"></script>
+<script src="js/chupanh.js?v=2026.11.27s"></script>
+<script src="js/ocrtoado.js?v=2026.11.27s"></script>
+<script src="js/thongke-config.js?v=2026.11.27s"></script>
+<script src="js/thongke.js?v=2026.11.27s"></script>
+<script src="js/google.js?v=2026.11.27s"></script>
 </head>
 <body>
 <div class="layout">
@@ -124,6 +124,10 @@
       <h2>Lớp từ file</h2>
       <p class="muted small">Mở file <b>KML, KMZ</b> (Google Earth), <b>DWG, DXF</b> (AutoCAD), <b>DGN</b> (MicroStation V7, V8) hoặc <b>ảnh bay / ảnh trực giao</b> (<b>GeoTIFF</b> .tif; ảnh .tif/.jpg/.png kèm file world .tfw/.jgw/.pgw, overview .ovr — chọn cùng lúc) để chồng lên bản đồ — bấm nút hoặc kéo thả file vào bản đồ. Toạ độ VN-2000: chọn kinh tuyến trục khi mở. File chỉ đọc trên máy bạn, không tải lên đâu cả.</p>
       <button type="button" id="lf-add" class="btn">Thêm file KML, DWG, DXF, DGN, ảnh trực giao…</button>
+      <div id="lf-tien" class="lf-tien" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Tiến trình thêm file" hidden>
+        <div class="lf-tien-dong"><span class="lf-tien-chu"></span><b class="lf-tien-pt"></b></div>
+        <div class="lf-tien-thanh"><span></span></div>
+      </div>
       <input type="file" id="lf-input" accept=".kml,.kmz,.dxf,.dgn,.dwg,.tif,.tiff,.jpg,.jpeg,.png,.tfw,.tifw,.jgw,.jpgw,.pgw,.pngw,.wld,.prj,.ovr" multiple hidden>
       <div id="lf-loi" class="lf-loi" hidden></div>
       <ul id="lf-ds" class="lf-ds" hidden></ul>
@@ -290,6 +294,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.27r"></script>
+<script src="js/app.js?v=2026.11.27s"></script>
 </body>
 </html>

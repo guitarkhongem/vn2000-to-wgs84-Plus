@@ -481,14 +481,18 @@
   }
 
   let daDangKy = false;
+  const TDV = { dang: 0, tong: 0 };                 // số ô đang vẽ / tổng số ô của đợt (báo cho thanh tiến trình)
   function dangKyGiaoThuc() {
     if (daDangKy || !root.maplibregl || !root.maplibregl.addProtocol) return;
     daDangKy = true;
+    const bao = () => { if (root.VN.anhBayTienDo) root.VN.anhBayTienDo(TDV.tong - TDV.dang, TDV.tong); };
     root.maplibregl.addProtocol("anhbay", async (params, ac) => {
       const m = /^anhbay:\/\/([^/]+)\/(\d+)\/(\d+)\/(\d+)/.exec(params.url);
       const lop = m && DS.get(m[1]);
       if (!lop) return { data: await oTrong() };
-      return { data: await veO(lop, +m[2], +m[3], +m[4], ac && ac.signal) };
+      TDV.tong++; TDV.dang++; bao();
+      try { return { data: await veO(lop, +m[2], +m[3], +m[4], ac && ac.signal) }; }
+      finally { TDV.dang--; bao(); if (!TDV.dang) TDV.tong = 0; }
     });
   }
 

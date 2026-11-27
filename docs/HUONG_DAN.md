@@ -238,6 +238,9 @@ Mục **Lớp từ file** trong bảng điều khiển: bấm **Thêm file KML, 
 - **Màu vùng** (lớp có vùng khép kín): **Không tô (none)** — chỉ vẽ viền; **Phủ màu (overlay)** — tô màu lớp (hoặc
   màu vùng ghi trong KML), kéo thanh **độ đậm** 5–100 % để thấy nền / ảnh vệ tinh bên dưới. Mặc định: bản vẽ CAD
   (DXF, DGN, DWG) không tô; KML / KMZ phủ màu 40 %.
+- **Thanh tiến trình** dưới nút *Thêm file…*: tệp thứ mấy / tổng số, đang làm gì (đọc file — có % theo dung lượng
+  đã đọc, phân tích, chờ chọn hệ toạ độ, chuyển toạ độ, vẽ lên bản đồ) và % chung; với ảnh trực giao, thanh còn báo
+  **số ô ảnh đã vẽ** mỗi khi bản đồ đang vẽ ảnh (lúc mở, phóng to / thu nhỏ, kéo bản đồ).
 - **Danh sách lớp**: ô đánh dấu để ẩn / hiện, **⤢** phóng tới lớp, **×** gỡ lớp. Lớp từ file không được lưu
   lại — tải lại trang thì mở lại file.
 - **Ảnh bay / ảnh trực giao** (ảnh drone xuất từ Pix4D, Agisoft Metashape, DJI Terra, Global Mapper…):
