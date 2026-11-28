@@ -13,7 +13,8 @@
  * vĩ độ / kinh độ → chấm vị trí thửa lên bản đồ (gom cụm khi thu nhỏ), bấm xem toàn bộ thông tin dòng đó;
  * sau mỗi lần chuyển toạ độ gợi ý các thửa trong dữ liệu ở gần (app.js gọi VN.thuaDatRows).
  *
- * Chỉ đường: nút 🚗 trong ô thông tin thửa mở Google Maps dẫn đường tới vị trí thửa (như AppSheet).
+ * Chỉ đường: nút 🚗 trong ô thông tin thửa mở Google Maps dẫn đường tới vị trí thửa (như AppSheet); nút 🔗 Chia sẻ gửi vị trí
+ * thửa kèm link Google Maps chỉ đường (VN.chiaSeViTri ở app.js — bảng chia sẻ của máy: Zalo, tin nhắn…).
  * Thêm mới: nút "＋ Thêm thửa mới" (ô dưới nút Thửa đất, trong "Thửa đất gần đây", và trong ô của từng điểm vừa chuyển — cạnh
  * "Vòng tròn bán kính", app.js gọi VN.thuaDatThem([lat, lon])) → hiện GHIM vàng như Google Earth: kéo ghim / chạm bản đồ /
  * "Vị trí của tôi", thanh dưới bản đồ báo toạ độ WGS84 + VN-2000 (thuật toán của ứng dụng) → "Chốt vị trí" → form
@@ -239,6 +240,7 @@
       `<table>${dong.map(([h, v]) => `<tr><th>${e(h)}</th><td>${lienKet(v)}</td></tr>`).join("")}</table>` +
       `<small class="muted">Nguồn: Google Sheets “${e(b.nguon)}” › ${e(b.bang)}, dòng ${d.r + 2} · đọc lúc ${e(gio(S.luc))}</small>` +
       `<div class="td-pop-nut"><a href="${e(chiDuong(d))}" target="_blank" rel="noopener" title="Mở Google Maps chỉ đường từ vị trí hiện tại tới thửa này">🚗 Chỉ đường</a>` +
+      (VN.chiaSeViTri ? `<button type="button" data-share="${i}" title="Gửi vị trí thửa (Zalo, tin nhắn…) — người nhận bấm là Google Maps chỉ đường">🔗 Chia sẻ</button>` : "") +
       `<button type="button" data-sua="${i}">✏️ Sửa / bổ sung</button></div></div>`;
   }
   function moThua(i, bay) {
@@ -247,7 +249,11 @@
     if (S.popup) S.popup.remove();
     S.popup = new root.maplibregl.Popup({ offset: 8, maxWidth: "360px" }).setLngLat([d.lon, d.lat]).setHTML(popupHtml(i)).addTo(S.map);
     const el = S.popup.getElement && S.popup.getElement();
-    if (el) el.addEventListener("click", (ev) => { const b = ev.target.closest("[data-sua]"); if (b) moSua(Number(b.dataset.sua)); });
+    if (el) el.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-sua]"); if (b) moSua(Number(b.dataset.sua));
+      const c = ev.target.closest("[data-share]");
+      if (c && VN.chiaSeViTri) { const x = S.diem[Number(c.dataset.share)], t = tieuDe(x); VN.chiaSeViTri(`Thửa đất: ${t.ten}`, x.lat, x.lon, t.phu); }
+    });
   }
 
   // ======================================================================= sửa / bổ sung thông tin (ghi thẳng vào Google Sheets)

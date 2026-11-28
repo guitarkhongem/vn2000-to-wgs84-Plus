@@ -318,6 +318,28 @@
       : "Không lấy được vị trí — kiểm tra GPS / kết nối rồi thử lại");
   });
   
+  // ---------------- Chia sẻ vị trí (như Zalo): gửi kèm link Google Maps chỉ đường — người nhận bấm link là Google Maps
+  // chỉ đường từ chỗ họ tới điểm đó. Link theo Google Maps URLs (developers.google.com/maps/documentation/urls):
+  // https://www.google.com/maps/dir/?api=1&destination=vĩ độ,kinh độ. Điện thoại: bảng chia sẻ của máy (Zalo, Messenger,
+  // tin nhắn…); máy không có bảng chia sẻ: sao chép nội dung + link để dán.
+  const linkChiDuong = (lat, lon) => `https://www.google.com/maps/dir/?api=1&destination=${lat.toFixed(7)},${lon.toFixed(7)}`;
+  async function chiaSeViTri(tieuDe, lat, lon, them) {
+    const url = linkChiDuong(lat, lon);
+    let vn = "";
+    try { const l0 = getLon0(); const [x, y] = VN.wgs84ToVn2000(lat, lon, 0, l0); vn = `\nVN-2000 (KTT ${l0}°): X = ${fmt(x, 2)} · Y = ${fmt(y, 2)}`; }
+    catch (_) { /* chưa có kinh tuyến trục hợp lệ */ }
+    const text = `📍 ${tieuDe}\nWGS84: ${lat.toFixed(7)}, ${lon.toFixed(7)}${vn}${them ? "\n" + them : ""}\nChỉ đường Google Maps:`;
+    if (navigator.share) {
+      try { await navigator.share({ title: tieuDe, text, url }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }      // người dùng đóng bảng chia sẻ
+    }
+    try { await navigator.clipboard.writeText(`${text}\n${url}`); toast("Đã sao chép vị trí và link chỉ đường — dán vào Zalo / tin nhắn để gửi"); }
+    catch (_) { toast("Không chia sẻ được trên trình duyệt này"); }
+  }
+  VN.chiaSeViTri = chiaSeViTri;
+  $("geo-share").addEventListener("click", () => {
+    if (geoPos) chiaSeViTri("Vị trí của tôi", geoPos.lat, geoPos.lon, `Độ chính xác ±${fmt(geoPos.acc, 0)} m (GPS điện thoại)`);
+  });
   $("geo-copy").addEventListener("click", async () => {
     try { await navigator.clipboard.writeText(geoText()); toast("Đã sao chép vị trí"); }
     catch (_) { toast("Không sao chép được"); }
@@ -359,6 +381,7 @@
         </form>
         ${mine.length ? `<ul class="circle-mine">${mine.map((c) =>
           `<li>R = ${fmt(c.r, c.r % 1 ? 2 : 0)} m <button type="button" class="link" data-del="${c.id}">Xoá</button></li>`).join("")}</ul>` : ""}
+        <button type="button" class="btn small pt-share" data-share>🔗 Chia sẻ vị trí điểm này</button>
         ${VN.thuaDatCo && VN.thuaDatCo() ? `<button type="button" class="btn small td-them-pt" data-td-them>＋ Thêm thông tin thửa đất tại điểm này</button>` : ""}`;
       el.querySelector("form").addEventListener("submit", (e) => {
         e.preventDefault();
@@ -369,6 +392,7 @@
         addCircle(r, radius);
       });
       // chế độ ẩn Thửa đất (docs/js/thuadat.js): thêm dòng thửa mới vào Google Sheets, toạ độ lấy theo điểm này
+      el.querySelector("[data-share]").addEventListener("click", () => chiaSeViTri(`Điểm ${r.name}`, r.lat, r.lon));
       const them = el.querySelector("[data-td-them]");
       if (them) them.addEventListener("click", () => { popup.remove(); VN.thuaDatThem([r.lat, r.lon]); });
       el.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", () => {

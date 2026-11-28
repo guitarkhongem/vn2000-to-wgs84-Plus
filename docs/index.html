@@ -7,25 +7,25 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.28h">
+<link rel="stylesheet" href="css/style.css?v=2026.11.28i">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.28g"></script>
-<script src="js/parse.js?v=2026.11.28g"></script>
-<script src="js/geo.js?v=2026.11.28g"></script>
-<script src="js/export.js?v=2026.11.28g"></script>
-<script src="js/giadat.js?v=2026.11.28g"></script>
-<script src="js/lopfile.js?v=2026.11.28g"></script>
-<script src="js/anhbay.js?v=2026.11.28g"></script>
-<script src="js/goianh.js?v=2026.11.28g"></script>
-<script src="js/thuadat-config.js?v=2026.11.28g"></script>
-<script src="js/thuadat.js?v=2026.11.28h"></script>
-<script src="js/chupanh.js?v=2026.11.28g"></script>
-<script src="js/ocrtoado.js?v=2026.11.28g"></script>
-<script src="js/thongke-config.js?v=2026.11.28g"></script>
-<script src="js/thongke.js?v=2026.11.28g"></script>
-<script src="js/google.js?v=2026.11.28g"></script>
+<script src="js/converter.js?v=2026.11.28i"></script>
+<script src="js/parse.js?v=2026.11.28i"></script>
+<script src="js/geo.js?v=2026.11.28i"></script>
+<script src="js/export.js?v=2026.11.28i"></script>
+<script src="js/giadat.js?v=2026.11.28i"></script>
+<script src="js/lopfile.js?v=2026.11.28i"></script>
+<script src="js/anhbay.js?v=2026.11.28i"></script>
+<script src="js/goianh.js?v=2026.11.28i"></script>
+<script src="js/thuadat-config.js?v=2026.11.28i"></script>
+<script src="js/thuadat.js?v=2026.11.28i"></script>
+<script src="js/chupanh.js?v=2026.11.28i"></script>
+<script src="js/ocrtoado.js?v=2026.11.28i"></script>
+<script src="js/thongke-config.js?v=2026.11.28i"></script>
+<script src="js/thongke.js?v=2026.11.28i"></script>
+<script src="js/google.js?v=2026.11.28i"></script>
 </head>
 <body>
 <div class="layout">
@@ -303,6 +303,7 @@
     <div id="geo-info" class="geo-info" role="status" hidden>
       <div class="geo-head"><strong>📍 Vị trí của tôi</strong>
         <button type="button" id="geo-chup" title="Chụp ảnh có in toạ độ">📷 Chụp ảnh</button>
+        <button type="button" id="geo-share" title="Chia sẻ vị trí (Zalo, tin nhắn…) — người nhận bấm là Google Maps chỉ đường">🔗 Chia sẻ</button>
         <button type="button" id="geo-copy" title="Sao chép toạ độ">Sao chép</button>
         <button type="button" id="geo-close" class="geo-x" title="Đóng" aria-label="Đóng">×</button></div>
       <div id="geo-body"></div>
@@ -342,6 +343,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.28g"></script>
+<script src="js/app.js?v=2026.11.28i"></script>
 </body>
 </html>
