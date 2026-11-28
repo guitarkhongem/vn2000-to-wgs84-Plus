@@ -1185,6 +1185,7 @@
   }
 
   function onClick(ev) {
+    if (root.VN.dangGhim) return;                   // đang đặt ghim thửa mới (docs/js/thuadat.js)
     const ids = [];
     for (const f of S.files) if (f.visible && f.kind !== "anh") ids.push(f.id + "-pt", f.id + "-line", f.id + "-fill");
     if (!ids.length) return;

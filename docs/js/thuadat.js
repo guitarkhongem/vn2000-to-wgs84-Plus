@@ -14,7 +14,8 @@
  *
  * Chỉ đường: nút 🚗 trong ô thông tin thửa mở Google Maps dẫn đường tới vị trí thửa (như AppSheet).
  * Thêm mới: nút "＋ Thêm thửa mới" (ô dưới nút Thửa đất, trong "Thửa đất gần đây", và trong ô của từng điểm vừa chuyển — cạnh
- * "Vòng tròn bán kính", app.js gọi VN.thuaDatThem([lat, lon]) — lấy sẵn toạ độ) → form
+ * "Vòng tròn bán kính", app.js gọi VN.thuaDatThem([lat, lon])) → hiện GHIM vàng như Google Earth: kéo ghim / chạm bản đồ /
+ * "Vị trí của tôi", thanh dưới bản đồ báo toạ độ WGS84 + VN-2000 (thuật toán của ứng dụng) → "Chốt vị trí" → form
  * theo đúng các cột của bảng → thêm 1 dòng cuối Google Sheets (ID tự cấp, cột công thức tự tính).
  * Sửa / bổ sung: nút ✏️ trong ô thông tin thửa → hộp sửa mọi cột (ô có công thức bị khoá) → ghi thẳng vào Google Sheets
  * (xin thêm quyền "spreadsheets" khi bấm Lưu lần đầu; tìm lại dòng theo cột ID; không ghi đè ô vừa bị sửa trên AppSheet).
@@ -456,12 +457,13 @@
       ? `<label for="td-them-bang">Thêm vào bảng</label><select id="td-them-bang">${bangThem().map(([x, i]) => `<option value="${i}"${i === SUA.bi ? " selected" : ""}>${e(x.nguon)} › ${e(x.bang)}</option>`).join("")}</select>` : "") +
       Array.from({ length: nCot }, (_, j) => {
         const h = b.header[j] || `Cột ${cotChu(j)}`, laId = j === b.cot.id, khoa = SUA.cong[j] || laId;
+        const laVt = j === b.cot.ll || j === b.cot.lat || j === b.cot.lon;
         const v = j === b.cot.ll ? vietLatLon(b, lat, lon) : j === b.cot.lat ? lat.toFixed(9) : j === b.cot.lon ? lon.toFixed(9) : "";
-        return `<label for="td-o-${j}" title="Cột ${cotChu(j)}">${e(h)}</label><input type="text" id="td-o-${j}" data-j="${j}" ${khoa ? "disabled" : ""} value="${e(v)}"` +
+        return `<label for="td-o-${j}" title="Cột ${cotChu(j)}">${e(h)}</label><input type="text" id="td-o-${j}" data-j="${j}" ${khoa ? "disabled" : ""}${laVt ? " readonly class=\"td-vt\"" : ""} value="${e(v)}"` +
           ` placeholder="${laId ? "tự cấp khi lưu" : khoa ? "tự tính theo công thức" : ""}">` +
           (laId ? `<small class="td-goi">Mã dòng tự cấp (số tiếp theo) để AppSheet nhận dòng mới</small>`
             : khoa ? `<small class="td-goi">Cột có công thức — tự tính như các dòng khác</small>`
-            : j === b.cot.ll ? `<small class="td-goi">Vĩ độ, kinh độ (WGS84) — lấy sẵn theo điểm vừa chuyển / giữa bản đồ, sửa được</small>` : "");
+            : laVt && j !== b.cot.lon ? `<small class="td-goi">📍 Vị trí đã chốt trên bản đồ · <button type="button" class="td-chon-lai" data-chon-lai>Chọn lại vị trí</button></small>` : "");
       }).join("");
   }
   async function chuanBiThem(bi) {
@@ -489,6 +491,66 @@
     const nCot = Math.max(b.header.length, ((hdr.values && hdr.values[0]) || []).length);
     return { cuoi: Math.max(1, ...ds.map((c) => c.length)), nCot, ds, cot };
   }
+  // ---------- đặt ghim vị trí thửa mới (như ghim của Google Earth): kéo ghim / chạm bản đồ / vị trí của tôi → Chốt ----------
+  const GHIM = { mk: null, nghe: null };
+  const SVG_GHIM = `<svg width="40" height="54" viewBox="0 0 40 54" aria-hidden="true">
+    <line x1="20" y1="22" x2="20" y2="53" stroke="#4a4f57" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="20" cy="13" r="11.5" fill="#fdd835" stroke="#8d6e00" stroke-width="1.6"/>
+    <circle cx="16" cy="9" r="3.6" fill="#fff8b0"/></svg>`;
+  function batDauGhim(vt) {
+    if (!bangThem().length) { S.h.toast("Chưa có dữ liệu thửa đất — bấm nút Thửa đất để tải trước"); return; }
+    if (S.popup) S.popup.remove();
+    boGhim();
+    const map = S.map, p = vt || viTriGoiY(), el = document.createElement("div");
+    el.className = "td-pin"; el.innerHTML = SVG_GHIM; el.title = "Kéo để đặt vị trí thửa";
+    GHIM.mk = new root.maplibregl.Marker({ element: el, anchor: "bottom", draggable: true }).setLngLat([p[1], p[0]]).addTo(map);
+    GHIM.mk.on("drag", hienGhim); GHIM.mk.on("dragend", hienGhim);
+    GHIM.nghe = (ev) => { GHIM.mk.setLngLat(ev.lngLat); hienGhim(); };
+    map.on("click", GHIM.nghe);
+    VN.dangGhim = true;                                   // app.js / giadat.js / lopfile.js không mở ô thông tin khi đang đặt ghim
+    map.getCanvas().style.cursor = "crosshair";
+    map.easeTo({ center: [p[1], p[0]], zoom: Math.max(map.getZoom(), 17) });
+    $("td-ghim").hidden = false; hienGhim();
+  }
+  function hienGhim() {
+    if (!GHIM.mk) return;
+    const p = GHIM.mk.getLngLat(), e = S.h.escapeHtml;
+    let vn = "";
+    try {
+      const l0 = S.h.getLon0 && S.h.getLon0();
+      if (l0 != null) { const [x, y] = VN.wgs84ToVn2000(p.lat, p.lng, 0, l0); vn = `<br>VN-2000: X ${S.h.fmt(x, 3)} · Y ${S.h.fmt(y, 3)} <small>(KTT ${e(String(l0))}°)</small>`; }
+    } catch (_) { vn = ""; }
+    $("td-ghim-td").innerHTML = `${p.lat.toFixed(8)}, ${p.lng.toFixed(8)}${vn}`;
+  }
+  // bỏ chế độ đặt ghim; giu = giữ ghim trên bản đồ (đang mở form thêm thông tin)
+  function boGhim(giu) {
+    const map = S.map;
+    if (GHIM.nghe) { map.off("click", GHIM.nghe); GHIM.nghe = null; }
+    VN.dangGhim = false;
+    if (map && map.getCanvas) map.getCanvas().style.cursor = "";
+    $("td-ghim").hidden = true;
+    if (!giu && GHIM.mk) { GHIM.mk.remove(); GHIM.mk = null; }
+    if (giu && GHIM.mk) GHIM.mk.setDraggable(false);
+  }
+  function chotGhim() {
+    if (!GHIM.mk) return;
+    const p = GHIM.mk.getLngLat();
+    boGhim(true);
+    moThem([p.lat, p.lng]);
+  }
+  function viTriCuaToi() {
+    if (!navigator.geolocation) { S.h.toast("Thiết bị không cho lấy vị trí"); return; }
+    const nut = $("td-ghim-gps"); nut.disabled = true;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      nut.disabled = false;
+      if (!GHIM.mk) return;
+      const c = [pos.coords.longitude, pos.coords.latitude];
+      GHIM.mk.setLngLat(c); S.map.easeTo({ center: c, zoom: Math.max(S.map.getZoom(), 18) }); hienGhim();
+      S.h.toast(`Đã đặt ghim theo vị trí của máy (sai số khoảng ±${Math.round(pos.coords.accuracy)} m)`);
+    }, (err) => { nut.disabled = false; S.h.toast(err && err.code === 1 ? "Chưa cho phép lấy vị trí" : "Không lấy được vị trí"); },
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 5000 });
+  }
+
   function moThem(vt) {
     const ds = bangThem();
     if (!ds.length) { S.h.toast("Chưa có dữ liệu thửa đất — bấm nút Thửa đất để tải trước"); return; }
@@ -563,7 +625,16 @@
     $("td-capnhat").addEventListener("click", taiVe);
     $("td-dlg-luu").addEventListener("click", () => (SUA.che === "them" ? luuThem() : luuSua()));
     $("td-dlg-form").addEventListener("change", (ev) => { if (ev.target.id === "td-them-bang") chuanBiThem(Number(ev.target.value)); });
-    $("td-them").addEventListener("click", () => moThem());
+    $("td-them").addEventListener("click", () => batDauGhim());
+    $("td-ghim-chot").addEventListener("click", chotGhim);
+    $("td-ghim-huy").addEventListener("click", () => boGhim());
+    $("td-ghim-gps").addEventListener("click", viTriCuaToi);
+    $("td-dlg").addEventListener("close", () => { if (SUA.che === "them" && !GHIM.nghe) boGhim(); });
+    $("td-dlg-form").addEventListener("click", (ev) => {
+      if (!ev.target.closest("[data-chon-lai]")) return;
+      const vt = SUA.vt; SUA.che = "";                    // đóng form (không xoá ghim ở sự kiện close) rồi đặt ghim lại
+      $("td-dlg").close(); SUA.che = "them"; batDauGhim(vt);
+    });
     $("td-dlg-huy").addEventListener("click", () => $("td-dlg").close());
     let hen = 0;
     $("td-tim").addEventListener("input", () => { clearTimeout(hen); hen = setTimeout(timKiem, 200); });
@@ -577,9 +648,10 @@
       S.bk = Number(ev.target.value) || 300; LS.set("bk", String(S.bk)); capNhatGan(S.rows);
     });
     for (const id of ["td-kq", "td-gan"]) $(id).addEventListener("click", (ev) => { const li = ev.target.closest("li[data-i]"); if (li) moThua(Number(li.dataset.i), true); });
-    $("td-gan").addEventListener("click", (ev) => { if (ev.target.closest("[data-them]")) moThem(); });
-    map.on("click", "td-diem", (ev) => { const f = ev.features && ev.features[0]; if (f) moThua(f.properties.i, false); });
+    $("td-gan").addEventListener("click", (ev) => { if (ev.target.closest("[data-them]")) batDauGhim(); });
+    map.on("click", "td-diem", (ev) => { if (VN.dangGhim) return; const f = ev.features && ev.features[0]; if (f) moThua(f.properties.i, false); });
     map.on("click", "td-cum", async (ev) => {
+      if (VN.dangGhim) return;
       const f = ev.features && ev.features[0]; if (!f) return;
       try { const z = await map.getSource("td").getClusterExpansionZoom(f.properties.cluster_id); map.easeTo({ center: f.geometry.coordinates, zoom: z }); }
       catch (_) { map.easeTo({ center: f.geometry.coordinates, zoom: map.getZoom() + 2 }); }
@@ -597,5 +669,5 @@
 
   Object.assign(VN, { thuaDatInit: init, thuaDatRows: capNhatGan,
     thuaDatCo: () => laQuanTri() && !!$("td-toggle") && !$("td-toggle").hidden,     // máy này đang dùng chế độ Thửa đất
-    thuaDatThem: (vt) => moThem(vt), tdDocLatLon: docLatLon, tdPhanTich: phanTich, tdCotChu: cotChu });
+    thuaDatThem: (vt) => batDauGhim(vt), tdDocLatLon: docLatLon, tdPhanTich: phanTich, tdCotChu: cotChu });
 })(typeof window !== "undefined" ? window : globalThis);

@@ -7,25 +7,25 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.28f">
+<link rel="stylesheet" href="css/style.css?v=2026.11.28g">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.28f"></script>
-<script src="js/parse.js?v=2026.11.28f"></script>
-<script src="js/geo.js?v=2026.11.28f"></script>
-<script src="js/export.js?v=2026.11.28f"></script>
-<script src="js/giadat.js?v=2026.11.28f"></script>
-<script src="js/lopfile.js?v=2026.11.28f"></script>
-<script src="js/anhbay.js?v=2026.11.28f"></script>
-<script src="js/goianh.js?v=2026.11.28f"></script>
-<script src="js/thuadat-config.js?v=2026.11.28f"></script>
-<script src="js/thuadat.js?v=2026.11.28f"></script>
-<script src="js/chupanh.js?v=2026.11.28f"></script>
-<script src="js/ocrtoado.js?v=2026.11.28f"></script>
-<script src="js/thongke-config.js?v=2026.11.28f"></script>
-<script src="js/thongke.js?v=2026.11.28f"></script>
-<script src="js/google.js?v=2026.11.28f"></script>
+<script src="js/converter.js?v=2026.11.28g"></script>
+<script src="js/parse.js?v=2026.11.28g"></script>
+<script src="js/geo.js?v=2026.11.28g"></script>
+<script src="js/export.js?v=2026.11.28g"></script>
+<script src="js/giadat.js?v=2026.11.28g"></script>
+<script src="js/lopfile.js?v=2026.11.28g"></script>
+<script src="js/anhbay.js?v=2026.11.28g"></script>
+<script src="js/goianh.js?v=2026.11.28g"></script>
+<script src="js/thuadat-config.js?v=2026.11.28g"></script>
+<script src="js/thuadat.js?v=2026.11.28g"></script>
+<script src="js/chupanh.js?v=2026.11.28g"></script>
+<script src="js/ocrtoado.js?v=2026.11.28g"></script>
+<script src="js/thongke-config.js?v=2026.11.28g"></script>
+<script src="js/thongke.js?v=2026.11.28g"></script>
+<script src="js/google.js?v=2026.11.28g"></script>
 </head>
 <body>
 <div class="layout">
@@ -290,6 +290,16 @@
       <summary>Chú giải quy hoạch</summary>
       <ul></ul>
     </details>
+    <div id="td-ghim" class="td-ghim" role="dialog" aria-label="Đặt vị trí thửa mới" hidden>
+      <div class="td-ghim-dau"><strong>📍 Đặt vị trí thửa mới</strong><small>Kéo ghim vàng hoặc chạm vào bản đồ</small></div>
+      <div id="td-ghim-td" class="td-ghim-td"></div>
+      <div class="td-ghim-nut">
+        <button type="button" id="td-ghim-gps" class="btn small ghost" title="Đặt ghim theo vị trí GPS của máy">◎ Vị trí của tôi</button>
+        <span class="td-ghim-gian"></span>
+        <button type="button" id="td-ghim-huy" class="btn small ghost">Huỷ</button>
+        <button type="button" id="td-ghim-chot" class="btn small primary">Chốt vị trí</button>
+      </div>
+    </div>
     <div id="geo-info" class="geo-info" role="status" hidden>
       <div class="geo-head"><strong>📍 Vị trí của tôi</strong>
         <button type="button" id="geo-chup" title="Chụp ảnh có in toạ độ">📷 Chụp ảnh</button>
@@ -332,6 +342,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.28f"></script>
+<script src="js/app.js?v=2026.11.28g"></script>
 </body>
 </html>

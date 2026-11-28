@@ -118,6 +118,7 @@
 
     for (const id of ["gd-line", "gd-line-nghi", "gd-diem"]) {
       map.on("click", id, (e) => {
+        if (root.VN.dangGhim) return;               // đang đặt ghim thửa mới (docs/js/thuadat.js)
         const f = e.features[0];
         new maplibregl.Popup({ offset: 8, maxWidth: "340px" }).setLngLat(e.lngLat).setHTML(popupHtml(G.doan[f.properties.i])).addTo(map);
       });

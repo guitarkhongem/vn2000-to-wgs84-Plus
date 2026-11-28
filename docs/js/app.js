@@ -545,6 +545,7 @@
     }, "parcel-fill");
 
     map.on("click", "qh-fill", (e) => {
+      if (VN.dangGhim) return;                      // đang đặt ghim thửa mới (docs/js/thuadat.js)
       // Vùng lớn (đường, khu vực) có thể phủ lên thửa nhỏ → lấy thửa nhỏ nhất tại điểm bấm
       const f = [...e.features].sort((a, b) => (a.properties.dien_tich ?? Infinity) - (b.properties.dien_tich ?? Infinity))[0];
       if (!f) return;
@@ -838,7 +839,7 @@
     // Thống kê truy cập — tab chỉ hiện cho chủ ứng dụng khi mở bằng ?thongke (docs/js/thongke.js)
     if (VN.thongKeInit) VN.thongKeInit(map, { escapeHtml, fmt, toast });
     // Thửa đất của tôi — chế độ ẩn, chỉ chủ ứng dụng; dữ liệu AppSheet đọc từ Google Sheets (docs/js/thuadat.js)
-    if (VN.thuaDatInit) VN.thuaDatInit(map, { escapeHtml, fmt, toast });
+    if (VN.thuaDatInit) VN.thuaDatInit(map, { escapeHtml, fmt, toast, getLon0 });
     if (VN.thuaDatRows) VN.thuaDatRows(state.rows);
   });
 
