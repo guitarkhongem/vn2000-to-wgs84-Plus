@@ -485,6 +485,7 @@
     renderTable();
     renderProvinces();
     if (VN.giadatRows) VN.giadatRows(state.rows);
+    if (VN.thuaDatRows) VN.thuaDatRows(state.rows);
     whenStyleReady(() => {
       renderMap(fit);
       schedulePlanningHits();
@@ -832,6 +833,9 @@
       provinces: VN.LON0_BY_PROVINCE, provinceValue: () => provinceSel.value });
     // Thống kê truy cập — tab chỉ hiện cho chủ ứng dụng khi mở bằng ?thongke (docs/js/thongke.js)
     if (VN.thongKeInit) VN.thongKeInit(map, { escapeHtml, fmt, toast });
+    // Thửa đất của tôi — chế độ ẩn, chỉ chủ ứng dụng; dữ liệu AppSheet đọc từ Google Sheets (docs/js/thuadat.js)
+    if (VN.thuaDatInit) VN.thuaDatInit(map, { escapeHtml, fmt, toast });
+    if (VN.thuaDatRows) VN.thuaDatRows(state.rows);
   });
 
   // Lần đầu mở: hiện ví dụ cho người dùng thấy ngay; các lần sau: chạy lại dữ liệu đã lưu

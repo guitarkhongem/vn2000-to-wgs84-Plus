@@ -406,3 +406,17 @@ tbody tr:hover { background: var(--accent-soft); }
 .ga-anh[hidden] { display: none; }
 .lf-xuat-tat { margin-top: 8px; width: 100%; }
 .lf-xuat-tat[hidden] { display: none; }
+
+/* Thửa đất của tôi (chế độ ẩn — docs/js/thuadat.js) */
+.td-card textarea { width: 100%; font: 12px/1.4 ui-monospace, monospace; resize: vertical; }
+.td-nut { gap: 8px; align-items: center; margin: 6px 0; }
+.td-bk { flex-direction: row; align-items: center; gap: 6px; }
+.td-gan { border-color: #b5838d; background: rgba(193, 18, 31, .05); }
+.td-sw { background: #e63946; border-radius: 50%; width: 10px; height: 10px; border: 2px solid #fff; box-shadow: 0 0 0 1px #c1121f; flex: none; margin-top: 4px; }
+.td-list li { display: flex; gap: 8px; align-items: flex-start; }
+.td-so { color: #fff; font: 700 11px/1 system-ui, sans-serif; pointer-events: none; text-shadow: 0 0 2px rgba(0,0,0,.4); }
+.td-pop table { border-collapse: collapse; margin: 6px 0; font-size: 12px; }
+.td-pop th { text-align: left; font-weight: 600; color: #5d6470; padding: 2px 8px 2px 0; vertical-align: top; white-space: nowrap; }
+.td-pop td { padding: 2px 0; overflow-wrap: anywhere; }
+.td-pop .muted { color: #5d6470; }
+.td-pop { max-height: 52vh; overflow: auto; }

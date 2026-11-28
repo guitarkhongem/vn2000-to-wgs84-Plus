@@ -7,23 +7,25 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.27u">
+<link rel="stylesheet" href="css/style.css?v=2026.11.28a">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.27u"></script>
-<script src="js/parse.js?v=2026.11.27u"></script>
-<script src="js/geo.js?v=2026.11.27u"></script>
-<script src="js/export.js?v=2026.11.27u"></script>
-<script src="js/giadat.js?v=2026.11.27u"></script>
-<script src="js/lopfile.js?v=2026.11.27u"></script>
-<script src="js/anhbay.js?v=2026.11.27u"></script>
-<script src="js/goianh.js?v=2026.11.27u"></script>
-<script src="js/chupanh.js?v=2026.11.27u"></script>
-<script src="js/ocrtoado.js?v=2026.11.27u"></script>
-<script src="js/thongke-config.js?v=2026.11.27u"></script>
-<script src="js/thongke.js?v=2026.11.27u"></script>
-<script src="js/google.js?v=2026.11.27u"></script>
+<script src="js/converter.js?v=2026.11.28a"></script>
+<script src="js/parse.js?v=2026.11.28a"></script>
+<script src="js/geo.js?v=2026.11.28a"></script>
+<script src="js/export.js?v=2026.11.28a"></script>
+<script src="js/giadat.js?v=2026.11.28a"></script>
+<script src="js/lopfile.js?v=2026.11.28a"></script>
+<script src="js/anhbay.js?v=2026.11.28a"></script>
+<script src="js/goianh.js?v=2026.11.28a"></script>
+<script src="js/thuadat-config.js?v=2026.11.28a"></script>
+<script src="js/thuadat.js?v=2026.11.28a"></script>
+<script src="js/chupanh.js?v=2026.11.28a"></script>
+<script src="js/ocrtoado.js?v=2026.11.28a"></script>
+<script src="js/thongke-config.js?v=2026.11.28a"></script>
+<script src="js/thongke.js?v=2026.11.28a"></script>
+<script src="js/google.js?v=2026.11.28a"></script>
 </head>
 <body>
 <div class="layout">
@@ -107,6 +109,7 @@
       <div id="area" class="area" hidden></div>
       <div id="qh-info" class="qh-info" hidden></div>
       <div id="gd-gan" class="gd-gan" hidden></div>
+      <div id="td-gan" class="gd-gan td-gan" hidden></div>
       <div id="circles" class="circles" hidden></div>
     </section>
 
@@ -133,6 +136,24 @@
       <div id="lf-loi" class="lf-loi" hidden></div>
       <ul id="lf-ds" class="lf-ds" hidden></ul>
       <button type="button" id="lf-xuat-tat" class="btn small lf-xuat-tat" hidden title="Gộp mọi ảnh trực giao đang mở thành 1 file .pmtiles để mở nhanh trên điện thoại"></button>
+    </section>
+
+    <section class="card td-card" id="td-card" hidden>
+      <h2>🔒 Thửa đất của tôi</h2>
+      <p class="muted small">Chỉ hiện trên máy đã bật chế độ quản trị. Đọc dữ liệu AppSheet trong <b>Google Sheets</b> bằng tài khoản Google của anh (quyền chỉ đọc) — chấm vị trí các thửa lên bản đồ, bấm chấm xem thông tin; sau mỗi lần chuyển toạ độ, mục <i>Kết quả</i> gợi ý thửa ở gần. Dữ liệu chỉ đi giữa máy này và Google, lưu tạm trên máy này để lần sau mở nhanh.</p>
+      <label class="field"><span>Link bảng tính Google Sheets (nhiều bảng: mỗi dòng một link)</span>
+        <textarea id="td-link" rows="2" spellcheck="false" placeholder="https://docs.google.com/spreadsheets/d/…"></textarea></label>
+      <div class="row wrap td-nut">
+        <button type="button" id="td-tai" class="btn primary">Đăng nhập Google &amp; tải dữ liệu</button>
+        <button type="button" id="td-xoa" class="btn small ghost" hidden>Xoá khỏi máy</button>
+      </div>
+      <div class="row wrap td-nut">
+        <label class="toggle"><input type="checkbox" id="td-hien" checked> Hiện vị trí thửa trên bản đồ</label>
+        <label class="field td-bk"><span>Gợi ý trong bán kính</span><select id="td-bk"><option value="100">100 m</option><option value="300">300 m</option><option value="500">500 m</option><option value="1000">1 km</option></select></label>
+      </div>
+      <p id="td-tt" class="muted small"></p>
+      <label class="field"><span>Tìm theo tên, tờ, thửa, địa chỉ…</span><input id="td-tim" type="search" autocomplete="off" placeholder="vd: Nguyễn Hữu Sen, 41 152"></label>
+      <div id="td-kq" class="gd-kq td-kq"></div>
     </section>
 
     <button type="button" id="tk-mo" class="tk-mo" hidden title="Xem thống kê lượt truy cập (chỉ chủ ứng dụng)">📊 Thống kê truy cập</button>
@@ -309,6 +330,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.27u"></script>
+<script src="js/app.js?v=2026.11.28a"></script>
 </body>
 </html>
