@@ -4,6 +4,7 @@
  *
  * Giao diện: nút "Thửa đất" trong khung "Lớp bản đồ" (chỉ máy đã bật chế độ quản trị thấy) — bấm lần đầu tự đăng nhập
  * Google và tải, sau đó bật / tắt chấm thửa; ô nhỏ dưới nút: số thửa, giờ cập nhật, ⟳ cập nhật, tìm kiếm.
+ * Tìm kiếm lọc như AppSheet: bản đồ chỉ hiện các thửa khớp, ẩn thửa khác, tự phóng vừa khít; "✕ Bỏ lọc" hiện lại tất cả.
  * Bảng tính gắn sẵn trong thuadat-config.js (VN_THUADAT_BANG; bảng để chế độ "Bị hạn chế" nên lộ link cũng không đọc được).
  *
  * Đọc dữ liệu AppSheet nằm trong Google Sheets bằng chính tài khoản Google của người dùng
@@ -191,7 +192,7 @@
     if (!co) {
       for (const id of ["td-diem", "td-cum"]) if (map.getLayer(id)) map.removeLayer(id);
       if (map.getSource("td")) map.removeSource("td");
-      veSo(); return;
+      veLoc(); return;
     }
     if (map.getSource("td")) map.getSource("td").setData(geojson());
     else {
@@ -204,6 +205,7 @@
         paint: { "circle-color": "#e63946", "circle-stroke-color": "#fff", "circle-stroke-width": 1.5,
           "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 4, 16, 6.5, 20, 9] } });
     }
+    veLoc();                                             // đang tìm → chỉ hiện thửa khớp
   }
   // số trên mỗi cụm (bản đồ nền không có font chữ cho lớp symbol → dùng nhãn HTML cho các cụm đang thấy)
   function veSo() {
@@ -369,20 +371,64 @@
   }
 
   // ======================================================================= tìm trong dữ liệu
-  function timKiem() {
+  // Lọc như AppSheet: khi ô tìm có chữ, bản đồ CHỈ hiện các thửa khớp (lớp td-loc, không gom cụm), ẩn mọi thửa khác
+  // (td-cum, td-diem, số trên cụm) và tự thu / phóng bản đồ vừa khít các thửa tìm được (1 thửa → bay tới + mở thông tin).
+  // Xoá chữ trong ô hoặc bấm "✕ Bỏ lọc" → hiện lại toàn bộ.
+  const LOC = { ds: null, khoa: "" };
+  const SO_DS = 50;                                      // số dòng tối đa trong danh sách (bản đồ vẫn hiện đủ mọi thửa khớp)
+  function veLoc() {
+    const map = S.map; if (!map || !map.getLayer) return;
+    const co = S.hien && S.diem.length > 0 && !!LOC.ds;
+    for (const id of ["td-diem", "td-cum"]) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", co ? "none" : "visible");
+    if (!co) {
+      if (map.getLayer("td-loc")) map.removeLayer("td-loc");
+      if (map.getSource("td-loc")) map.removeSource("td-loc");
+      veSo(); return;
+    }
+    const data = { type: "FeatureCollection", features: LOC.ds.map((i) => ({ type: "Feature", properties: { i },
+      geometry: { type: "Point", coordinates: [S.diem[i].lon, S.diem[i].lat] } })) };
+    if (map.getSource("td-loc")) map.getSource("td-loc").setData(data);
+    else {
+      map.addSource("td-loc", { type: "geojson", data, attribution: "Thửa đất: dữ liệu AppSheet riêng của chủ ứng dụng (Google Sheets)" });
+      map.addLayer({ id: "td-loc", type: "circle", source: "td-loc",
+        paint: { "circle-color": "#e63946", "circle-stroke-color": "#fff", "circle-stroke-width": 2.5,
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 6, 16, 8, 20, 11] } });
+    }
+    veSo();                                              // td-cum đang ẩn → gỡ các số trên cụm
+  }
+  function khitBanDo(ds) {
+    if (!S.map || !ds.length) return;
+    if (ds.length === 1) { moThua(ds[0], true); return; }
+    let w = 180, s = 90, e = -180, n = -90;
+    for (const i of ds) { const d = S.diem[i]; w = Math.min(w, d.lon); e = Math.max(e, d.lon); s = Math.min(s, d.lat); n = Math.max(n, d.lat); }
+    S.map.fitBounds([[w, s], [e, n]], { padding: 60, maxZoom: 17, duration: 800 });
+  }
+  // bay: được dời bản đồ khi kết quả đổi; ep: dời cả khi kết quả không đổi (bấm Enter)
+  function timKiem(bay = true, ep = false) {
     const kq = $("td-kq"), q = boDau($("td-tim").value.trim());
-    if (q.length < 2) { kq.innerHTML = ""; kq.hidden = true; return; }
+    if (q.length < 2) {
+      kq.innerHTML = ""; kq.hidden = true;
+      if (LOC.ds) { LOC.ds = null; LOC.khoa = ""; veLoc(); }
+      return;
+    }
     const tu = q.split(/\s+/).filter(Boolean), out = [];
-    for (let i = 0; i < S.diem.length && out.length < 30; i++) {
+    for (let i = 0; i < S.diem.length; i++) {
       const d = S.diem[i];
       if (d.tim == null) { const b = S.bang[d.b]; d.tim = boDau(b.rows[d.r].join(" ")); }
       if (tu.every((t) => d.tim.includes(t))) out.push(i);
     }
+    const khoa = out.join(","), doi = khoa !== LOC.khoa;
+    LOC.ds = out; LOC.khoa = khoa;
+    if (doi && S.popup) { S.popup.remove(); S.popup = null; }
+    veLoc();
+    if (bay && (doi || ep)) khitBanDo(out);
     const e = S.h.escapeHtml;
     kq.hidden = false;
-    kq.innerHTML = out.length ? `<ul class="td-list">${out.map((i) => { const t = tieuDe(S.diem[i]);
-      return `<li data-i="${i}"><b>${e(t.ten)}</b>${t.phu ? `<small>${e(t.phu)}</small>` : ""}</li>`; }).join("")}</ul>`
-      : `<small class="muted">Không thấy thửa nào.</small>`;
+    const dau = `<div class="td-kq-dau"><span>${out.length ? `Tìm thấy <b>${out.length.toLocaleString("vi-VN")}</b> thửa — bản đồ chỉ hiện các thửa này`
+      : "Không thấy thửa nào — bản đồ đang ẩn mọi thửa"}</span><button type="button" data-bo-loc title="Xoá tìm kiếm, hiện lại mọi thửa">✕ Bỏ lọc</button></div>`;
+    kq.innerHTML = dau + (out.length ? `<ul class="td-list">${out.slice(0, SO_DS).map((i) => { const t = tieuDe(S.diem[i]);
+      return `<li data-i="${i}"><b>${e(t.ten)}</b>${t.phu ? `<small>${e(t.phu)}</small>` : ""}</li>`; }).join("")}</ul>` : "") +
+      (out.length > SO_DS ? `<small class="muted">và ${(out.length - SO_DS).toLocaleString("vi-VN")} thửa khác (có trên bản đồ) — gõ thêm để thu hẹp.</small>` : "");
   }
 
   // ======================================================================= tải / hiện dữ liệu
@@ -409,7 +455,7 @@
   function apDung(dl) {
     S.bang = (dl && dl.bang) || []; S.luc = (dl && dl.luc) || 0;
     lapDiem(); veLop(); giaoDien(); capNhatGan(S.rows);
-    if ($("td-tim").value) timKiem();
+    if ($("td-tim").value) timKiem(false);
   }
   async function taiVe() {
     if (S.dang) return;
@@ -637,7 +683,9 @@
     });
     $("td-dlg-huy").addEventListener("click", () => $("td-dlg").close());
     let hen = 0;
-    $("td-tim").addEventListener("input", () => { clearTimeout(hen); hen = setTimeout(timKiem, 200); });
+    $("td-tim").addEventListener("input", () => { clearTimeout(hen); hen = setTimeout(() => timKiem(), 300); });
+    $("td-tim").addEventListener("keydown", (ev) => { if (ev.key === "Enter") { ev.preventDefault(); clearTimeout(hen); timKiem(true, true); } });
+    $("td-kq").addEventListener("click", (ev) => { if (ev.target.closest("[data-bo-loc]")) { $("td-tim").value = ""; timKiem(); } });
     $("td-xoa").addEventListener("click", async () => {
       await dbXoa(); S.token = null; S.hien = false; LS.set("hien", "0"); LS.set("link", null);
       $("td-tim").value = ""; timKiem(); apDung(null);
@@ -649,6 +697,7 @@
     });
     for (const id of ["td-kq", "td-gan"]) $(id).addEventListener("click", (ev) => { const li = ev.target.closest("li[data-i]"); if (li) moThua(Number(li.dataset.i), true); });
     $("td-gan").addEventListener("click", (ev) => { if (ev.target.closest("[data-them]")) batDauGhim(); });
+    map.on("click", "td-loc", (ev) => { if (VN.dangGhim) return; const f = ev.features && ev.features[0]; if (f) moThua(f.properties.i, false); });
     map.on("click", "td-diem", (ev) => { if (VN.dangGhim) return; const f = ev.features && ev.features[0]; if (f) moThua(f.properties.i, false); });
     map.on("click", "td-cum", async (ev) => {
       if (VN.dangGhim) return;
@@ -656,7 +705,7 @@
       try { const z = await map.getSource("td").getClusterExpansionZoom(f.properties.cluster_id); map.easeTo({ center: f.geometry.coordinates, zoom: z }); }
       catch (_) { map.easeTo({ center: f.geometry.coordinates, zoom: map.getZoom() + 2 }); }
     });
-    for (const l of ["td-diem", "td-cum"]) {
+    for (const l of ["td-diem", "td-cum", "td-loc"]) {
       map.on("mouseenter", l, () => { map.getCanvas().style.cursor = "pointer"; });
       map.on("mouseleave", l, () => { map.getCanvas().style.cursor = ""; });
     }

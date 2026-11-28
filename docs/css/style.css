@@ -427,6 +427,10 @@ tbody tr:hover { background: var(--accent-soft); }
 .td-kq .td-list li:first-child { border-top: 0; }
 .td-kq .td-list li:hover { background: rgba(0,0,0,.04); }
 .td-kq small { display: block; color: var(--muted); }
+.td-kq-dau { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 2px 5px; font-size: 12px; color: var(--muted); }
+.td-kq-dau b { color: var(--text); }
+.td-kq-dau button { flex: none; font: inherit; font-size: 12px; font-weight: 600; border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.td-kq-dau button:hover { border-color: #b30000; }
 .td-xoa { align-self: flex-start; font: inherit; font-size: 11px; border: 0; background: none; color: var(--muted); padding: 0; cursor: pointer; text-decoration: underline; }
 .td-gan { border-color: var(--line); background: transparent; }
 .td-dau { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
