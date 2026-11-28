@@ -13,7 +13,8 @@
  * sau mỗi lần chuyển toạ độ gợi ý các thửa trong dữ liệu ở gần (app.js gọi VN.thuaDatRows).
  *
  * Chỉ đường: nút 🚗 trong ô thông tin thửa mở Google Maps dẫn đường tới vị trí thửa (như AppSheet).
- * Thêm mới: nút "＋ Thêm thửa mới" (ô dưới nút Thửa đất, và trong "Thửa đất gần đây" — lấy sẵn toạ độ điểm vừa chuyển) → form
+ * Thêm mới: nút "＋ Thêm thửa mới" (ô dưới nút Thửa đất, trong "Thửa đất gần đây", và trong ô của từng điểm vừa chuyển — cạnh
+ * "Vòng tròn bán kính", app.js gọi VN.thuaDatThem([lat, lon]) — lấy sẵn toạ độ) → form
  * theo đúng các cột của bảng → thêm 1 dòng cuối Google Sheets (ID tự cấp, cột công thức tự tính).
  * Sửa / bổ sung: nút ✏️ trong ô thông tin thửa → hộp sửa mọi cột (ô có công thức bị khoá) → ghi thẳng vào Google Sheets
  * (xin thêm quyền "spreadsheets" khi bấm Lưu lần đầu; tìm lại dòng theo cột ID; không ghi đè ô vừa bị sửa trên AppSheet).
@@ -594,5 +595,7 @@
     dbDoc().then((dl) => apDung(dl)).catch(() => apDung(null));
   }
 
-  Object.assign(VN, { thuaDatInit: init, thuaDatRows: capNhatGan, tdDocLatLon: docLatLon, tdPhanTich: phanTich, tdCotChu: cotChu });
+  Object.assign(VN, { thuaDatInit: init, thuaDatRows: capNhatGan,
+    thuaDatCo: () => laQuanTri() && !!$("td-toggle") && !$("td-toggle").hidden,     // máy này đang dùng chế độ Thửa đất
+    thuaDatThem: (vt) => moThem(vt), tdDocLatLon: docLatLon, tdPhanTich: phanTich, tdCotChu: cotChu });
 })(typeof window !== "undefined" ? window : globalThis);

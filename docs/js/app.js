@@ -358,7 +358,8 @@
           <button type="submit" class="btn small primary">Vẽ</button>
         </form>
         ${mine.length ? `<ul class="circle-mine">${mine.map((c) =>
-          `<li>R = ${fmt(c.r, c.r % 1 ? 2 : 0)} m <button type="button" class="link" data-del="${c.id}">Xoá</button></li>`).join("")}</ul>` : ""}`;
+          `<li>R = ${fmt(c.r, c.r % 1 ? 2 : 0)} m <button type="button" class="link" data-del="${c.id}">Xoá</button></li>`).join("")}</ul>` : ""}
+        ${VN.thuaDatCo && VN.thuaDatCo() ? `<button type="button" class="btn small td-them-pt" data-td-them>＋ Thêm thông tin thửa đất tại điểm này</button>` : ""}`;
       el.querySelector("form").addEventListener("submit", (e) => {
         e.preventDefault();
         const radius = Number(String(e.target.r.value).replace(",", "."));
@@ -367,6 +368,9 @@
         popup.remove();            // đóng popup để không che vòng tròn (xoá được ở bảng điều khiển)
         addCircle(r, radius);
       });
+      // chế độ ẩn Thửa đất (docs/js/thuadat.js): thêm dòng thửa mới vào Google Sheets, toạ độ lấy theo điểm này
+      const them = el.querySelector("[data-td-them]");
+      if (them) them.addEventListener("click", () => { popup.remove(); VN.thuaDatThem([r.lat, r.lon]); });
       el.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", () => {
         removeCircle(Number(b.dataset.del));
         popup.setDOMContent(build());
