@@ -12,6 +12,7 @@
  * vĩ độ / kinh độ → chấm vị trí thửa lên bản đồ (gom cụm khi thu nhỏ), bấm xem toàn bộ thông tin dòng đó;
  * sau mỗi lần chuyển toạ độ gợi ý các thửa trong dữ liệu ở gần (app.js gọi VN.thuaDatRows).
  *
+ * Chỉ đường: nút 🚗 trong ô thông tin thửa mở Google Maps dẫn đường tới vị trí thửa (như AppSheet).
  * Sửa / bổ sung: nút ✏️ trong ô thông tin thửa → hộp sửa mọi cột (ô có công thức bị khoá) → ghi thẳng vào Google Sheets
  * (xin thêm quyền "spreadsheets" khi bấm Lưu lần đầu; tìm lại dòng theo cột ID; không ghi đè ô vừa bị sửa trên AppSheet).
  *
@@ -222,13 +223,17 @@
     S.so = moi;
   }
   const lienKet = (v) => /^https?:\/\/\S+$/i.test(v) ? `<a href="${S.h.escapeHtml(v)}" target="_blank" rel="noopener">${S.h.escapeHtml(v.length > 48 ? v.slice(0, 45) + "…" : v)}</a>` : S.h.escapeHtml(v);
+  // Google Maps URLs (developers.google.com/maps/documentation/urls): mở ứng dụng Google Maps trên điện thoại, chỉ đường từ vị trí
+  // hiện tại tới thửa (dir_action=navigate bắt đầu dẫn đường; không ghi travelmode để Google Maps chọn theo thói quen: xe máy, ô tô…)
+  const chiDuong = (d) => `https://www.google.com/maps/dir/?api=1&destination=${d.lat.toFixed(7)},${d.lon.toFixed(7)}&dir_action=navigate`;
   function popupHtml(i) {
     const d = S.diem[i], b = S.bang[d.b], r = b.rows[d.r], e = S.h.escapeHtml, t = tieuDe(d);
     const dong = b.header.map((h, j) => [h, o(r, j)]).filter(([, v]) => v);
     return `<div class="td-pop"><b>${e(t.ten)}</b>${t.phu ? `<div class="muted">${e(t.phu)}</div>` : ""}` +
       `<table>${dong.map(([h, v]) => `<tr><th>${e(h)}</th><td>${lienKet(v)}</td></tr>`).join("")}</table>` +
       `<small class="muted">Nguồn: Google Sheets “${e(b.nguon)}” › ${e(b.bang)}, dòng ${d.r + 2} · đọc lúc ${e(gio(S.luc))}</small>` +
-      `<div class="td-pop-nut"><button type="button" data-sua="${i}">✏️ Sửa / bổ sung thông tin</button></div></div>`;
+      `<div class="td-pop-nut"><a href="${e(chiDuong(d))}" target="_blank" rel="noopener" title="Mở Google Maps chỉ đường từ vị trí hiện tại tới thửa này">🚗 Chỉ đường</a>` +
+      `<button type="button" data-sua="${i}">✏️ Sửa / bổ sung</button></div></div>`;
   }
   function moThua(i, bay) {
     const d = S.diem[i]; if (!d || !S.map) return;

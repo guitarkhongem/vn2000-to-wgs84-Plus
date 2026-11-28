@@ -441,9 +441,10 @@ tbody tr:hover { background: var(--accent-soft); }
 .td-pop td { padding: 2px 0; overflow-wrap: anywhere; }
 .td-pop .muted { color: #5d6470; }
 .td-pop { max-height: 52vh; overflow: auto; }
-.td-pop-nut { margin-top: 6px; }
-.td-pop-nut button { font: inherit; font-size: 12px; font-weight: 600; border: 1px solid #d0d4da; background: #fff; color: #16181d; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
-.td-pop-nut button:hover { border-color: #b30000; }
+.td-pop-nut { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+.td-pop-nut button, .td-pop-nut a { font: inherit; font-size: 12px; font-weight: 600; border: 1px solid #d0d4da; background: #fff; color: #16181d; border-radius: 6px; padding: 4px 10px; cursor: pointer; text-decoration: none; }
+.td-pop-nut button:hover, .td-pop-nut a:hover { border-color: #b30000; }
+.td-pop-nut a { background: #1a73e8; border-color: #1a73e8; color: #fff; }
 .td-dlg { width: min(560px, calc(100vw - 24px)); max-width: min(560px, calc(100vw - 24px)); }
 .td-form { display: grid; grid-template-columns: minmax(96px, 34%) 1fr; gap: 6px 10px; align-items: start; max-height: 58vh; overflow: auto; padding: 2px; margin: 8px 0; }
 .td-form label { font-size: 12px; font-weight: 600; color: var(--muted); padding-top: 7px; overflow-wrap: anywhere; }
