@@ -13,6 +13,8 @@
  * sau mỗi lần chuyển toạ độ gợi ý các thửa trong dữ liệu ở gần (app.js gọi VN.thuaDatRows).
  *
  * Chỉ đường: nút 🚗 trong ô thông tin thửa mở Google Maps dẫn đường tới vị trí thửa (như AppSheet).
+ * Thêm mới: nút "＋ Thêm thửa mới" (ô dưới nút Thửa đất, và trong "Thửa đất gần đây" — lấy sẵn toạ độ điểm vừa chuyển) → form
+ * theo đúng các cột của bảng → thêm 1 dòng cuối Google Sheets (ID tự cấp, cột công thức tự tính).
  * Sửa / bổ sung: nút ✏️ trong ô thông tin thửa → hộp sửa mọi cột (ô có công thức bị khoá) → ghi thẳng vào Google Sheets
  * (xin thêm quyền "spreadsheets" khi bấm Lưu lần đầu; tìm lại dòng theo cột ID; không ghi đè ô vừa bị sửa trên AppSheet).
  *
@@ -270,11 +272,11 @@
     } else if (!giong(moi, r, nCot)) throw new Error("Dòng này trên Google Sheets đã thay đổi — bấm ⟳ cập nhật rồi sửa lại");
     return { so, moi, nCot };
   }
-  const SUA = { i: -1, d: null, so: 0, moi: null, nCot: 0, cong: [] };
+  const SUA = { che: "sua", i: -1, d: null, so: 0, moi: null, nCot: 0, cong: [], bi: -1, vt: null };
   async function moSua(i) {
     const d = S.diem[i]; if (!d) return;
     const b = S.bang[d.b], dlg = $("td-dlg"), form = $("td-dlg-form"), tt = $("td-dlg-tt"), luu = $("td-dlg-luu"), e = S.h.escapeHtml;
-    Object.assign(SUA, { i, d, so: 0, moi: null });
+    Object.assign(SUA, { che: "sua", i, d, so: 0, moi: null });
     $("td-dlg-tieude").textContent = `Sửa thông tin — ${tieuDe(d).ten}`;
     form.innerHTML = ""; luu.disabled = true;
     tt.textContent = "Đang lấy dữ liệu mới nhất từ Google Sheets…";
@@ -359,6 +361,7 @@
         return `<li data-i="${i}"><span class="sw td-sw"></span><div><b>${e(t.ten)}</b> <small class="muted">· ${S.h.fmt(m, 0)} m</small>${t.phu ? `<div class="muted">${e(t.phu)}</div>` : ""}</div></li>`; }).join("")}</ul>`;
       if (gan.length > 8) html += `<small class="muted">và ${gan.length - 8} thửa khác.</small>`;
     } else html += `<div class="muted">Không có thửa nào trong phạm vi này.</div>`;
+    html += `<button type="button" class="td-them-day" data-them>＋ Thêm thửa mới tại vị trí này</button>`;
     html += `<small class="muted td-chu">Theo vị trí ghim trong dữ liệu (${e(nguonNgan())}, cập nhật ${e(gioNgan(S.luc))}), không phải ranh thửa.</small>`;
     box.innerHTML = html; box.hidden = false;
   }
@@ -430,6 +433,118 @@
     }
   }
 
+  // ======================================================================= thêm thửa mới (thêm 1 dòng cuối bảng)
+  // Một lần ghi spreadsheets.batchUpdate (cả gói thành công hoặc không có gì): chèn 1 dòng sau dòng cuối (giữ định dạng),
+  // chép công thức của dòng cuối xuống (cột tự tính theo công thức vẫn tự tính), rồi điền từng ô của form; ID tự cấp
+  // (số lớn nhất + 1 nếu cột ID toàn số, không thì mã ngẫu nhiên 8 ký tự chưa có).
+  const bangThem = () => S.bang.map((b, i) => [b, i]).filter(([b]) => b.cot.ll >= 0 || (b.cot.lat >= 0 && b.cot.lon >= 0));
+  // vị trí gợi ý: tâm / điểm vừa chuyển toạ độ, không có thì giữa màn hình bản đồ
+  function viTriGoiY() {
+    if (S.rows.length) { const n = S.rows.length; return [S.rows.reduce((a, r) => a + r.lat, 0) / n, S.rows.reduce((a, r) => a + r.lon, 0) / n]; }
+    const c = S.map.getCenter(); return [c.lat, c.lng];
+  }
+  // ghi toạ độ theo đúng kiểu đang có trong cột (dấu cách sau dấu phẩy, số chữ số thập phân)
+  function vietLatLon(b, lat, lon) {
+    const mau = b.rows.map((r) => o(r, b.cot.ll)).find((v) => docLatLon(v)) || "";
+    const so = Math.min(12, Math.max(7, ((/\.(\d+)/.exec(mau) || [, ""])[1]).length || 9));
+    return `${lat.toFixed(so)}${/,\s/.test(mau) ? ", " : ","}${lon.toFixed(so)}`;
+  }
+  function veFormThem() {
+    const b = S.bang[SUA.bi], e = S.h.escapeHtml, [lat, lon] = SUA.vt, nCot = SUA.nCot;
+    $("td-dlg-form").innerHTML = (bangThem().length > 1
+      ? `<label for="td-them-bang">Thêm vào bảng</label><select id="td-them-bang">${bangThem().map(([x, i]) => `<option value="${i}"${i === SUA.bi ? " selected" : ""}>${e(x.nguon)} › ${e(x.bang)}</option>`).join("")}</select>` : "") +
+      Array.from({ length: nCot }, (_, j) => {
+        const h = b.header[j] || `Cột ${cotChu(j)}`, laId = j === b.cot.id, khoa = SUA.cong[j] || laId;
+        const v = j === b.cot.ll ? vietLatLon(b, lat, lon) : j === b.cot.lat ? lat.toFixed(9) : j === b.cot.lon ? lon.toFixed(9) : "";
+        return `<label for="td-o-${j}" title="Cột ${cotChu(j)}">${e(h)}</label><input type="text" id="td-o-${j}" data-j="${j}" ${khoa ? "disabled" : ""} value="${e(v)}"` +
+          ` placeholder="${laId ? "tự cấp khi lưu" : khoa ? "tự tính theo công thức" : ""}">` +
+          (laId ? `<small class="td-goi">Mã dòng tự cấp (số tiếp theo) để AppSheet nhận dòng mới</small>`
+            : khoa ? `<small class="td-goi">Cột có công thức — tự tính như các dòng khác</small>`
+            : j === b.cot.ll ? `<small class="td-goi">Vĩ độ, kinh độ (WGS84) — lấy sẵn theo điểm vừa chuyển / giữa bản đồ, sửa được</small>` : "");
+      }).join("");
+  }
+  async function chuanBiThem(bi) {
+    const b = S.bang[bi], tt = $("td-dlg-tt"), luu = $("td-dlg-luu");
+    Object.assign(SUA, { bi, cong: [], nCot: b.header.length });
+    luu.disabled = true; $("td-dlg-form").innerHTML = "";
+    tt.textContent = "Đang đọc cấu trúc bảng trên Google Sheets…";
+    try {
+      await layToken();
+      const { cuoi, nCot } = await dongCuoi(b);
+      const cong = cuoi > 1 ? await docDong(b, cuoi, nCot, "FORMULA") : [];
+      SUA.nCot = nCot; SUA.cong = Array.from({ length: nCot }, (_, j) => typeof cong[j] === "string" && cong[j].startsWith("="));
+      veFormThem();
+      const e = S.h.escapeHtml;
+      tt.innerHTML = `Thêm 1 dòng mới vào cuối Google Sheets “${e(b.nguon)}” › ${e(b.bang)} (sau dòng ${cuoi}). Điền các ô cần thiết rồi bấm Save.`;
+      luu.disabled = false;
+    } catch (err) { tt.textContent = err && err.message ? err.message : String(err); }
+  }
+  // dòng cuối có dữ liệu (theo cột ID / toạ độ / cột A) và số cột của bảng
+  async function dongCuoi(b) {
+    const cot = [...new Set([b.cot.id, b.cot.ll, b.cot.lat, 0].filter((j) => j >= 0))];
+    const v = await api(`${URL_GS}${b.id}/values:batchGet?${cot.map((j) => "ranges=" + encodeURIComponent(`${tenTab(b.bang)}!${cotChu(j)}:${cotChu(j)}`)).join("&")}&majorDimension=COLUMNS`);
+    const ds = (v.valueRanges || []).map((x) => (x.values && x.values[0]) || []);
+    const hdr = await api(`${URL_GS}${b.id}/values/${encodeURIComponent(`${tenTab(b.bang)}!1:1`)}?majorDimension=ROWS`);
+    const nCot = Math.max(b.header.length, ((hdr.values && hdr.values[0]) || []).length);
+    return { cuoi: Math.max(1, ...ds.map((c) => c.length)), nCot, ds, cot };
+  }
+  function moThem(vt) {
+    const ds = bangThem();
+    if (!ds.length) { S.h.toast("Chưa có dữ liệu thửa đất — bấm nút Thửa đất để tải trước"); return; }
+    if (S.popup) S.popup.remove();
+    const nhieu = ds.slice().sort((a, b) => b[0].rows.length - a[0].rows.length)[0][1];
+    Object.assign(SUA, { che: "them", vt: vt || viTriGoiY(), d: null, moi: null });
+    $("td-dlg-tieude").textContent = "Thêm thửa mới";
+    if (!$("td-dlg").open) $("td-dlg").showModal();
+    chuanBiThem(SUA.bi >= 0 && ds.some(([, i]) => i === SUA.bi) ? SUA.bi : nhieu);
+  }
+  async function luuThem() {
+    const b = S.bang[SUA.bi], tt = $("td-dlg-tt"), luu = $("td-dlg-luu");
+    const gt = new Map([...$("td-dlg-form").querySelectorAll("[data-j]:not([disabled])")].map((el) => [Number(el.dataset.j), el.value.trim()]));
+    if (b.cot.ll >= 0 && !docLatLon(gt.get(b.cot.ll))) { tt.textContent = "Toạ độ không đúng dạng “vĩ độ, kinh độ” (trong Việt Nam) — sửa lại rồi bấm Save."; return; }
+    if (b.cot.ll < 0 && !viTri(b, Object.assign([], { [b.cot.lat]: gt.get(b.cot.lat), [b.cot.lon]: gt.get(b.cot.lon) }))) { tt.textContent = "Vĩ độ / kinh độ không hợp lệ."; return; }
+    luu.disabled = true;
+    try {
+      tt.textContent = "Đang xin quyền sửa bảng tính…";
+      await layToken(true);
+      tt.textContent = "Đang thêm dòng mới…";
+      const m = await api(`${URL_GS}${b.id}?fields=sheets.properties(sheetId,title,gridProperties.rowCount)`);
+      const tab = (m.sheets || []).map((x) => x.properties).find((p) => p.title === b.bang);
+      if (!tab) throw new Error(`Không thấy tab “${b.bang}” trên bảng tính nữa`);
+      const { cuoi, nCot, ds, cot } = await dongCuoi(b);
+      // ID mới
+      let idMoi = "";
+      if (b.cot.id >= 0 && !SUA.cong[b.cot.id]) {
+        const ids = (ds[cot.indexOf(b.cot.id)] || []).slice(1).map((x) => String(x).trim()).filter(Boolean);
+        if (ids.length && ids.every((x) => /^\d+$/.test(x))) idMoi = String(Math.max(...ids.map(Number)) + 1);
+        else { const co = new Set(ids); do { idMoi = Math.random().toString(16).slice(2, 10); } while (co.has(idMoi)); }
+      }
+      const sheetId = tab.sheetId, R = cuoi;                // dòng mới: chỉ số 0-based = cuoi (ngay sau dòng cuối)
+      const cong = cuoi > 1 ? (await docDong(b, cuoi, nCot, "FORMULA")).map((v) => typeof v === "string" && v.startsWith("=")) : [];
+      const giaTri = (v) => v === "" ? {} : /^-?\d+(\.\d+)?$/.test(v) && !/^0\d/.test(v) ? { userEnteredValue: { numberValue: Number(v) } } : { userEnteredValue: { stringValue: v } };
+      const soDongLuoi = (tab.gridProperties && tab.gridProperties.rowCount) || 0;
+      const req = [R < soDongLuoi ? { insertDimension: { range: { sheetId, dimension: "ROWS", startIndex: R, endIndex: R + 1 }, inheritFromBefore: R > 1 } }
+        : { appendDimension: { sheetId, dimension: "ROWS", length: 1 } }];
+      if (cong.some(Boolean)) req.push({ copyPaste: { source: { sheetId, startRowIndex: R - 1, endRowIndex: R, startColumnIndex: 0, endColumnIndex: nCot },
+        destination: { sheetId, startRowIndex: R, endRowIndex: R + 1, startColumnIndex: 0, endColumnIndex: nCot }, pasteType: "PASTE_FORMULA" } });
+      for (let j = 0; j < nCot; j++) {
+        if (cong[j]) continue;                              // cột công thức: giữ công thức vừa chép xuống
+        const v = j === b.cot.id ? idMoi : gt.has(j) ? gt.get(j) : "";
+        req.push({ updateCells: { start: { sheetId, rowIndex: R, columnIndex: j }, rows: [{ values: [giaTri(v)] }], fields: "userEnteredValue" } });
+      }
+      await api(`${URL_GS}${b.id}:batchUpdate`, { requests: req });
+      const moi = await docDong(b, R + 1, nCot, "FORMATTED_VALUE");
+      while (b.rows.length < R - 1) b.rows.push([]);
+      b.rows[R - 1] = moi;
+      lapDiem(); veLop(); giaoDien(); capNhatGan(S.rows);
+      try { await dbLuu({ bang: S.bang, luc: S.luc }); } catch (_) { /* bỏ qua */ }
+      $("td-dlg").close();
+      const i = S.diem.findIndex((x) => x.b === SUA.bi && x.r === R - 1);
+      if (i >= 0) moThua(i, true);
+      S.h.toast(`Đã thêm thửa mới${idMoi ? ` (ID ${idMoi})` : ""} vào dòng ${R + 1} — AppSheet thấy sau khi đồng bộ`, 6000);
+    } catch (err) { tt.textContent = err && err.message ? err.message : String(err); luu.disabled = false; }
+  }
+
   function init(map, helpers) {
     S.map = map; S.h = helpers;
     const q = new URLSearchParams(location.search);
@@ -445,7 +560,9 @@
       veLop(); giaoDien();
     });
     $("td-capnhat").addEventListener("click", taiVe);
-    $("td-dlg-luu").addEventListener("click", luuSua);
+    $("td-dlg-luu").addEventListener("click", () => (SUA.che === "them" ? luuThem() : luuSua()));
+    $("td-dlg-form").addEventListener("change", (ev) => { if (ev.target.id === "td-them-bang") chuanBiThem(Number(ev.target.value)); });
+    $("td-them").addEventListener("click", () => moThem());
     $("td-dlg-huy").addEventListener("click", () => $("td-dlg").close());
     let hen = 0;
     $("td-tim").addEventListener("input", () => { clearTimeout(hen); hen = setTimeout(timKiem, 200); });
@@ -459,6 +576,7 @@
       S.bk = Number(ev.target.value) || 300; LS.set("bk", String(S.bk)); capNhatGan(S.rows);
     });
     for (const id of ["td-kq", "td-gan"]) $(id).addEventListener("click", (ev) => { const li = ev.target.closest("li[data-i]"); if (li) moThua(Number(li.dataset.i), true); });
+    $("td-gan").addEventListener("click", (ev) => { if (ev.target.closest("[data-them]")) moThem(); });
     map.on("click", "td-diem", (ev) => { const f = ev.features && ev.features[0]; if (f) moThua(f.properties.i, false); });
     map.on("click", "td-cum", async (ev) => {
       const f = ev.features && ev.features[0]; if (!f) return;

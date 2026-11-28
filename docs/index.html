@@ -7,25 +7,25 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.28d">
+<link rel="stylesheet" href="css/style.css?v=2026.11.28e">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.28d"></script>
-<script src="js/parse.js?v=2026.11.28d"></script>
-<script src="js/geo.js?v=2026.11.28d"></script>
-<script src="js/export.js?v=2026.11.28d"></script>
-<script src="js/giadat.js?v=2026.11.28d"></script>
-<script src="js/lopfile.js?v=2026.11.28d"></script>
-<script src="js/anhbay.js?v=2026.11.28d"></script>
-<script src="js/goianh.js?v=2026.11.28d"></script>
-<script src="js/thuadat-config.js?v=2026.11.28d"></script>
-<script src="js/thuadat.js?v=2026.11.28d"></script>
-<script src="js/chupanh.js?v=2026.11.28d"></script>
-<script src="js/ocrtoado.js?v=2026.11.28d"></script>
-<script src="js/thongke-config.js?v=2026.11.28d"></script>
-<script src="js/thongke.js?v=2026.11.28d"></script>
-<script src="js/google.js?v=2026.11.28d"></script>
+<script src="js/converter.js?v=2026.11.28e"></script>
+<script src="js/parse.js?v=2026.11.28e"></script>
+<script src="js/geo.js?v=2026.11.28e"></script>
+<script src="js/export.js?v=2026.11.28e"></script>
+<script src="js/giadat.js?v=2026.11.28e"></script>
+<script src="js/lopfile.js?v=2026.11.28e"></script>
+<script src="js/anhbay.js?v=2026.11.28e"></script>
+<script src="js/goianh.js?v=2026.11.28e"></script>
+<script src="js/thuadat-config.js?v=2026.11.28e"></script>
+<script src="js/thuadat.js?v=2026.11.28e"></script>
+<script src="js/chupanh.js?v=2026.11.28e"></script>
+<script src="js/ocrtoado.js?v=2026.11.28e"></script>
+<script src="js/thongke-config.js?v=2026.11.28e"></script>
+<script src="js/thongke.js?v=2026.11.28e"></script>
+<script src="js/google.js?v=2026.11.28e"></script>
 </head>
 <body>
 <div class="layout">
@@ -271,6 +271,7 @@
     </button>
     <div id="td-hop" class="td-hop" hidden>
       <div class="td-dong"><span id="td-tt" class="td-tt"></span><button type="button" id="td-capnhat" class="td-nut" title="Cập nhật từ Google Sheets" aria-label="Cập nhật">⟳</button></div>
+      <button type="button" id="td-them" class="td-them">＋ Thêm thửa mới</button>
       <input id="td-tim" type="search" placeholder="Tìm tên, tờ, thửa…" autocomplete="off" aria-label="Tìm thửa đất">
       <div id="td-kq" class="td-kq" hidden></div>
       <button type="button" id="td-xoa" class="td-xoa">Xoá dữ liệu khỏi máy này</button>
@@ -331,6 +332,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.28d"></script>
+<script src="js/app.js?v=2026.11.28e"></script>
 </body>
 </html>
