@@ -2,6 +2,10 @@
  * Thửa đất của tôi — chế độ ẩn, chỉ chủ ứng dụng thấy (cùng cờ quản trị với Thống kê: mở trang 1 lần bằng
  * ?thongke hoặc ?thuadat trên máy đó; thoát chế độ quản trị trong hộp Thống kê).
  *
+ * Giao diện: nút "Thửa đất" trong khung "Lớp bản đồ" (chỉ máy đã bật chế độ quản trị thấy) — bấm lần đầu tự đăng nhập
+ * Google và tải, sau đó bật / tắt chấm thửa; ô nhỏ dưới nút: số thửa, giờ cập nhật, ⟳ cập nhật, tìm kiếm.
+ * Bảng tính gắn sẵn trong thuadat-config.js (VN_THUADAT_BANG; bảng để chế độ "Bị hạn chế" nên lộ link cũng không đọc được).
+ *
  * Đọc dữ liệu AppSheet nằm trong Google Sheets bằng chính tài khoản Google của người dùng
  * (Google Identity Services, quyền CHỈ ĐỌC spreadsheets.readonly; mã khách OAuth ở thuadat-config.js — mã này công khai,
  * không phải bí mật). Mỗi bảng (tab) có cột toạ độ dạng "vĩ độ, kinh độ" (kiểu LatLong của AppSheet) hoặc 2 cột
@@ -15,7 +19,7 @@
   "use strict";
   const VN = (root.VN = root.VN || {});
   const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
-  const S = { map: null, h: null, bang: [], diem: [], luc: 0, token: null, het: 0, popup: null, so: new Map(), rows: [], hien: true, bk: 300 };
+  const S = { map: null, h: null, bang: [], diem: [], luc: 0, token: null, het: 0, popup: null, so: new Map(), rows: [], hien: true, bk: 300, dang: "" };
   const LS = {
     get: (k, d) => { try { const v = localStorage.getItem("vn_td_" + k); return v == null ? d : v; } catch (_) { return d; } },
     set: (k, v) => { try { if (v == null) localStorage.removeItem("vn_td_" + k); else localStorage.setItem("vn_td_" + k, v); } catch (_) { /* bỏ qua */ } },
@@ -222,6 +226,9 @@
     S.popup = new root.maplibregl.Popup({ offset: 8, maxWidth: "360px" }).setLngLat([d.lon, d.lat]).setHTML(popupHtml(i)).addTo(S.map);
   }
   const gio = (t) => t ? new Date(t).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }) : "";
+  // gọn: trong ngày chỉ giờ, ngày khác thêm ngày/tháng
+  const gioNgan = (t) => { if (!t) return ""; const d = new Date(t), h = d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    return d.toDateString() === new Date().toDateString() ? h : `${h} ${d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })}`; };
 
   // ======================================================================= gợi ý thửa gần các điểm vừa chuyển
   function capNhatGan(rows) {
@@ -239,88 +246,109 @@
     });
     gan.sort((a, b) => a[0] - b[0]);
     const e = S.h.escapeHtml;
-    let html = `<div><strong>🔒 Thửa đất trong dữ liệu của anh gần ${S.rows.length >= 3 ? "các điểm / tâm thửa" : "điểm"}</strong> <small class="muted">(bán kính ${R} m)</small></div>`;
+    const chon = [100, 300, 500, 1000].map((v) => `<option value="${v}"${v === R ? " selected" : ""}>${v < 1000 ? v + " m" : "1 km"}</option>`).join("");
+    let html = `<div class="td-dau"><strong>Thửa đất gần đây</strong><label>trong <select data-bk>${chon}</select></label></div>`;
     if (gan.length) {
       html += `<ul class="gd-list td-list">${gan.slice(0, 8).map(([m, i]) => { const t = tieuDe(S.diem[i]);
-        return `<li data-i="${i}"><span class="sw td-sw"></span><div><b>${e(t.ten)}</b> <small class="muted">· cách ${S.h.fmt(m, 0)} m</small>${t.phu ? `<div class="muted">${e(t.phu)}</div>` : ""}</div></li>`; }).join("")}</ul>`;
-      if (gan.length > 8) html += `<small class="muted">… và ${gan.length - 8} thửa khác trong bán kính.</small>`;
-    } else html += `<div class="muted">Không có thửa nào trong dữ liệu trong bán kính ${R} m.</div>`;
-    html += `<small class="muted" style="display:block;margin-top:4px">Theo vị trí ghim trong AppSheet (Google Sheets, đọc lúc ${e(gio(S.luc))}) — vị trí ghim không phải ranh thửa, chỉ để gợi ý.</small>`;
+        return `<li data-i="${i}"><span class="sw td-sw"></span><div><b>${e(t.ten)}</b> <small class="muted">· ${S.h.fmt(m, 0)} m</small>${t.phu ? `<div class="muted">${e(t.phu)}</div>` : ""}</div></li>`; }).join("")}</ul>`;
+      if (gan.length > 8) html += `<small class="muted">và ${gan.length - 8} thửa khác.</small>`;
+    } else html += `<div class="muted">Không có thửa nào trong phạm vi này.</div>`;
+    html += `<small class="muted td-chu">Theo vị trí ghim trong dữ liệu (${e(nguonNgan())}, cập nhật ${e(gioNgan(S.luc))}), không phải ranh thửa.</small>`;
     box.innerHTML = html; box.hidden = false;
   }
 
   // ======================================================================= tìm trong dữ liệu
   function timKiem() {
     const kq = $("td-kq"), q = boDau($("td-tim").value.trim());
-    if (q.length < 2) { kq.innerHTML = ""; return; }
+    if (q.length < 2) { kq.innerHTML = ""; kq.hidden = true; return; }
     const tu = q.split(/\s+/).filter(Boolean), out = [];
-    for (let i = 0; i < S.diem.length && out.length < 50; i++) {
+    for (let i = 0; i < S.diem.length && out.length < 30; i++) {
       const d = S.diem[i];
       if (d.tim == null) { const b = S.bang[d.b]; d.tim = boDau(b.rows[d.r].join(" ")); }
       if (tu.every((t) => d.tim.includes(t))) out.push(i);
     }
     const e = S.h.escapeHtml;
-    kq.innerHTML = out.length ? `<ul class="gd-list td-list">${out.map((i) => { const t = tieuDe(S.diem[i]);
-      return `<li data-i="${i}"><span class="sw td-sw"></span><div><b>${e(t.ten)}</b>${t.phu ? `<div class="muted">${e(t.phu)}</div>` : ""}</div></li>`; }).join("")}</ul>` +
-      (out.length >= 50 ? `<small class="muted">Chỉ hiện 50 kết quả đầu — gõ thêm để lọc.</small>` : "")
-      : `<small class="muted">Không thấy thửa nào khớp.</small>`;
+    kq.hidden = false;
+    kq.innerHTML = out.length ? `<ul class="td-list">${out.map((i) => { const t = tieuDe(S.diem[i]);
+      return `<li data-i="${i}"><b>${e(t.ten)}</b>${t.phu ? `<small>${e(t.phu)}</small>` : ""}</li>`; }).join("")}</ul>`
+      : `<small class="muted">Không thấy thửa nào.</small>`;
   }
 
   // ======================================================================= tải / hiện dữ liệu
-  function trangThai(chu) {
-    const tt = $("td-tt"); if (!tt) return;
-    if (chu != null) { tt.textContent = chu; return; }
-    if (!S.bang.length) { tt.textContent = maKhach() ? "Chưa có dữ liệu trên máy này — dán link bảng tính rồi bấm tải." : "Chưa cài mã đăng nhập Google (thuadat-config.js)."; return; }
-    const nguon = [...new Set(S.bang.map((b) => `“${b.nguon}” › ${b.bang}`))];
-    tt.textContent = `${S.diem.length.toLocaleString("vi-VN")} thửa có toạ độ · đọc lúc ${gio(S.luc)} · Nguồn: Google Sheets ${nguon.join("; ")} (dữ liệu AppSheet của anh).`;
+  // bảng tính: gắn sẵn trong thuadat-config.js (VN_THUADAT_BANG); bản cũ còn link dán tay trong máy thì dùng thêm
+  function dsBang() {
+    const ch = [].concat(root.VN_THUADAT_BANG || []), cu = LS.get("link", "");
+    return [...new Set(ch.concat(cu.split(/[\n\s]+/)).map(maBang).filter(Boolean))];
+  }
+  const nguonNgan = () => [...new Set(S.bang.map((b) => b.nguon))].join(", ") || "Google Sheets";
+  function giaoDien() {
+    const nut = $("td-toggle"), hop = $("td-hop");
+    const bat = S.hien && S.diem.length > 0;
+    nut.setAttribute("aria-pressed", bat ? "true" : "false");
+    nut.classList.toggle("dang", S.dang);
+    hop.hidden = !bat && !S.dang;
+    const tt = $("td-tt");
+    if (S.dang) tt.textContent = S.dang;
+    else if (S.diem.length) {
+      tt.textContent = `${S.diem.length.toLocaleString("vi-VN")} thửa · cập nhật ${gioNgan(S.luc)}`;
+      tt.title = `Nguồn: Google Sheets ${[...new Set(S.bang.map((b) => `“${b.nguon}” › ${b.bang}`))].join("; ")} (dữ liệu AppSheet)`;
+    } else tt.textContent = "";
+    $("td-capnhat").disabled = !!S.dang;
   }
   function apDung(dl) {
     S.bang = (dl && dl.bang) || []; S.luc = (dl && dl.luc) || 0;
-    lapDiem(); veLop(); trangThai(); capNhatGan(S.rows);
-    $("td-xoa").hidden = !S.bang.length;
+    lapDiem(); veLop(); giaoDien(); capNhatGan(S.rows);
     if ($("td-tim").value) timKiem();
   }
   async function taiVe() {
-    const ids = [...new Set($("td-link").value.split(/[\n\s]+/).map(maBang).filter(Boolean))];
-    if (!ids.length) { S.h.toast("Dán link bảng tính Google Sheets (dạng https://docs.google.com/spreadsheets/d/…)"); $("td-link").focus(); return; }
-    LS.set("link", $("td-link").value.trim());
-    const nut = $("td-tai"); nut.disabled = true;
+    if (S.dang) return;
+    const ids = dsBang();
+    if (!ids.length) { S.h.toast("Chưa gắn bảng tính dữ liệu thửa đất (VN_THUADAT_BANG trong thuadat-config.js)"); return; }
+    S.dang = "Đang đăng nhập Google…"; giaoDien();
     try {
-      trangThai("Đang đăng nhập Google…");
       await layToken();
       const bang = [];
       for (const id of ids) {
-        trangThai(`Đang đọc bảng tính ${bang.length ? "tiếp theo" : ""}…`);
+        S.dang = "Đang đọc dữ liệu…"; giaoDien();
         for (const t of await docBangTinh(id)) { const p = phanTich(t.values); if (p) bang.push({ id: t.id, nguon: t.nguon, bang: t.bang, ...p }); }
       }
       if (!bang.length) throw new Error("Không thấy bảng nào có cột toạ độ (dạng “vĩ độ, kinh độ” hoặc 2 cột Vĩ độ / Kinh độ)");
       const dl = { bang, luc: Date.now() };
+      S.dang = ""; S.hien = true; LS.set("hien", "1");
       apDung(dl);
       try { await dbLuu(dl); } catch (_) { /* không lưu được thì vẫn dùng trong phiên này */ }
-      S.h.toast(`Đã tải ${S.diem.length.toLocaleString("vi-VN")} thửa có toạ độ từ ${bang.length} bảng`);
+      S.h.toast(`Đã cập nhật ${S.diem.length.toLocaleString("vi-VN")} thửa đất`);
     } catch (err) {
-      trangThai(); S.h.toast(err && err.message ? err.message : String(err), 7000);
-    } finally { nut.disabled = false; }
+      S.dang = ""; giaoDien();
+      S.h.toast(err && err.message ? err.message : String(err), 7000);
+    }
   }
 
   function init(map, helpers) {
     S.map = map; S.h = helpers;
     const q = new URLSearchParams(location.search);
     if (q.has("thuadat") || /thuadat/.test(location.hash)) { try { localStorage.setItem("vn_tk_admin", "1"); } catch (_) { /* bỏ qua */ } }
-    const card = $("td-card");
-    if (!card || !laQuanTri()) return;                   // người dùng thường: không hiện gì, không tải gì
-    card.hidden = false;
+    const nut = $("td-toggle");
+    if (!nut || !laQuanTri()) return;                    // người dùng thường: không hiện gì, không tải gì
+    nut.hidden = false;
     S.hien = LS.get("hien", "1") === "1"; S.bk = Number(LS.get("bk", "300")) || 300;
-    $("td-hien").checked = S.hien; $("td-bk").value = String(S.bk);
-    $("td-link").value = LS.get("link", "");
-    $("td-tai").addEventListener("click", taiVe);
-    $("td-hien").addEventListener("change", (ev) => { S.hien = ev.target.checked; LS.set("hien", S.hien ? "1" : "0"); veLop(); });
-    $("td-bk").addEventListener("change", (ev) => { S.bk = Number(ev.target.value) || 300; LS.set("bk", String(S.bk)); capNhatGan(S.rows); });
+    nut.addEventListener("click", () => {
+      if (S.dang) return;
+      if (!S.diem.length) { taiVe(); return; }           // chưa có dữ liệu trên máy: đăng nhập + tải
+      S.hien = !S.hien; LS.set("hien", S.hien ? "1" : "0");
+      veLop(); giaoDien();
+    });
+    $("td-capnhat").addEventListener("click", taiVe);
     let hen = 0;
     $("td-tim").addEventListener("input", () => { clearTimeout(hen); hen = setTimeout(timKiem, 200); });
     $("td-xoa").addEventListener("click", async () => {
-      await dbXoa(); S.token = null; apDung(null); $("td-kq").innerHTML = "";
+      await dbXoa(); S.token = null; S.hien = false; LS.set("hien", "0"); LS.set("link", null);
+      $("td-tim").value = ""; timKiem(); apDung(null);
       S.h.toast("Đã xoá dữ liệu thửa đất khỏi máy này");
+    });
+    $("td-gan").addEventListener("change", (ev) => {
+      if (!ev.target.matches("[data-bk]")) return;
+      S.bk = Number(ev.target.value) || 300; LS.set("bk", String(S.bk)); capNhatGan(S.rows);
     });
     for (const id of ["td-kq", "td-gan"]) $(id).addEventListener("click", (ev) => { const li = ev.target.closest("li[data-i]"); if (li) moThua(Number(li.dataset.i), true); });
     map.on("click", "td-diem", (ev) => { const f = ev.features && ev.features[0]; if (f) moThua(f.properties.i, false); });
@@ -336,7 +364,7 @@
     map.on("moveend", veSo);
     map.on("sourcedata", (ev) => { if (ev.sourceId === "td" && ev.isSourceLoaded) veSo(); });
     if (maKhach()) napGis().catch(() => {});             // nạp sẵn để cửa sổ đăng nhập mở ngay khi bấm (trình duyệt không chặn)
-    trangThai("Đang mở dữ liệu đã lưu trên máy…");
+    giaoDien();
     dbDoc().then((dl) => apDung(dl)).catch(() => apDung(null));
   }
 
