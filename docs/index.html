@@ -7,25 +7,25 @@
 <meta name="description" content="Chuyển đổi toạ độ VN-2000 ⇄ WGS84, xem trên bản đồ, tính diện tích, xuất KML/DXF/CSV.">
 <link rel="icon" href="assets/logo.jpg">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<link rel="stylesheet" href="css/style.css?v=2026.11.28b">
+<link rel="stylesheet" href="css/style.css?v=2026.11.28c">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@4.3.0/dist/pmtiles.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/geographiclib-geodesic@2.0.0/geographiclib-geodesic.min.js"></script>
-<script src="js/converter.js?v=2026.11.28b"></script>
-<script src="js/parse.js?v=2026.11.28b"></script>
-<script src="js/geo.js?v=2026.11.28b"></script>
-<script src="js/export.js?v=2026.11.28b"></script>
-<script src="js/giadat.js?v=2026.11.28b"></script>
-<script src="js/lopfile.js?v=2026.11.28b"></script>
-<script src="js/anhbay.js?v=2026.11.28b"></script>
-<script src="js/goianh.js?v=2026.11.28b"></script>
-<script src="js/thuadat-config.js?v=2026.11.28b"></script>
-<script src="js/thuadat.js?v=2026.11.28b"></script>
-<script src="js/chupanh.js?v=2026.11.28b"></script>
-<script src="js/ocrtoado.js?v=2026.11.28b"></script>
-<script src="js/thongke-config.js?v=2026.11.28b"></script>
-<script src="js/thongke.js?v=2026.11.28b"></script>
-<script src="js/google.js?v=2026.11.28b"></script>
+<script src="js/converter.js?v=2026.11.28c"></script>
+<script src="js/parse.js?v=2026.11.28c"></script>
+<script src="js/geo.js?v=2026.11.28c"></script>
+<script src="js/export.js?v=2026.11.28c"></script>
+<script src="js/giadat.js?v=2026.11.28c"></script>
+<script src="js/lopfile.js?v=2026.11.28c"></script>
+<script src="js/anhbay.js?v=2026.11.28c"></script>
+<script src="js/goianh.js?v=2026.11.28c"></script>
+<script src="js/thuadat-config.js?v=2026.11.28c"></script>
+<script src="js/thuadat.js?v=2026.11.28c"></script>
+<script src="js/chupanh.js?v=2026.11.28c"></script>
+<script src="js/ocrtoado.js?v=2026.11.28c"></script>
+<script src="js/thongke-config.js?v=2026.11.28c"></script>
+<script src="js/thongke.js?v=2026.11.28c"></script>
+<script src="js/google.js?v=2026.11.28c"></script>
 </head>
 <body>
 <div class="layout">
@@ -137,6 +137,16 @@
       <ul id="lf-ds" class="lf-ds" hidden></ul>
       <button type="button" id="lf-xuat-tat" class="btn small lf-xuat-tat" hidden title="Gộp mọi ảnh trực giao đang mở thành 1 file .pmtiles để mở nhanh trên điện thoại"></button>
     </section>
+
+    <dialog id="td-dlg" class="lf-dlg td-dlg" aria-labelledby="td-dlg-tieude">
+      <h3 id="td-dlg-tieude">Sửa thông tin thửa</h3>
+      <p id="td-dlg-tt" class="muted small"></p>
+      <form id="td-dlg-form" class="td-form" onsubmit="return false"></form>
+      <div class="row lf-dlg-nut">
+        <button type="button" id="td-dlg-huy" class="btn ghost">Huỷ</button>
+        <button type="button" id="td-dlg-luu" class="btn primary">Lưu vào Google Sheets</button>
+      </div>
+    </dialog>
 
     <button type="button" id="tk-mo" class="tk-mo" hidden title="Xem thống kê lượt truy cập (chỉ chủ ứng dụng)">📊 Thống kê truy cập</button>
 
@@ -321,6 +331,6 @@
     <div id="toast" class="toast" role="status" hidden></div>
   </main>
 </div>
-<script src="js/app.js?v=2026.11.28b"></script>
+<script src="js/app.js?v=2026.11.28c"></script>
 </body>
 </html>

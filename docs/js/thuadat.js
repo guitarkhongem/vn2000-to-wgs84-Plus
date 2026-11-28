@@ -12,6 +12,9 @@
  * vĩ độ / kinh độ → chấm vị trí thửa lên bản đồ (gom cụm khi thu nhỏ), bấm xem toàn bộ thông tin dòng đó;
  * sau mỗi lần chuyển toạ độ gợi ý các thửa trong dữ liệu ở gần (app.js gọi VN.thuaDatRows).
  *
+ * Sửa / bổ sung: nút ✏️ trong ô thông tin thửa → hộp sửa mọi cột (ô có công thức bị khoá) → ghi thẳng vào Google Sheets
+ * (xin thêm quyền "spreadsheets" khi bấm Lưu lần đầu; tìm lại dòng theo cột ID; không ghi đè ô vừa bị sửa trên AppSheet).
+ *
  * Dữ liệu chỉ đi giữa trình duyệt và Google, không qua máy chủ nào khác, không nằm trong mã nguồn. Lưu tạm trên
  * máy đang dùng (IndexedDB "vn_thuadat") để lần sau mở nhanh / không cần mạng; nút "Xoá khỏi máy" xoá hẳn.
  */
@@ -19,7 +22,8 @@
   "use strict";
   const VN = (root.VN = root.VN || {});
   const SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
-  const S = { map: null, h: null, bang: [], diem: [], luc: 0, token: null, het: 0, popup: null, so: new Map(), rows: [], hien: true, bk: 300, dang: "" };
+  const SCOPE_GHI = "https://www.googleapis.com/auth/spreadsheets";   // chỉ xin khi bấm "Lưu" lần đầu (sửa thông tin thửa)
+  const S = { map: null, h: null, bang: [], diem: [], luc: 0, token: null, het: 0, ghi: false, popup: null, so: new Map(), rows: [], hien: true, bk: 300, dang: "" };
   const LS = {
     get: (k, d) => { try { const v = localStorage.getItem("vn_td_" + k); return v == null ? d : v; } catch (_) { return d; } },
     set: (k, v) => { try { if (v == null) localStorage.removeItem("vn_td_" + k); else localStorage.setItem("vn_td_" + k, v); } catch (_) { /* bỏ qua */ } },
@@ -110,16 +114,20 @@
     });
     return gisHua;
   }
-  async function layToken() {
-    if (S.token && Date.now() < S.het - 60000) return S.token;
+  // ghi = true: xin thêm quyền sửa bảng tính (Google hỏi đồng ý 1 lần); mã có quyền sửa cũng dùng để đọc
+  async function layToken(ghi) {
+    if (S.token && Date.now() < S.het - 60000 && (!ghi || S.ghi)) return S.token;
     if (!maKhach()) throw new Error("Chưa cài mã đăng nhập Google (VN_GOOGLE_CLIENT_ID trong js/thuadat-config.js)");
     await napGis();
     return new Promise((res, rej) => {
       const tc = root.google.accounts.oauth2.initTokenClient({
-        client_id: maKhach(), scope: SCOPE, hint: LS.get("email", "") || undefined,
+        client_id: maKhach(), scope: ghi ? `${SCOPE} ${SCOPE_GHI}` : SCOPE, include_granted_scopes: true, hint: LS.get("email", "") || undefined,
         callback: (r) => {
           if (!r || r.error) { rej(new Error(r && (r.error_description || r.error) || "Đăng nhập Google lỗi")); return; }
-          S.token = r.access_token; S.het = Date.now() + (Number(r.expires_in) || 3600) * 1000; res(S.token);
+          const co = String(r.scope || "").split(/\s+/);
+          if (ghi && r.scope && !co.includes(SCOPE_GHI)) { rej(new Error("Chưa cho phép quyền sửa bảng tính — bấm Lưu lại và đánh dấu cho phép “xem, chỉnh sửa… bảng tính”")); return; }
+          S.token = r.access_token; S.het = Date.now() + (Number(r.expires_in) || 3600) * 1000;
+          S.ghi = co.includes(SCOPE_GHI) || (ghi && !r.scope); res(S.token);
         },
         error_callback: (e) => rej(new Error(e && e.type === "popup_closed" ? "Đã đóng cửa sổ đăng nhập Google"
           : e && e.type === "popup_failed_to_open" ? "Trình duyệt chặn cửa sổ đăng nhập — cho phép cửa sổ bật lên rồi bấm lại" : "Đăng nhập Google lỗi")),
@@ -127,10 +135,12 @@
       tc.requestAccessToken({ prompt: "" });
     });
   }
-  async function api(url) {
-    const r = await fetch(url, { headers: { Authorization: "Bearer " + S.token } });
-    if (r.status === 401) { S.token = null; throw new Error("Phiên đăng nhập Google đã hết — bấm tải lại"); }
-    if (r.status === 403) throw new Error("Tài khoản Google này không có quyền xem bảng tính (hoặc dự án chưa bật Google Sheets API)");
+  async function api(url, than) {
+    const r = await fetch(url, than ? { method: "POST", headers: { Authorization: "Bearer " + S.token, "Content-Type": "application/json" }, body: JSON.stringify(than) }
+      : { headers: { Authorization: "Bearer " + S.token } });
+    if (r.status === 401) { S.token = null; S.ghi = false; throw new Error("Phiên đăng nhập Google đã hết — bấm lại"); }
+    if (r.status === 403) throw new Error(than ? "Tài khoản Google này không có quyền sửa bảng tính (cần quyền Người chỉnh sửa)"
+      : "Tài khoản Google này không có quyền xem bảng tính (hoặc dự án chưa bật Google Sheets API)");
     if (r.status === 404) throw new Error("Không tìm thấy bảng tính — kiểm tra lại link");
     if (!r.ok) throw new Error(`Google Sheets trả lỗi ${r.status}`);
     return r.json();
@@ -217,13 +227,104 @@
     const dong = b.header.map((h, j) => [h, o(r, j)]).filter(([, v]) => v);
     return `<div class="td-pop"><b>${e(t.ten)}</b>${t.phu ? `<div class="muted">${e(t.phu)}</div>` : ""}` +
       `<table>${dong.map(([h, v]) => `<tr><th>${e(h)}</th><td>${lienKet(v)}</td></tr>`).join("")}</table>` +
-      `<small class="muted">Nguồn: Google Sheets “${e(b.nguon)}” › ${e(b.bang)}, dòng ${d.r + 2} · đọc lúc ${e(gio(S.luc))}</small></div>`;
+      `<small class="muted">Nguồn: Google Sheets “${e(b.nguon)}” › ${e(b.bang)}, dòng ${d.r + 2} · đọc lúc ${e(gio(S.luc))}</small>` +
+      `<div class="td-pop-nut"><button type="button" data-sua="${i}">✏️ Sửa / bổ sung thông tin</button></div></div>`;
   }
   function moThua(i, bay) {
     const d = S.diem[i]; if (!d || !S.map) return;
     if (bay) S.map.flyTo({ center: [d.lon, d.lat], zoom: Math.max(S.map.getZoom(), 18) });
     if (S.popup) S.popup.remove();
     S.popup = new root.maplibregl.Popup({ offset: 8, maxWidth: "360px" }).setLngLat([d.lon, d.lat]).setHTML(popupHtml(i)).addTo(S.map);
+    const el = S.popup.getElement && S.popup.getElement();
+    if (el) el.addEventListener("click", (ev) => { const b = ev.target.closest("[data-sua]"); if (b) moSua(Number(b.dataset.sua)); });
+  }
+
+  // ======================================================================= sửa / bổ sung thông tin (ghi thẳng vào Google Sheets)
+  // An toàn: lấy dòng mới nhất trước khi sửa; tìm lại dòng theo cột ID nếu bảng đã thêm / xoá dòng; ô có công thức không cho sửa;
+  // trước khi ghi kiểm tra ô cần sửa chưa bị ai đổi trên AppSheet trong lúc đang sửa; chỉ ghi các ô đã đổi.
+  const cotChu = (j) => { let t = "", n = j + 1; while (n > 0) { const m = (n - 1) % 26; t = String.fromCharCode(65 + m) + t; n = Math.floor((n - 1) / 26); } return t; };
+  const tenTab = (t) => `'${String(t).replace(/'/g, "''")}'`;
+  const URL_GS = "https://sheets.googleapis.com/v4/spreadsheets/";
+  async function docDong(b, so, nCot, che) {
+    const rg = encodeURIComponent(`${tenTab(b.bang)}!A${so}:${cotChu(nCot - 1)}${so}`);
+    const v = await api(`${URL_GS}${b.id}/values/${rg}?majorDimension=ROWS&valueRenderOption=${che}`);
+    return (v.values && v.values[0]) || [];
+  }
+  const giong = (x, y, n) => { for (let j = 0; j < n; j++) if (o(x, j) !== o(y, j)) return false; return true; };
+  // số dòng hiện tại trên bảng tính của bản ghi d (dòng có thể đã dịch nếu AppSheet thêm / xoá dòng phía trên)
+  async function timDong(d) {
+    const b = S.bang[d.b], r = b.rows[d.r], nCot = Math.max(b.header.length, r.length), idj = b.cot.id, id = o(r, idj);
+    let so = d.r + 2, moi = await docDong(b, so, nCot, "FORMATTED_VALUE");
+    if (idj >= 0 && id) {
+      if (o(moi, idj) !== id) {
+        const v = await api(`${URL_GS}${b.id}/values/${encodeURIComponent(`${tenTab(b.bang)}!${cotChu(idj)}:${cotChu(idj)}`)}?majorDimension=COLUMNS`);
+        const cot = (v.values && v.values[0]) || [], k = cot.findIndex((x, i) => i > 0 && String(x).trim() === id);
+        if (k < 0) throw new Error(`Không thấy thửa ID ${id} trên bảng tính nữa (có thể đã bị xoá) — bấm ⟳ để cập nhật`);
+        so = k + 1; moi = await docDong(b, so, nCot, "FORMATTED_VALUE");
+      }
+    } else if (!giong(moi, r, nCot)) throw new Error("Dòng này trên Google Sheets đã thay đổi — bấm ⟳ cập nhật rồi sửa lại");
+    return { so, moi, nCot };
+  }
+  const SUA = { i: -1, d: null, so: 0, moi: null, nCot: 0, cong: [] };
+  async function moSua(i) {
+    const d = S.diem[i]; if (!d) return;
+    const b = S.bang[d.b], dlg = $("td-dlg"), form = $("td-dlg-form"), tt = $("td-dlg-tt"), luu = $("td-dlg-luu"), e = S.h.escapeHtml;
+    Object.assign(SUA, { i, d, so: 0, moi: null });
+    $("td-dlg-tieude").textContent = `Sửa thông tin — ${tieuDe(d).ten}`;
+    form.innerHTML = ""; luu.disabled = true;
+    tt.textContent = "Đang lấy dữ liệu mới nhất từ Google Sheets…";
+    if (!dlg.open) dlg.showModal();
+    try {
+      await layToken();
+      const { so, moi, nCot } = await timDong(d);
+      const cong = await docDong(b, so, nCot, "FORMULA");
+      const cuDoi = !giong(moi, b.rows[d.r], nCot);
+      Object.assign(SUA, { so, moi, nCot, cong: cong.map((v) => typeof v === "string" && v.startsWith("=")) });
+      const ll = b.cot.ll;
+      form.innerHTML = Array.from({ length: Math.max(nCot, b.header.length) }, (_, j) => {
+        const h = b.header[j] || `Cột ${cotChu(j)}`, v = o(moi, j), laId = j === b.cot.id, khoa = SUA.cong[j] || laId, dai = v.length > 60;
+        const o2 = `id="td-o-${j}" data-j="${j}" ${khoa ? "disabled" : ""} value="${e(v)}"`;
+        return `<label for="td-o-${j}" title="Cột ${cotChu(j)}">${e(h)}</label>` +
+          (dai && !khoa ? `<textarea id="td-o-${j}" data-j="${j}" rows="3">${e(v)}</textarea>` : `<input type="text" ${o2}>`) +
+          (laId ? `<small class="td-goi">Mã dòng (khoá của AppSheet) — không sửa</small>` : khoa ? `<small class="td-goi">Ô có công thức — sửa trong Google Sheets</small>` : j === ll ? `<small class="td-goi">Vĩ độ, kinh độ (WGS84) — vd 16.6124, 106.5925</small>` : "");
+      }).join("");
+      tt.innerHTML = `Google Sheets “${e(b.nguon)}” › ${e(b.bang)}, dòng ${so}${so !== d.r + 2 ? " (dòng đã dịch so với lúc tải)" : ""}.` +
+        (cuDoi ? " <b>Dữ liệu vừa được cập nhật theo bản mới nhất trên Google Sheets.</b>" : "") + " Chỉ những ô anh đổi mới được ghi.";
+      luu.disabled = false;
+    } catch (err) { tt.textContent = err && err.message ? err.message : String(err); }
+  }
+  async function luuSua() {
+    const { d } = SUA; if (!d || !SUA.moi) return;
+    const b = S.bang[d.b], tt = $("td-dlg-tt"), luu = $("td-dlg-luu");
+    const doi = [...$("td-dlg-form").querySelectorAll("[data-j]:not([disabled])")]
+      .map((el) => [Number(el.dataset.j), el.value.trim()]).filter(([j, v]) => v !== o(SUA.moi, j));
+    if (!doi.length) { $("td-dlg").close(); S.h.toast("Không có gì thay đổi"); return; }
+    if (b.cot.ll >= 0) { const m = doi.find(([j]) => j === b.cot.ll); if (m && m[1] && !docLatLon(m[1])) { tt.textContent = "Toạ độ không đúng dạng “vĩ độ, kinh độ” (trong Việt Nam) — sửa lại rồi lưu."; return; } }
+    luu.disabled = true;
+    try {
+      tt.textContent = "Đang xin quyền sửa bảng tính…";
+      await layToken(true);
+      tt.textContent = "Đang kiểm tra dòng trên Google Sheets…";
+      const hienTai = await docDong(b, SUA.so, SUA.nCot, "FORMATTED_VALUE");
+      if (b.cot.id >= 0 && o(hienTai, b.cot.id) !== o(SUA.moi, b.cot.id)) throw new Error("Dòng trên bảng tính vừa bị dịch — đóng hộp sửa, bấm ✏️ lại");
+      const vuaDoi = doi.filter(([j]) => o(hienTai, j) !== o(SUA.moi, j));
+      if (vuaDoi.length) throw new Error(`Ô “${vuaDoi.map(([j]) => b.header[j] || cotChu(j)).join("”, “")}” vừa được sửa trên AppSheet — đóng hộp sửa, bấm ✏️ để lấy bản mới rồi sửa lại`);
+      tt.textContent = "Đang lưu vào Google Sheets…";
+      // giá trị bắt đầu bằng = + - @ sẽ thành công thức → thêm ' để giữ nguyên là chữ (trừ số âm)
+      const giuChu = (v) => (/^[=+@]/.test(v) || (/^-/.test(v) && !/^-\d+([.,]\d+)?$/.test(v)) ? "'" + v : v);
+      await api(`${URL_GS}${b.id}/values:batchUpdate`, { valueInputOption: "USER_ENTERED",
+        data: doi.map(([j, v]) => ({ range: `${tenTab(b.bang)}!${cotChu(j)}${SUA.so}`, values: [[giuChu(v)]] })) });
+      const moi = await docDong(b, SUA.so, SUA.nCot, "FORMATTED_VALUE");
+      b.rows[d.r] = moi;
+      const i = SUA.i, p = viTri(b, moi);
+      if (p) { d.lat = p[0]; d.lon = p[1]; }
+      d.tim = null;
+      veLop(); capNhatGan(S.rows);
+      try { await dbLuu({ bang: S.bang, luc: S.luc }); } catch (_) { /* bỏ qua */ }
+      $("td-dlg").close();
+      moThua(i, !!p);
+      S.h.toast(`Đã lưu ${doi.length} ô vào Google Sheets — AppSheet thấy sau khi đồng bộ`, 5000);
+    } catch (err) { tt.textContent = err && err.message ? err.message : String(err); luu.disabled = false; }
   }
   const gio = (t) => t ? new Date(t).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }) : "";
   // gọn: trong ngày chỉ giờ, ngày khác thêm ngày/tháng
@@ -339,6 +440,8 @@
       veLop(); giaoDien();
     });
     $("td-capnhat").addEventListener("click", taiVe);
+    $("td-dlg-luu").addEventListener("click", luuSua);
+    $("td-dlg-huy").addEventListener("click", () => $("td-dlg").close());
     let hen = 0;
     $("td-tim").addEventListener("input", () => { clearTimeout(hen); hen = setTimeout(timKiem, 200); });
     $("td-xoa").addEventListener("click", async () => {
@@ -368,5 +471,5 @@
     dbDoc().then((dl) => apDung(dl)).catch(() => apDung(null));
   }
 
-  Object.assign(VN, { thuaDatInit: init, thuaDatRows: capNhatGan, tdDocLatLon: docLatLon, tdPhanTich: phanTich });
+  Object.assign(VN, { thuaDatInit: init, thuaDatRows: capNhatGan, tdDocLatLon: docLatLon, tdPhanTich: phanTich, tdCotChu: cotChu });
 })(typeof window !== "undefined" ? window : globalThis);
